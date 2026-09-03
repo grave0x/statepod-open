@@ -1,0 +1,20 @@
+# build artifacts
+*.o
+*.a
+*.so
+!libswarmstate.so
+!libswarmstate.a
+*.exe
+*.dll
+test_kernel
+build-cross/
+__pycache__/
+*.pyc
+win/build/
+win/dist/
+win/*.zip
+infer/smoke_infer
+infer/*.log
+.swarmstate/
+.pi/
+.Rhistory

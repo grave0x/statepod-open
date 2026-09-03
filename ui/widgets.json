@@ -1,0 +1,8 @@
+{
+  "roles": {
+    "field_worker": ["alerts", "tasks", "status"],
+    "supervisor":   ["status", "alerts", "roster", "gov", "tasks", "qr"],
+    "admin":        ["status", "roster", "gov", "qr", "tasks", "alerts"],
+    "observer":     ["status", "alerts"]
+  }
+}

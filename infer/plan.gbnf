@@ -1,0 +1,14 @@
+# SwarmState plan grammar — flattened for llama.cpp's GBNF parser.
+# Same schema as harness/plan_grammar.py PLAN_GBNF.  llama.cpp GBNF:
+# single-line rules and NO underscores in rule names.
+root      ::= ws "{" ws ops "," ws strategy ws "}"
+ops       ::= "\"ops\"" ws ":" ws "[" ws op (ws "," ws op)* ws "]"
+op        ::= "{" ws "\"type\"" ws ":" ws optype (ws "," ws opfield)* ws "}"
+optype    ::= "\"READ\"" | "\"WRITE\"" | "\"GREP\"" | "\"DIFF\"" | "\"STATUS\"" | "\"EXECUTE\"" | "\"AST_PARSE\"" | "\"AST_QUERY\"" | "\"SYMBOL_SUMMARY\""
+opfield   ::= "\"path\"" ws ":" ws string | "\"content\"" ws ":" ws string | "\"pattern\"" ws ":" ws string | "\"target\"" ws ":" ws string | "\"command\"" ws ":" ws string | "\"linestart\"" ws ":" ws number | "\"lineend\"" ws ":" ws number | "\"maxresults\"" ws ":" ws number
+strategy  ::= "\"strategy\"" ws ":" ws ("\"DELTA\"" | "\"TARGETED\"" | "\"FULL\"" | "\"SYMBOLIC\"")
+string    ::= "\"" char* "\""
+char      ::= [^"\\] | "\\" escape
+escape    ::= ["\\/bfnrt]
+number    ::= "-"? [0-9]+
+ws        ::= [ \t\n]*

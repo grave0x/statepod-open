@@ -1,0 +1,32 @@
+SwarmState Third-Party Notices
+===============================
+
+This repository includes or interfaces with the third-party components
+listed below. Their copyrights and license terms are noted here.
+
+1. QR Code Generator for JavaScript — win/qrcodegen.js
+   Copyright (c) 2009 Kazuhiko Arase
+   Licensed under the MIT License:
+     http://www.opensource.org/licenses/mit-license.php
+   The word "QR Code" is a registered trademark of DENSO WAVE INCORPORATED.
+
+2. tree-sitter (API compatibility) — win/stubs/tree_sitter/
+   These files are original, compile-only stubs that mirror the
+   tree-sitter API surface; they contain no tree-sitter source code.
+   The Linux kernel build links against tree-sitter itself, which is
+   Copyright (c) the tree-sitter authors and licensed under the MIT
+   License (https://github.com/tree-sitter/tree-sitter).
+
+3. llama.cpp — infer/llama_infer.c
+   The embedded inference handler links against the system libllama.so
+   and <llama.h>. llama.cpp is Copyright (c) the llama.cpp authors and
+   licensed under the MIT License (https://github.com/ggml-org/llama.cpp).
+
+4. Shared C mesh base (libmesh) — win/swarmstate-node.c
+   The Windows node links against the SwarmState shared C mesh base
+   (mesh.h, jsmn.h, libmesh). That component is maintained by the same
+   copyright holder and is distributed separately.
+
+All other files in this repository are Copyright (c) 2026 grave0x and
+licensed under the GNU Affero General Public License v3 (see LICENSE),
+except the proprietary Kernel binaries (see KERNEL-LICENSE).
