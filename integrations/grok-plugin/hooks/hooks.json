@@ -1,0 +1,39 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "../scripts/session_start.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "read_file|Read|run_terminal_command|Bash|grep|Grep|Write|write_file|Edit|edit_file|edit|ApplyRewrite|apply_rewrite|tree_sitter_query|TreeSitterQuery|tree_sitter|ast_query|ASTQuery|Glob|glob|Mkdir|mkdir|Rmdir|rmdir|Remove|remove_file|RemoveFile|lean-ctx__ctx_read|lean-ctx__read|lean-ctx__ctx_shell|lean-ctx__shell|lean-ctx__ctx_search|lean-ctx__search|ReadUrl|ReadURL|web_fetch|run_ipynb|ipynb",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "../scripts/pretool_rewrite.py",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "../scripts/posttool_archive.py",
+            "timeout": 8
+          }
+        ]
+      }
+    ]
+  }
+}

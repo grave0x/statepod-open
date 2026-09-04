@@ -1,0 +1,20 @@
+# Phase 5 target: governance approve/deny (token copy variant)
+screen "Governance · Approve / Deny" w 70 h 24 bg 17
+  col weight 1 pad 2 gap 1
+    text "High-risk op needs approval" fg 14 bold 1
+    text "EXECUTE · barn-01 · WinService Restart" fg 7
+    divider
+    col pad 1 border 1
+      text "Plan" fg 8 bold 1
+      text "op: EXECUTE" fg 7
+      text "cmd: Restart-Service Foo" fg 7
+      text "reason: hung after cumulative update" fg 7
+      text "auth: pending supervisor token" fg 11
+    text "Token (TTL 300s)" fg 8
+    input "ss_tok_7f3a…c91e" bg 23
+    row gap 1
+      button "Approve + stamp" fg 15 bg 34 weight 1
+      button "Deny" fg 15 bg 52 weight 1
+      button "Cancel" fg 15 bg 23
+    divider
+    text "Logged to SNAP-6 audit ledger either way" fg 8

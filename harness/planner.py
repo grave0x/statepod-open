@@ -14,18 +14,28 @@ import re
 import urllib.request
 import urllib.error
 from pathlib import Path
-
-from swarmstate import (
-    SS_OP_READ, SS_OP_WRITE, SS_OP_GREP, SS_OP_DIFF, SS_OP_STATUS,
-    SS_OP_EXECUTE, SS_OP_AST_PARSE, SS_OP_AST_QUERY, SS_OP_SYMBOL_SUMMARY,
-    SS_CONTEXT_DELTA, SS_CONTEXT_TARGETED, SS_CONTEXT_FULL,
-)
+from dag import validate_dag, schedule as dag_schedule, summarize as dag_summarize, build_dag
 
 # Local (ollama) plan generation guardrails: hard token cap + socket
 # timeout so a runaway generation can never hang a task forever. A compact
 # plan is 60-150 completion tokens; 512 is generous headroom.
 OLLAMA_MAX_TOKENS = 512
 OLLAMA_TIMEOUT = 150
+
+# Plan op constants (from swarmstate.py)
+SS_OP_READ = 0
+SS_OP_WRITE = 1
+SS_OP_GREP = 2
+SS_OP_DIFF = 3
+SS_OP_STATUS = 4
+SS_OP_EXECUTE = 5
+SS_OP_AST_PARSE = 6
+SS_OP_AST_QUERY = 7
+SS_OP_SYMBOL_SUMMARY = 8
+SS_CONTEXT_DELTA = 0
+SS_CONTEXT_TARGETED = 1
+SS_CONTEXT_FULL = 2
+SS_CONTEXT_SYMBOLIC = 3
 
 VALID_TYPES = {
     "READ": SS_OP_READ, "WRITE": SS_OP_WRITE, "GREP": SS_OP_GREP,
@@ -210,11 +220,9 @@ def plan_signature(ops: list[dict]) -> str:
     return "+".join(sorted(set(op_signature(o) for o in ops))) or "EMPTY"
 
 
-# Spec 9.3 / GAPS.md priority 1: minimum semantic feedback samples on a
-# STRAT: key before the registry may override the op-shape heuristic.
-# One sample is noise (a single y/n); two gives the router a first
-# signal, and the count keeps growing as the suite/CLI closes the loop.
-STRAT_MIN_SAMPLES = 2
+# Spec 9.3: ≥3 samples before STRAT: overrides the op-shape heuristic
+# (aligned with pick_model_rates / build-plan-v1).
+STRAT_MIN_SAMPLES = 3
 
 
 # Cost order for tie-breaking (cheapest first): the registry should not
@@ -844,8 +852,9 @@ def plan_hw(query: str, summary: str | None,
         if _fallback.exists():
             hw_bin = str(_fallback)
     if not hw_bin:
-        raise RuntimeError("hw not found (set HW_BIN or install the hw harness)")
-    if harness not in ("omp", "prime", "grok", "hermes"):
+        raise RuntimeError("hw not found (install via "
+                           "~/Projects/internal.source/02-tools/hw/install.sh)")
+    if harness not in ("omp", "prime", "grok", "hermes", "jcode", "claude", "codex", "qwen", "kimi", "gemini"):
         raise RuntimeError(f"unknown harness '{harness}' for hw backend")
     prompt = (_planner_system(summary)
               + "\n\nUSER QUERY:\n" + query)
@@ -976,4 +985,14 @@ def make_plan(query: str, summary: str | None, backend: str = "mock",
         if not ok:
             raise ValueError("plan grammar violation: "
                              + "; ".join(errors))
+    # DAG validation (optional: only when ops have id/depends)
+    ops = plan.get("ops") or []
+    if any(op.get("id") or op.get("depends") for op in ops):
+        ok, derrs = validate_dag(ops)
+        if not ok:
+            msg = "plan dag: " + "; ".join(derrs)
+            if grammar == "strict":
+                raise ValueError(msg)
+            import sys as _sys
+            print(f"[planner] WARN {msg}", file=_sys.stderr)
     return plan

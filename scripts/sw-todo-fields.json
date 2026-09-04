@@ -1,0 +1,224 @@
+{
+  "_meta": {
+    "version": "ext-v1",
+    "schema_compat": "4-layer-v1+ext-v1",
+    "owner": "swarmstate",
+    "doc": "Extension fields (GitHub Issues parity + custom). User can override at ~/.swarmstate/todo-fields.json"
+  },
+  "labels": {
+    "ftype": "labels",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": [],
+    "doc": "GitHub-style labels (free-form strings, comma-separated on CLI)"
+  },
+  "milestone": {
+    "ftype": "text",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "doc": "Milestone name or ID (e.g. 'v1.0', 'Sprint 3')"
+  },
+  "assignees": {
+    "ftype": "assignees",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": [],
+    "doc": "Agent/user names assigned"
+  },
+  "mentions": {
+    "ftype": "mentions",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": [],
+    "doc": "Cross-references to other task IDs"
+  },
+  "reactions": {
+    "ftype": "reactions",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": {},
+    "doc": "Reactions: {thumbs_up: 1, heart: 2, ...}"
+  },
+  "draft": {
+    "ftype": "bool",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": false,
+    "doc": "Draft (hidden from auto-routing)"
+  },
+  "estimate": {
+    "ftype": "duration",
+    "layers": [
+      "story",
+      "task"
+    ],
+    "doc": "Time estimate: 30m, 2h, 1d"
+  },
+  "actual": {
+    "ftype": "duration",
+    "layers": [
+      "story",
+      "task"
+    ],
+    "doc": "Actual time spent (set on complete)"
+  },
+  "due": {
+    "ftype": "date",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "doc": "Due date: ISO-8601"
+  },
+  "closed_at": {
+    "ftype": "date",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "doc": "When task was completed"
+  },
+  "project": {
+    "ftype": "text",
+    "layers": [
+      "epic",
+      "story"
+    ],
+    "doc": "Project name"
+  },
+  "effort_score": {
+    "ftype": "number",
+    "layers": [
+      "story",
+      "task"
+    ],
+    "min_val": 1,
+    "max_val": 13,
+    "doc": "Fibonacci: 1, 2, 3, 5, 8, 13"
+  },
+  "impact_score": {
+    "ftype": "number",
+    "layers": [
+      "epic",
+      "story"
+    ],
+    "min_val": 1,
+    "max_val": 5,
+    "doc": "Impact: 1=trivial, 5=critical"
+  },
+  "risk": {
+    "ftype": "select",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": "low",
+    "choices": [
+      "low",
+      "medium",
+      "high",
+      "critical"
+    ],
+    "doc": "Risk level"
+  },
+  "weight": {
+    "ftype": "number",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": 1.0,
+    "min_val": 0.0,
+    "max_val": 100.0,
+    "doc": "Scheduling weight (float)"
+  },
+  "checklist": {
+    "ftype": "checklist",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": [],
+    "doc": "Inline checklist: [{text, done}, ...]"
+  },
+  "links": {
+    "ftype": "links",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": [],
+    "doc": "External refs: [{rel, url}, ...]"
+  },
+  "watchers": {
+    "ftype": "assignees",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": [],
+    "doc": "Users watching for updates"
+  },
+  "priority_boost": {
+    "ftype": "number",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": 0,
+    "min_val": -10,
+    "max_val": 10,
+    "doc": "Modifier added to base priority"
+  },
+  "swarm_tags": {
+    "ftype": "labels",
+    "layers": [
+      "vision",
+      "epic",
+      "story",
+      "task"
+    ],
+    "default": [],
+    "doc": "Swarm-specific tags"
+  }
+}

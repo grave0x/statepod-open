@@ -1,0 +1,533 @@
+#!/home/grave/.prime/agent/kernel-venv/bin/python
+"""sw todo — 4-layer task manager CLI (Vision/Epic/Story/Task) with GitHub Issues
+parity extension fields.
+
+Wraps the agent's task_manager skill and enforces the 4-layer schema + ext-v1
+extension fields (see docs/todo-schema.md, docs/todo-invariants.md,
+docs/todo-extensions.md).
+
+Extension fields: labels, milestone, assignees, mentions, reactions, draft,
+estimate, actual, due, closed_at, project, effort_score, impact_score, risk,
+weight, checklist, links, watchers, priority_boost, swarm_tags.
+
+Custom fields: drop a JSON catalog at ~/.swarmstate/todo-fields.json.
+
+Usage:
+  sw todo add "Title" --layer task [--parent T-0001] [--priority P0]
+                     [--label bug,security] [--assignee alice,bob]
+                     [--estimate 2h] [--due 2026-09-15] [--risk high]
+                     [--effort 8] [--impact 4] [--milestone v1.0]
+  sw todo ls    [--layer L] [--status S] [--priority P] [--label X] [--assignee X]
+  sw todo show  T-0001
+  sw todo start T-0001
+  sw todo complete T-0001 [--actual 2.5h]
+  sw todo depend T-0001 T-0002 T-0003
+  sw todo graph [--fmt ascii|md] [--depth N] [--root T-0001]
+  sw todo next  [--limit 3]
+  sw todo check [--task T-0001] [--strict]
+  sw todo scaffold "I want to <verb> <thing>"
+  sw todo field ls|show <name>|add NAME=SPEC
+  sw todo sync  push|pull
+  sw todo serve [--port 7741] [--all-interfaces]
+  sw todo version
+
+Exit codes:
+  0 = success, 1 = invalid args, 2 = invariant violation, 3 = not found
+"""
+import sys, os, json, re, asyncio
+from pathlib import Path
+
+import importlib, site
+
+# Ensure task_manager skill is on the path
+_skill_root = Path.home() / ".agents" / "skills" / "task-manager" / "src"
+if _skill_root.exists():
+    sys.path.insert(0, str(_skill_root))
+    sys.path.insert(0, str(_skill_root.parent))
+tm = importlib.import_module("task_manager")
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "py"))
+import todo_custom as tc
+
+VALID_LAYERS     = {"vision", "epic", "story", "task"}
+VALID_PRIORITIES = {"P0", "P1", "P2", "P3"}
+
+
+def err(msg, code=1):
+    print("sw todo: " + msg, file=sys.stderr)
+    sys.exit(code)
+
+
+def parse_args(argv):
+    positional = []
+    flags = {}
+    i = 1
+    while i < len(argv):
+        a = argv[i]
+        if a.startswith("--"):
+            if "=" in a:
+                k, v = a[2:].split("=", 1)
+                flags[k] = v
+                i += 1
+            else:
+                k = a[2:]
+                if i + 1 < len(argv) and not argv[i + 1].startswith("--"):
+                    flags[k] = argv[i + 1]
+                    i += 2
+                else:
+                    flags[k] = True
+                    i += 1
+        else:
+            positional.append(a)
+            i += 1
+    return positional, flags
+
+
+# Extension field store
+def _ext_path():
+    p = Path(os.path.expanduser("~/.swarmstate/task-extensions.json"))
+    p.parent.mkdir(parents=True, exist_ok=True)
+    return p
+
+def _ext_load():
+    p = _ext_path()
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return {}
+
+def _ext_save(d):
+    _ext_path().write_text(json.dumps(d, indent=2, default=str))
+
+def _ext_get(tid):
+    return _ext_load().get(tid, {})
+
+def _ext_set(tid, fields):
+    d = _ext_load()
+    d.setdefault(tid, {}).update(fields)
+    _ext_save(d)
+
+
+def mirror_md(task):
+    try:
+        md_dir = Path(os.path.expanduser("~/.swarmstate/tasks"))
+        md_dir.mkdir(parents=True, exist_ok=True)
+        tid = task["id"]
+        ext = _ext_get(tid)
+        lines = [
+            "---",
+            "id:         " + tid,
+            "schema:     todo-schema-v1+ext-v1",
+            "layer:      " + task.get("category", "task"),
+            "status:     " + task.get("status", "todo"),
+            "priority:   " + task.get("priority", "P2"),
+            "category:   " + task.get("category", ""),
+            "tags:       [" + ", ".join(task.get("tags", [])) + "]",
+            "depends:    [" + ", ".join(task.get("deps", [])) + "]",
+            "created:    " + task.get("created_at", ""),
+            "updated:    " + task.get("updated_at", ""),
+        ]
+        for fname, fval in ext.items():
+            xk = "x_" + fname
+            if isinstance(fval, bool):
+                lines.append(f"{xk}: {str(fval).lower()}")
+            elif isinstance(fval, list):
+                lines.append(f"{xk}: [" + ", ".join(str(x) for x in fval) + "]")
+            elif isinstance(fval, dict):
+                lines.append(f"{xk}: " + json.dumps(fval, separators=(",", ":")))
+            elif fval is not None:
+                lines.append(f"{xk}: {fval}")
+        lines.append("---")
+        body = "# " + task["title"] + "\n\n" + task.get("description", "") + "\n"
+        (md_dir / (tid + ".md")).write_text("\n".join(lines) + "\n" + body)
+    except Exception as e:
+        print("sw todo: warning: mirror failed: " + str(e), file=sys.stderr)
+
+
+def _load_raw():
+    store = Path(os.path.expanduser("~/.prime/agent/task-manager/tasks.json"))
+    if not store.exists():
+        return []
+    try:
+        return json.loads(store.read_text())
+    except Exception:
+        return []
+
+
+# Invariants
+def check_layer_parent(task, all_tasks):
+    layer = task.get("category", "task")
+    deps = task.get("deps", [])
+    parents = [t for t in all_tasks if t["id"] in deps]
+    if layer == "vision":
+        return None
+    if layer == "epic":
+        if not parents:
+            return None
+        if not any(p.get("category") == "vision" for p in parents):
+            return task["id"] + " (epic) missing vision parent"
+        return None
+    if layer == "story":
+        if not any(p.get("category") == "epic" for p in parents):
+            return task["id"] + " (story) missing epic parent"
+        return None
+    if layer == "task":
+        if not (any(p.get("category") == "story" for p in parents)
+                or any(p.get("category") == "epic" for p in parents)):
+            return task["id"] + " (task) missing story or epic parent"
+        return None
+    return None
+
+
+def check_story_acceptance(task, all_tasks=None):
+    if task.get("category") != "story":
+        return None
+    body = (task.get("title", "") + " " + task.get("description", "")).lower()
+    if "## acceptance" not in body and "acceptance" not in body:
+        return task["id"] + " (story) missing acceptance criteria"
+    return None
+
+
+def check_vision_scope(task, all_tasks=None):
+    if task.get("category") != "vision":
+        return None
+    if len(task.get("description", "")) > 500:
+        return task["id"] + " (vision) desc > 500 chars"
+    return None
+
+
+def check_title_len(task, all_tasks=None):
+    if len(task.get("title", "")) > 80:
+        return task["id"] + " title > 80 chars"
+    return None
+
+
+def check_desc_len(task, all_tasks=None):
+    d = task.get("description", "")
+    if 0 < len(d) < 20:
+        return task["id"] + " desc < 20 chars"
+    return None
+
+
+CHECKS = [check_layer_parent, check_story_acceptance, check_vision_scope,
+          check_title_len, check_desc_len]
+
+
+def check_ext_layer(task, all_tasks):
+    tid = task["id"]
+    ext = _ext_get(tid)
+    layer = task.get("category", "task")
+    cat = tc.get_catalog()
+    violations = []
+    for fname in ext:
+        if fname in cat and not cat[fname].applicable(layer):
+            violations.append(f"{tid} I11: {fname!r} not applicable to layer {layer!r}")
+    return violations
+
+
+def check_ext_value(task, all_tasks):
+    tid = task["id"]
+    ext = _ext_get(tid)
+    violations = []
+    for fname, fval in ext.items():
+        ok, err = tc.validate_value(fname, fval)
+        if not ok:
+            violations.append(f"{tid} I12: {err}")
+    return violations
+
+
+EXT_CHECKS = [check_ext_layer, check_ext_value]
+
+
+# CLI commands
+async def cmd_add(pos, flags):
+    if not pos:
+        err("add requires a title")
+    title = pos[0]
+    layer = flags.get("layer", "task")
+    if layer not in VALID_LAYERS:
+        err("layer must be one of " + str(sorted(VALID_LAYERS)) + ", got " + repr(layer))
+    parent = flags.get("parent")
+    deps_field = flags.get("deps", "")
+    if isinstance(deps_field, list):
+        deps = deps_field
+    elif deps_field:
+        deps = [d.strip() for d in deps_field.split(",") if d.strip()]
+    else:
+        deps = []
+    if parent:
+        deps = [parent] + deps
+    priority = flags.get("priority", "P2")
+    if priority not in VALID_PRIORITIES:
+        err("priority must be " + str(sorted(VALID_PRIORITIES)))
+    description = flags.get("description", "")
+    tags_field = flags.get("tags", "")
+    if isinstance(tags_field, list):
+        tags = tags_field
+    elif tags_field:
+        tags = [t.strip() for t in tags_field.split(",") if t.strip()]
+    else:
+        tags = []
+    cat = tc.get_catalog()
+    ext_flags = {k: v for k, v in flags.items() if k in cat}
+    ext_fields = tc.parse_flags(ext_flags)
+    errs = tc.validate_all(ext_fields)
+    if errs:
+        for e in errs:
+            print("sw todo: " + e, file=sys.stderr)
+        err("extension field validation failed", code=2)
+    bad = [n for n in ext_fields if not tc.layer_applicable(n, layer)]
+    if bad:
+        err(f"fields not applicable to layer {layer!r}: {bad}", code=2)
+    tid = await tm.add(title, description, priority, layer, tags, deps)
+    if ext_fields:
+        _ext_set(tid, ext_fields)
+    raw = _load_raw()
+    task = next((t for t in raw if t["id"] == tid), None)
+    if task:
+        mirror_md(task)
+    print(tid)
+    return 0
+
+
+async def cmd_ls(pos, flags):
+    layer = flags.get("layer")
+    status = flags.get("status")
+    priority = flags.get("priority")
+    label = flags.get("label")
+    assignee = flags.get("assignee")
+    print(await tm.list_tasks(status=status, category=layer, priority=priority, verbose=True))
+    if label or assignee:
+        ext = _ext_load()
+        raw = _load_raw()
+        if label:
+            raw = [t for t in raw if label in ext.get(t["id"], {}).get("labels", [])]
+        if assignee:
+            raw = [t for t in raw if assignee in ext.get(t["id"], {}).get("assignees", [])]
+        print(f"Filtered (label={label}, assignee={assignee}): {len(raw)} task(s)")
+        for t in raw:
+            e = ext.get(t["id"], {})
+            es = " ".join(f"{k}={v}" for k, v in e.items() if k in ("labels", "assignees", "milestone"))
+            print("  " + t["id"] + "  " + str(t.get("title", "")) + "  [" + es + "]")
+    return 0
+
+
+async def cmd_show(pos, flags):
+    if not pos:
+        err("show requires a task id")
+    print(await tm.show(pos[0]))
+    ext = _ext_get(pos[0])
+    if ext:
+        print()
+        print("Extension fields (ext-v1):")
+        cat = tc.get_catalog()
+        for k, v in sorted(ext.items()):
+            spec = cat.get(k)
+            note = ""
+            if spec and spec.doc:
+                note = " (" + spec.doc + ")"
+            val = v
+            if not isinstance(v, str):
+                val = json.dumps(v)
+            print("  " + k + ": " + str(val) + note)
+    return 0
+
+
+async def cmd_start(pos, flags):
+    if not pos:
+        err("start requires a task id")
+    print(await tm.start(pos[0]))
+    return 0
+
+
+async def cmd_complete(pos, flags):
+    if not pos:
+        err("complete requires a task id")
+    tid = pos[0]
+    print(await tm.complete(tid))
+    from datetime import datetime, timezone
+    updates = {}
+    if "actual" in flags:
+        updates["actual"] = flags["actual"]
+    updates.setdefault("closed_at", datetime.now(timezone.utc).isoformat())
+    _ext_set(tid, updates)
+    raw = _load_raw()
+    task = next((t for t in raw if t["id"] == tid), None)
+    if task:
+        mirror_md(task)
+    return 0
+
+
+async def cmd_depend(pos, flags):
+    if len(pos) < 2:
+        err("depend requires TASK_ID and one or more DEPENDS_ON")
+    print(await tm.depend(pos[0], pos[1:]))
+    return 0
+
+
+async def cmd_graph(pos, flags):
+    fmt = flags.get("fmt", "ascii")
+    root = flags.get("root")
+    print(await tm.graph(fmt=fmt, task_id=root))
+    return 0
+
+
+async def cmd_next(pos, flags):
+    limit = int(flags.get("limit", 3))
+    print(await tm.next_tasks(limit=limit))
+    return 0
+
+
+async def cmd_check(pos, flags):
+    target = flags.get("task")
+    raw = _load_raw()
+    if not raw:
+        err("no tasks found", code=3)
+    ids = [t["id"] for t in raw if not target or t["id"] == target]
+    if target and not ids:
+        err("task not found: " + target, code=3)
+    violations = []
+    for t in raw:
+        if t["id"] not in ids:
+            continue
+        for check in CHECKS:
+            v = check(t, raw)
+            if v:
+                violations.append(v)
+        for check in EXT_CHECKS:
+            for v in check(t, raw):
+                if v:
+                    violations.append(v)
+    if violations:
+        print("VIOLATIONS:")
+        for v in violations:
+            print("  " + v)
+        return 2
+    print("OK: " + str(len(raw)) + " task(s) passed all checks (4-layer + ext-v1)")
+    return 0
+
+
+async def cmd_scaffold(pos, flags):
+    if not pos:
+        err("scaffold requires a phrase")
+    phrase = " ".join(pos)
+    m = re.match(r"(?i)i\s+want\s+to\s+(\w+)\s+(.+)", phrase)
+    if not m:
+        err("could not parse intent: " + repr(phrase))
+    verb = m.group(1).lower()
+    obj = m.group(2).strip()
+    V = {"build": "vision", "ship": "vision", "launch": "vision", "design": "epic",
+         "implement": "epic", "add": "epic", "fix": "story", "refactor": "story",
+         "test": "story", "document": "task", "research": "task", "rename": "task"}
+    layer = V.get(verb, "task")
+    print("verb=" + verb + " object=" + repr(obj) + " -> layer=" + layer)
+    print("Run: sw todo add " + repr(obj) + " --layer " + layer)
+    return 0
+
+
+async def cmd_field(pos, flags):
+    # Field catalog: ls|show|add
+    sub = pos[0] if pos else "ls"
+    cat = tc.get_catalog()
+    if sub == "ls":
+        print("Extension field catalog (ext-v1, " + str(len(cat)) + " fields):")
+        for name in sorted(cat.keys()):
+            spec = cat[name]
+            layers = ",".join(spec.layers)
+            print("  " + name.ljust(20) + " " + spec.ftype.ljust(12) + " [" + layers + "]")
+            if spec.doc:
+                print("                 " + spec.doc)
+        return 0
+    if sub == "show":
+        name = pos[1] if len(pos) > 1 else None
+        if not name:
+            err("field show requires a field name")
+        spec = cat.get(name)
+        if not spec:
+            err("unknown field: " + repr(name) + " (try: sw todo field ls)")
+        print("Field: " + name)
+        print("  type    : " + spec.ftype)
+        print("  layers  : " + str(spec.layers))
+        print("  default : " + repr(spec.default))
+        print("  choices : " + str(spec.choices))
+        print("  range   : " + str(spec.min_val) + ".." + str(spec.max_val))
+        print("  doc     : " + spec.doc)
+        return 0
+    if sub == "add":
+        spec_str = pos[1] if len(pos) > 1 else ""
+        if "=" not in spec_str:
+            err("field add requires NAME=FTYPE or NAME=json")
+        name, rest = spec_str.split("=", 1)
+        try:
+            data = json.loads(rest)
+        except json.JSONDecodeError:
+            data = {"ftype": rest.strip()}
+        user_cat = Path.home() / ".swarmstate" / "todo-fields.json"
+        user_cat.parent.mkdir(parents=True, exist_ok=True)
+        existing = {}
+        if user_cat.exists():
+            try:
+                existing = json.loads(user_cat.read_text())
+            except Exception:
+                pass
+        existing[name.strip()] = data
+        user_cat.write_text(json.dumps(existing, indent=2))
+        print("Added custom field " + repr(name.strip()) + " -> " + str(user_cat))
+        print("Restart sw todo to pick up the new field.")
+        return 0
+    err("unknown field subcommand: " + repr(sub) + " (ls|show|add)", code=1)
+
+
+async def cmd_version(pos, flags):
+    print("sw todo v0.2.0 (4-layer schema v1 + ext-v1)")
+    return 0
+
+
+async def cmd_sync(pos, flags):
+    print("(sync not implemented — PR welcome)")
+    return 0
+
+
+async def cmd_serve(pos, flags):
+    port = int(flags.get("port", 7741))
+    print("(serve not implemented — PR welcome; port=" + str(port) + ")")
+    return 0
+
+
+SUBCOMMANDS = {
+    "add":      cmd_add,
+    "ls":       cmd_ls,
+    "list":     cmd_ls,
+    "show":     cmd_show,
+    "start":    cmd_start,
+    "complete": cmd_complete,
+    "done":     cmd_complete,
+    "depend":   cmd_depend,
+    "graph":    cmd_graph,
+    "next":     cmd_next,
+    "check":    cmd_check,
+    "scaffold": cmd_scaffold,
+    "field":    cmd_field,
+    "sync":     cmd_sync,
+    "serve":    cmd_serve,
+    "version":  cmd_version,
+    "help":     lambda p, f: print(__import__("sys").modules[__name__].__doc__),
+}
+
+
+def main(argv):
+    if len(argv) < 2:
+        print(__import__("sys").modules[__name__].__doc__)
+        return 1
+    sub = argv[1]
+    if sub not in SUBCOMMANDS:
+        err("unknown subcommand: " + repr(sub) + ". try: sw todo help")
+    pos, flags = parse_args(argv[1:])
+    handler = SUBCOMMANDS[sub]
+    return asyncio.run(handler(pos, flags))
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv) or 0)

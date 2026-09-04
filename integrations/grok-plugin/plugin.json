@@ -1,0 +1,8 @@
+{
+  "name": "swarmstate",
+  "version": "0.2.0",
+  "description": "SwarmState context containment for Grok Build — PreToolUse dump hardening, PostToolUse archive/ledger, /swarmstate CLI, optional kernel statusline. Closest prime-parity Grok allows.",
+  "skills": ["skills/swarmstate"],
+  "commands": ["commands"],
+  "hooks": "hooks/hooks.json"
+}

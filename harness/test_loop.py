@@ -1234,25 +1234,25 @@ class LoopTests(unittest.TestCase):
 
     def test_registry_strategy_overrides_heuristic_to_delta(self):
         """The money case: a READ plan's heuristic default is TARGETED,
-        but the registry proves DELTA wins (2 ok / 2 fail) -> the router
+        but the registry proves DELTA wins (3 ok / 3 fail) -> the router
         overrides the heuristic and returns DELTA."""
         with SwarmState(self.root) as state:
             ops = [{"type": "READ", "path": "x.c"}]
-            for _ in range(2):
+            for _ in range(3):
                 state.feedback("STRAT:READ:DELTA", True)
-            for _ in range(2):
+            for _ in range(3):
                 state.feedback("STRAT:READ:TARGETED", False)
             self.assertEqual(decide_strategy(ops, registry=state),
                              ("DELTA", None))
 
     def test_registry_strategy_picks_proven_targeted(self):
-        """DELTA proven bad twice, TARGETED proven good twice on a READ
+        """DELTA proven bad thrice, TARGETED proven good thrice on a READ
         plan -> TARGETED with the read path as the target."""
         with SwarmState(self.root) as state:
             ops = [{"type": "READ", "path": "x.c"}]
-            for _ in range(2):
+            for _ in range(3):
                 state.feedback("STRAT:READ:DELTA", False)
-            for _ in range(2):
+            for _ in range(3):
                 state.feedback("STRAT:READ:TARGETED", True)
             self.assertEqual(decide_strategy(ops, registry=state),
                              ("TARGETED", ["x.c"]))
@@ -1263,9 +1263,9 @@ class LoopTests(unittest.TestCase):
         log) instead of claiming a TARGETED that targets nothing."""
         with SwarmState(self.root) as state:
             ops = [{"type": "WRITE", "path": "a", "content": "b"}]
-            for _ in range(2):
+            for _ in range(3):
                 state.feedback("STRAT:WRITE:DELTA", False)
-            for _ in range(2):
+            for _ in range(3):
                 state.feedback("STRAT:WRITE:TARGETED", True)
             self.assertEqual(decide_strategy(ops, registry=state),
                              ("DELTA", None))
@@ -1319,7 +1319,7 @@ class LoopTests(unittest.TestCase):
         DELTA and TARGETED proven bad, SYMBOLIC proven good -> SYMBOLIC
         overrides the op-shape heuristic default (TARGETED)."""
         with SwarmState(self.root) as state:
-            for _ in range(2):
+            for _ in range(3):
                 state.feedback("STRAT:READ:DELTA", False)
                 state.feedback("STRAT:READ:TARGETED", False)
                 state.feedback("STRAT:READ:SYMBOLIC", True)
@@ -1360,20 +1360,26 @@ class LoopTests(unittest.TestCase):
         self.assertEqual(wrote, "int ok = a && b || c;\n")
 
     def test_registry_strategy_requires_min_samples(self):
-        """A single sample is noise: 1 OK on DELTA must not flip the
-        heuristic default (TARGETED for a READ plan)."""
+        """Fewer than STRAT_MIN_SAMPLES (3) is noise: 1 or 2 OK on DELTA
+        must not flip the heuristic default (TARGETED for a READ plan)."""
         with SwarmState(self.root) as state:
             state.feedback("STRAT:READ:DELTA", True)
             self.assertEqual(
                 decide_strategy([{"type": "READ", "path": "x.c"}],
                                 registry=state),
                 ("TARGETED", ["x.c"]))
+            state.feedback("STRAT:READ:DELTA", True)
+            self.assertEqual(
+                decide_strategy([{"type": "READ", "path": "x.c"}],
+                                registry=state),
+                ("TARGETED", ["x.c"]),
+                "2 samples still below the ≥3 proof bar")
 
     def test_registry_strategy_requested_full_still_honored(self):
         """An explicit FULL request always wins over registry evidence."""
         with SwarmState(self.root) as state:
-            state.feedback("STRAT:READ:DELTA", True)
-            state.feedback("STRAT:READ:DELTA", True)
+            for _ in range(3):
+                state.feedback("STRAT:READ:DELTA", True)
             self.assertEqual(
                 decide_strategy([{"type": "READ", "path": "x.c"}],
                                 requested="FULL", registry=state),
@@ -1383,16 +1389,15 @@ class LoopTests(unittest.TestCase):
         """All proven strategies bad (rate 0.0) -> least-bad wins so the
         loop keeps learning; on a full tie the cheaper strategy wins."""
         with SwarmState(self.root) as state:
-            state.feedback("STRAT:READ:TARGETED", False)
-            state.feedback("STRAT:READ:TARGETED", False)
-            state.feedback("STRAT:READ:DELTA", False)
-            state.feedback("STRAT:READ:DELTA", False)
+            for _ in range(3):
+                state.feedback("STRAT:READ:TARGETED", False)
+                state.feedback("STRAT:READ:DELTA", False)
             # 0.0 vs 0.0, same samples -> cheaper strategy (DELTA)
             self.assertEqual(registry_strategy(state, "READ", "DELTA"),
                              "DELTA")
-            # one more TARGETED sample at OK flips it to TARGETED
-            state.feedback("STRAT:READ:TARGETED", True)
-            state.feedback("STRAT:READ:TARGETED", True)
+            # more TARGETED OK samples flip the winner once rate > 0.5
+            for _ in range(4):
+                state.feedback("STRAT:READ:TARGETED", True)
             self.assertEqual(registry_strategy(state, "READ", "DELTA"),
                              "TARGETED")
 
@@ -1549,14 +1554,14 @@ class LoopTests(unittest.TestCase):
 
     def test_registry_strategy_flips_write_to_full_on_bad_delta(self):
         """The contradictory-evidence flip (mesh_flip_demo): DELTA proven
-        bad 4x and FULL proven good 2x on a WRITE plan -> the strategy
+        bad 4x and FULL proven good 3x on a WRITE plan -> the strategy
         gate refuses DELTA and selects FULL.  This is exactly what the
         mesh bridge delivers to a peer node."""
         with SwarmState(self.root) as state:
             ops = [{"type": "WRITE", "path": "a", "content": "b"}]
             for _ in range(4):
                 state.feedback("STRAT:WRITE:DELTA", False)
-            for _ in range(2):
+            for _ in range(3):
                 state.feedback("STRAT:WRITE:FULL", True)
             self.assertEqual(decide_strategy(ops, registry=state),
                              ("FULL", None))
@@ -2317,11 +2322,145 @@ class LoopTests(unittest.TestCase):
             b.shutdown()
             link.shutdown()
 
+    def test_lora_aes_gcm_roundtrip_and_wrong_key(self):
+        """Phase 6: AES-256-GCM on the LoRa CBOR blob; wrong PSK fails."""
+        import os as _os
+        import socket as _socket
+        import threading as _threading
+        import time as _time
+        from lora import LoRaLink
 
+        psk = _os.urandom(32)
+        link = LoRaLink(frame_cap=96, p_loss=0.0, airtime=0.002, seed=1,
+                        psk=psk)
+        a, b = link.endpoint("A"), link.endpoint("B")
+        got = []
+        stop = _threading.Event()
 
+        def reader():
+            while not stop.is_set():
+                try:
+                    got.append(b.recv(4096))
+                except _socket.timeout:
+                    continue
+                except Exception:
+                    break
+        _threading.Thread(target=reader, daemon=True).start()
+        msg = b'{"type":"req","id":"1","query":"ping"}\n'
+        a.sendall(msg)
+        _time.sleep(0.8)
+        stop.set()
+        self.assertEqual(got, [msg])
+        self.assertGreaterEqual(link.stats.get("enc_msgs", 0), 1)
+        self.assertGreaterEqual(a.reliability(), 1.0)
+        link.shutdown()
 
+        bad = LoRaLink(frame_cap=96, p_loss=0.0, airtime=0.002, seed=2,
+                       psk=_os.urandom(32))
+        # encrypt with one key, decrypt with another via mismatched streams:
+        # build two links that don't share a PSK — sender encrypts, receiver
+        # has different key → OSError on recv.
+        good = LoRaLink(frame_cap=96, p_loss=0.0, airtime=0.002, seed=3,
+                        psk=psk)
+        # Direct unit: decrypt helper rejects wrong key
+        from lora import _encrypt, _decrypt
+        blob = _encrypt(psk, b"\xa0")
+        with self.assertRaises(Exception):
+            _decrypt(_os.urandom(32), blob)
+        good.shutdown()
+        bad.shutdown()
 
-    # ── scoped bridges between pools (spec v1 §5) ─────────────────────
+    def test_lora_priority_acks_drain_first(self):
+        """Priority TX: queued ACKs leave before bulk DATA."""
+        from lora import LoRaLink, _pack, K_DATA, K_ACK, P_BULK, P_ACK
+        link = LoRaLink(frame_cap=64, p_loss=0.0, airtime=10.0, seed=0)
+        link._stop.set()  # freeze radio so TX heap stays inspectable
+        link.send(0, _pack(0, K_DATA, 1, 0, 1, b"bulk"), priority=P_BULK)
+        link.send(0, _pack(0, K_ACK, 2, 0, 0), priority=P_ACK)
+        link.send(0, _pack(0, K_DATA, 3, 0, 1, b"more"), priority=P_BULK)
+        with link._lock:
+            kinds = [f["kind"] for (_p, _s, f) in sorted(link._tx["A"])]
+        self.assertEqual(kinds[0], K_ACK)
+        self.assertEqual(kinds.count(K_DATA), 2)
+        link.shutdown()
+
+    def test_cbor_codec_roundtrip(self):
+        """Minimal CBOR codec: canonical shortest-form heads, exact
+        round-trip on mesh-message-shaped values, float64 support."""
+        import sys as _sys, os as _os
+        _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+        import cbor as _cbor
+        self.assertEqual(_cbor.dumps(23), b"\x17")
+        self.assertEqual(_cbor.dumps(24), b"\x18\x18")
+        self.assertEqual(_cbor.dumps(65536), b"\x1a\x00\x01\x00\x00")
+        self.assertEqual(_cbor.dumps(-1), b"\x20")
+        self.assertEqual(_cbor.dumps({}), b"\xa0")
+        self.assertEqual(_cbor.dumps("a" * 23), b"\x77" + b"a" * 23)
+        self.assertEqual(_cbor.dumps("a" * 24), b"\x78\x18" + b"a" * 24)
+        self.assertEqual(_cbor.dumps(1.5),
+                         b"\xfb\x3f\xf8\x00\x00\x00\x00\x00\x00")
+        vals = [{"type": "lora_share",
+                 "ops": [{"op": "set", "target": "reg/X", "value": "1",
+                          "clock": {"origin": "n1", "lamport": 3}}]},
+                {"f": 1.5, "b": True, "n": None, "neg": -7,
+                 "arr": [1, "two", [3]], "nested": {"x": {"y": "z"}}},
+                "", 0, -0.0, [None, False]]
+        for v in vals:
+            self.assertEqual(_cbor.loads(_cbor.dumps(v)), v)
+        with self.assertRaises(ValueError):
+            _cbor.loads(b"\x5f")            # indefinite length rejected
+        with self.assertRaises(ValueError):
+            _cbor.loads(_cbor.dumps([1]) + b"\x00")  # trailing bytes
+        with self.assertRaises(TypeError):
+            _cbor.dumps({1: "int key"})
+        # the point of the exercise: smaller than JSON on the radio
+        msg = {"type": "lora_share", "ops": [
+            {"op": "set", "target": "registry:q:sig:model",
+             "value": "qwen2.5-coder:1.5b",
+             "clock": {"origin": "node-a", "lamport": 42}}]}
+        import json as _json
+        self.assertLess(len(_cbor.dumps(msg)),
+                        len(_json.dumps(msg, separators=(",", ":")).encode()),
+                        "CBOR must be smaller than JSON on the wire")
+
+    def test_mesh_lora_wire_is_cbor(self):
+        """The radio carries CBOR, not JSON: stats count cbor_msgs and a
+        full lora_share batch shrinks on the wire (same convergence as
+        the JSON framing test below)."""
+        import sys as _sys, os as _os
+        _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+        from lora import LoRaLink
+        import socket as _socket
+        import threading as _threading
+        import time as _time
+        link = LoRaLink(frame_cap=96, p_loss=0.0, airtime=0.005, seed=5)
+        a, b = link.endpoint("A"), link.endpoint("B")
+        got, stop = [], _threading.Event()
+
+        def reader():
+            while not stop.is_set():
+                try:
+                    got.append(b.recv(4096))
+                except _socket.timeout:
+                    continue
+                except Exception:
+                    break
+        _threading.Thread(target=reader, daemon=True).start()
+        msg = (b'{"type":"lora_share","ops":[{"op":"set",'
+               b'"target":"reg/STRAT/WRITE:DELTA","value":"1",'
+               b'"clock":{"origin":"node-a","lamport":1}}]}\n')
+        a.sendall(msg)
+        _time.sleep(1.0)
+        stop.set()
+        self.assertEqual(got, [msg], "JSON line must round-trip unchanged")
+        self.assertGreaterEqual(link.stats.get("cbor_msgs", 0), 1,
+                                "radio must have encoded the message as CBOR")
+        import cbor as _cbor, json as _json
+        self.assertLess(len(_cbor.dumps(_json.loads(msg))), len(msg) - 1,
+                        "CBOR form must be smaller than the JSON line")
+        link.shutdown()
+
+    # ── scoped bridges between pools (spec v1 §5) ────────────────────
     def test_bridge_policy_scopes_relay(self):
         """BridgePolicy: target globs, data minimization, and the time
         window are enforced independently."""
@@ -2776,6 +2915,450 @@ class LoopTests(unittest.TestCase):
         self.assertTrue(all(g == "strict" for g in calls[:1]))
         self.assertEqual(calls[-1], "lenient")
 
+
+class ResearchHandlerTests(unittest.TestCase):
+    """Offline tests for the self-contained search/research handler
+    (harness/research.py): decoders, engine parsers, gather, kit store.
+    No real network — engine HTTP is mocked; fetch tests use a local
+    loopback HTTP server or refused connections."""
+
+    @staticmethod
+    def _serve(payload: bytes, ctype: str = "text/html"):
+        """Local one-shot HTTP server; yields base url, then shuts down."""
+        import threading
+        from http.server import BaseHTTPRequestHandler, HTTPServer
+
+        class H(BaseHTTPRequestHandler):
+            def do_GET(self):  # noqa: N802
+                self.send_response(200)
+                self.send_header("Content-Type", ctype)
+                self.send_header("Content-Length", str(len(payload)))
+                self.end_headers()
+                self.wfile.write(payload)
+
+            def log_message(self, *a):
+                pass
+
+        srv = HTTPServer(("127.0.0.1", 0), H)
+        th = threading.Thread(target=srv.serve_forever, daemon=True)
+        th.start()
+        url = f"http://127.0.0.1:{srv.server_port}/doc"
+        return url, srv
+
+    # -- decoders ---------------------------------------------------
+    def test_decode_html_keeps_links_and_drops_noise(self):
+        import research as rh
+        doc = ("<html><head><title>T</title></head><body>"
+               "<h1>Big</h1><p>Hello <strong>world</strong>.</p>"
+               "<script>alert(1)</script><ul><li><a href=\"https://a.b/c\">"
+               "link</a></li></ul></body></html>")
+        d = rh.decode_html(doc.encode())
+        self.assertIn("Big", d.text)
+        self.assertIn("Hello world", d.text)
+        self.assertNotIn("alert", d.text)
+        self.assertIn("[link](https://a.b/c)", d.text)
+        self.assertEqual(d.quality, "full")
+
+    @staticmethod
+    def _minimal_pdf(text: bytes = b"(Hello swarmstate) Tj") -> bytes:
+        stream = (b"BT /F1 12 Tf 72 720 Td " + text
+                  + b" 0 -20 Td (second line) Tj ET\n")
+        objs = [b"<< /Type /Catalog /Pages 2 0 R >>",
+                b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+                b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+                b"/Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+                b"<< /Length %d >>\nstream\n" % len(stream) + stream
+                + b"endstream",
+                b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>"]
+        pdf = b"%PDF-1.4\n"
+        offs = []
+        for i, o in enumerate(objs, 1):
+            offs.append(len(pdf))
+            pdf += b"%d 0 obj\n" % i + o + b"\nendobj\n"
+        xref = len(pdf)
+        pdf += b"xref\n0 %d\n" % (len(objs) + 1)
+        pdf += b"0000000000 65535 f \n"
+        for off in offs:
+            pdf += b"%010d 00000 n \n" % off
+        pdf += b"trailer << /Size %d /Root 1 0 R >>\nstartxref\n%d\n%%%%EOF\n" \
+            % (len(objs) + 1, xref)
+        return pdf
+
+    def test_pdf_python_fallback_extracts_text_ops(self):
+        import research as rh
+        d = rh.decode_pdf(self._minimal_pdf(), force="python")
+        self.assertIn("Hello swarmstate", d.text)
+        self.assertIn("second line", d.text)
+        self.assertNotIn("(", d.text)
+        self.assertEqual(d.quality, "degraded")
+        d2 = rh.decode_pdf(self._minimal_pdf(b"[(Hel) (lo sw) 40 (armstate)] TJ"),
+                           force="python")
+        self.assertIn("Hello swarmstate", d2.text)
+
+    def test_pdf_encrypted_marked_none(self):
+        import research as rh
+        raw = b"%PDF-1.7\n1 0 obj << /Encrypt 9 0 R /Type /Catalog >> endobj\n"
+        d = rh.decode_pdf(raw, force="python")
+        self.assertEqual(d.quality, "none")
+        self.assertIn("encrypted", d.note.lower())
+
+    def test_docx_and_epub_zip_decode(self):
+        import io
+        import zipfile
+        import research as rh
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w") as z:
+            z.writestr("[Content_Types].xml", "<Types/>")
+            z.writestr("word/document.xml",
+                       "<w:document xmlns:w=\"http://x\"><w:body>"
+                       "<w:p><w:r><w:t>Docx hello</w:t></w:r></w:p>"
+                       "<w:p><w:r><w:t>para two</w:t></w:r></w:p>"
+                       "</w:body></w:document>")
+        d = rh.decode(buf.getvalue())
+        self.assertEqual(d.fmt, "docx")
+        self.assertIn("Docx hello", d.text)
+        self.assertIn("para two", d.text)
+        # epub
+        buf2 = io.BytesIO()
+        with zipfile.ZipFile(buf2, "w") as z:
+            z.writestr("mimetype", "application/epub+zip")
+            z.writestr("META-INF/container.xml",
+                       "<container><rootfiles><rootfile "
+                       "full-path=\"OEBPS/opf.opf\"/></rootfiles></container>")
+            z.writestr("OEBPS/opf.opf",
+                       "<package><manifest><item id=\"c1\" href=\"ch1.xhtml\"/>"
+                       "</manifest><spine><itemref idref=\"c1\"/></spine>"
+                       "</package>")
+            z.writestr("OEBPS/ch1.xhtml",
+                       "<html><body><p>Epub chapter one</p></body></html>")
+        d = rh.decode(buf2.getvalue())
+        self.assertEqual(d.fmt, "epub")
+        self.assertIn("Epub chapter one", d.text)
+
+    def test_rss_atom_json_csv_sniff(self):
+        import research as rh
+        rss = b"<rss version=\"2.0\"><channel><title>C</title><item><title>I1</title>" \
+            b"<link>https://x/1</link><description>D1</description></item></channel></rss>"
+        d = rh.decode(rss)
+        self.assertEqual(d.fmt, "xml")
+        self.assertIn("I1", d.text)
+        self.assertIn("https://x/1", d.text)
+        atom = (b"<feed xmlns=\"http://www.w3.org/2005/Atom\"><entry>"
+                b"<title>E1</title><link href=\"https://y/2\"/>"
+                b"<summary>S</summary></entry></feed>")
+        d = rh.decode(atom)
+        self.assertIn("E1", d.text)
+        self.assertEqual(rh.sniff_fmt(b"{\"a\": [1,2]}"), "json")
+        self.assertEqual(rh.sniff_fmt(b"a,b\n1,2\n", hint="x.csv"), "csv")
+        self.assertEqual(rh.sniff_fmt(self._minimal_pdf()), "pdf")
+        self.assertEqual(rh.sniff_fmt(b"\x89PNG\r\n"), "image")
+        self.assertEqual(rh.sniff_fmt(b"\x00\x01\x02\xff\xfe\xfd"), "binary")
+
+    # -- search engines (HTTP mocked) -------------------------------
+    def _mock_http(self, by_url):
+        import research as rh
+        def fake(url, **kw):
+            for frag, raw in by_url.items():
+                if frag in url:
+                    return rh.Fetch(ok=True, status=200, raw=raw)
+            return rh.Fetch(ok=False, error="no mock for " + url[:60])
+        return fake
+
+    def test_bing_parse_and_redirect_unwrap(self):
+        import research as rh
+        page = ("<ol id=\"b_results\">"
+                "<li class=\"b_algo\"><h2><a target=\"_blank\" "
+                "href=\"https://www.bing.com/ck/a?!&amp;p=x&amp;u=a1"
+                "aHR0cHM6Ly9kb2MucnVzdC1sYW5nLm9yZy9yZWZlcmVuY2UvbWVtb3J5LW1vZGVsLmh0bWw"
+                "&amp;ntb=1\">Memory model - The <strong>Rust</strong> "
+                "Reference</a></h2><p>The Rust Reference Memory model "
+                "Warning</p></li>"
+                "<li class=\"b_algo\"><h2><a href=\"https://en.wikipedia.org/"
+                "wiki/Memory_model_(programming)\">Memory model</a></h2>"
+                "<p>In computing</p></li></ol>")
+        with mock.patch.object(rh, "_http", self._mock_http({"bing": page.encode()})):
+            out = rh.search_bing("rust memory model")
+        self.assertTrue(out.ok)
+        self.assertEqual(len(out.results), 2)
+        self.assertEqual(
+            out.results[0].url,
+            "https://doc.rust-lang.org/reference/memory-model.html")
+        self.assertEqual(out.results[0].title,
+                         "Memory model - The Rust Reference")
+        self.assertIn("Warning", out.results[0].snippet)
+
+    def test_bing_wall_and_ddg_anomaly_reported(self):
+        import research as rh
+        wall = b"<html><body><h1>DuckDuckGo</h1></body></html>"
+        with mock.patch.object(rh, "_http",
+                               self._mock_http({"bing.com": wall})):
+            out = rh.search_bing("x y")
+        self.assertFalse(out.ok)
+        self.assertIn("no result blocks", out.error)
+        with mock.patch.object(rh, "_http",
+                               self._mock_http({"duckduckgo": wall})):
+            out = rh.search_ddg("x y")
+        self.assertFalse(out.ok)
+        self.assertTrue("wall" in out.error or "markup" in out.error)
+
+    def test_ddg_uddg_unwrap(self):
+        import research as rh
+        page = (b"<div class=\"result\"><a rel=\"nofollow\" "
+                b"class=\"result__a\" href=\"//duckduckgo.com/l/?uddg="
+                b"https%3A%2F%2Fexample.com%2Fa&amp;rut=1\">Ex</a></div>")
+        with mock.patch.object(rh, "_http",
+                               self._mock_http({"duckduckgo": page})):
+            out = rh.search_ddg("ex")
+        self.assertTrue(out.ok)
+        self.assertEqual(out.results[0].url, "https://example.com/a")
+
+    def test_search_merges_dedupes_and_notes(self):
+        import research as rh
+        bing = rh.EngineOutcome("bing", True, [
+            rh.Result(url="https://example.com/a", title="A1")])
+        wiki = rh.EngineOutcome("wikipedia", True, [
+            rh.Result(url="https://example.com/a/", title="A2 dup"),
+            rh.Result(url="https://en.wikipedia.org/wiki/B", title="B")])
+        ddg = rh.EngineOutcome("ddg", False, [], "anomaly wall")
+        empty = rh.EngineOutcome("arxiv", False, [], "no hits")
+        with mock.patch.object(rh, "search_bing", return_value=bing), \
+                mock.patch.object(rh, "search_ddg", return_value=ddg), \
+                mock.patch.object(rh, "search_wikipedia", return_value=wiki), \
+                mock.patch.object(rh, "search_arxiv", return_value=empty):
+            results, notes = rh.search("q", engines=("bing", "ddg",
+                                                      "wikipedia"))
+        self.assertEqual(len(results), 2)  # A dup dropped
+        self.assertEqual(results[0].url, "https://example.com/a")
+        self.assertTrue(any("anomaly wall" in n for n in notes))
+
+    def test_search_paperish_includes_arxiv(self):
+        import research as rh
+        empty = rh.EngineOutcome("e", False, [], "wall")
+        with mock.patch.object(rh, "search_bing", return_value=empty), \
+                mock.patch.object(rh, "search_ddg", return_value=empty), \
+                mock.patch.object(rh, "search_wikipedia", return_value=empty), \
+                mock.patch.object(
+                    rh, "search_arxiv",
+                    return_value=rh.EngineOutcome("arxiv", True, [
+                        rh.Result(url="https://arxiv.org/abs/2401.00001",
+                                  pdf="https://arxiv.org/pdf/2401.00001",
+                                  title="P")])):
+            results, notes = rh.search("attention survey")
+        self.assertTrue(results)
+        self.assertEqual(results[0].url, "https://arxiv.org/abs/2401.00001")
+        self.assertTrue(any("wall" in n for n in notes))
+
+    # -- fetch / gather / kit (loopback only) ------------------------
+    def test_fetch_and_gather_url_over_loopback(self):
+        import research as rh
+        html = b"<html><body><p>Loopback hello world</p></body></html>"
+        url, srv = self._serve(html)
+        try:
+            f = rh._http(url, timeout=5)
+            self.assertTrue(f.ok)
+            d = rh.decode(f.raw, ctype=f.content_type, hint=url)
+            self.assertIn("Loopback hello world", d.text)
+            corpus = rh.gather([url], limit=1, timeout=5)
+            self.assertEqual(corpus.counts()["ok"], 1)
+            self.assertEqual(corpus.sources[0].kind, "url")
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
+    def test_gather_local_files_and_failed_target(self):
+        import research as rh
+        with tempfile.TemporaryDirectory(prefix="sw-research-") as td:
+            td = Path(td)
+            (td / "a.md").write_text("# Alpha\nlocal info here")
+            (td / "b.json").write_text('{"k": "v"}')
+            corpus = rh.gather([str(td / "a.md"), str(td / "b.json")])
+            self.assertEqual(corpus.counts()["ok"], 2)
+            # a dead loopback port -> honest ✗ row, not a hang
+            corpus = rh.gather(["http://127.0.0.1:1/x"], timeout=2)
+            self.assertEqual(corpus.counts()["failed"], 1)
+            self.assertIn("fetch failed", rh._status_row(corpus.sources[0])[1])
+            # missing file single target is not silently web-searched
+            corpus = rh.gather([str(td / "missing.pdf")], timeout=2)
+            self.assertEqual(corpus.counts()["failed"], 1)
+
+    def test_write_kit_labels_and_manifest(self):
+        import research as rh
+        with tempfile.TemporaryDirectory(prefix="sw-kit-") as td:
+            td = Path(td)
+            (td / "n.md").write_text("# Note\nreal content")
+            corpus = rh.gather([str(td / "n.md")])
+            corpus.sources.append(rh.Source(
+                id="s2", kind="url", url="http://127.0.0.1:1/x",
+                fetch=rh.Fetch(ok=False, error="HTTP 404")))
+            kit = rh.write_kit(corpus, td / "out", name="Sample Topic")
+            self.assertEqual(kit.name, "sample-topic")
+            readme = (kit / "README.md").read_text()
+            self.assertIn("✅", readme)
+            self.assertIn("✗", readme)
+            self.assertIn("## Unverified / gaps (auto)", readme)
+            self.assertIn("HTTP 404", readme)
+            rows = [json.loads(l)
+                    for l in (kit / "sources.jsonl").read_text().splitlines()]
+            self.assertEqual(len(rows), 2)
+            self.assertEqual(rows[0]["status"], "ok")
+            self.assertEqual(rows[1]["status"], "failed")
+            self.assertTrue((kit / "sources" / "text-1.txt").exists())
+
+    def test_bundle_and_slug(self):
+        import research as rh
+        self.assertEqual(rh._slug("What Is  Memory Model??"),
+                         "what-is-memory-model")
+        c = rh.Corpus(topic="t", query="q")
+        c.sources.append(rh.Source(
+            id="s1", kind="file", path="/x/y.md",
+            fetch=rh.Fetch(ok=True, status=200, raw=b"x"),
+            decoded=rh.Decoded(text="hello bundle", fmt="md",
+                               method="passthrough", quality="full")))
+        b = rh.bundle_for_brain(c)
+        self.assertIn("[s1] ✅", b)
+        self.assertIn("hello bundle", b)
+
+
+class FrontierHarnessTests(unittest.TestCase):
+    """Offline tests for the FrontierHarness eval runner
+    (harness/frontierharness.py): fixture-repo sync, pack mapping,
+    task selection, outcome classification and a hermetic end-to-end
+    mock run.  No network and no docker — the benchmark repo is a
+    small local fixture."""
+
+    @staticmethod
+    def _fixture() -> Path:
+        """A minimal frontier-harness-shaped tree: 2 terminal-bench +
+        1 deep-swe task (one with a quoted special-char name)."""
+        td = Path(tempfile.mkdtemp(prefix="sw-fhe-fix-"))
+        for key, prefix, instr in [
+            ("openssl-selfsigned-cert", "terminal-bench",
+             "Create /app/ssl/server.key (2048-bit RSA, mode 600) and "
+             "server.crt; write /app/check_cert.py."),
+            ("git-leak-recovery", "terminal-bench",
+             "Sanitize the git repo: remove the leaked secret from "
+             "history and rewrite HEAD."),
+            ("anko-typed-variable-bindings", "datacurve",
+             "Implement typed variable bindings so the failing test "
+             "passes."),
+        ]:
+            d = td / "tasks" / key
+            d.mkdir(parents=True)
+            (d / "task.toml").write_text(
+                f'schema_version = "1.1"\n'
+                f'[task]\nname = "{prefix}/{key}"\n'
+                f'description = "fixture"\n'
+                f'[metadata]\ndifficulty = "medium"\n'
+                f'category = "security"\n'
+                f'[environment]\ndocker_image = "img:{key}"\n'
+                f'workdir = "/app"\n')
+            (d / "instruction.md").write_text(instr)
+        # a second terminal-bench task exercises sort order + quoting
+        d = td / "tasks" / "weird name task"
+        d.mkdir(parents=True)
+        (d / "task.toml").write_text(
+            '[task]\nname = "terminal-bench/weird-name-task"\n'
+            '[metadata]\ndifficulty = "easy"\ncategory = "x"\n')
+        (d / "instruction.md").write_text("Write notes.md saying hi.")
+        return td
+
+    def test_sync_from_local_tree_and_pack_counts(self):
+        import frontierharness as fh
+        fix = self._fixture()
+        cache = Path(tempfile.mkdtemp(prefix="sw-fhe-cache-"))
+        repo, note = fh.sync(fix, cache=cache)
+        self.assertEqual(repo, cache / "frontier-harness")
+        self.assertIn("4 tasks", note)
+        self.assertEqual(fh.pack_counts(repo),
+                         {"terminal-bench": 3, "deep-swe": 1})
+
+    def test_load_and_select_by_pack_and_name(self):
+        import frontierharness as fh
+        fix = self._fixture()
+        tasks = fh.load_tasks(fix)
+        self.assertEqual(len(tasks), 4)
+        by_key = {t["key"]: t for t in tasks}
+        self.assertEqual(by_key["openssl-selfsigned-cert"]["name"],
+                         "terminal-bench/openssl-selfsigned-cert")
+        self.assertEqual(by_key["openssl-selfsigned-cert"]["pack"],
+                         "terminal-bench")
+        self.assertEqual(by_key["anko-typed-variable-bindings"]["pack"],
+                         "deep-swe")
+        # alias packs + individual names
+        self.assertEqual(len(fh.select(tasks, pack="ds")), 1)
+        self.assertEqual(len(fh.select(tasks, pack="tb")), 3)
+        self.assertEqual(
+            [t["key"] for t in fh.select(tasks, names=["openssl"])],
+            ["openssl-selfsigned-cert"])
+        self.assertEqual(len(fh.select(tasks, names=["openssl"], limit=1)), 1)
+
+    def test_classify_deny_and_fail(self):
+        import frontierharness as fh
+        # kernel whitelist refusal -> DENY with the tool named
+        out, reason = fh.classify(
+            "plan: WRITE /a\n  ERROR: command not whitelisted: openssl")
+        self.assertEqual(out, "DENY")
+        self.assertIn("openssl", reason)
+        # governance denial
+        out, _ = fh.classify("governance: plan denied: WRITE blocked")
+        self.assertEqual(out, "DENY")
+        # planner failure -> FAIL
+        out, _ = fh.classify("planner failed: timeout after 30s")
+        self.assertEqual(out, "FAIL")
+        # clean completion without verification -> FAIL-unverified
+        out, _ = fh.classify("[turn 1] strategy=DELTA backend=mock "
+                             "ops=['WRITE']\nwrote notes.md")
+        self.assertEqual(out, "FAIL")
+        self.assertIn("unverified", _)
+
+    def test_cost_uses_total_not_sum(self):
+        import frontierharness as fh
+        both = ('{"usage":{"prompt_tokens":40,"completion_tokens":60,'
+                '"total_tokens":100}}')
+        # total_tokens already includes prompt+completion: 0.1, not 0.2
+        self.assertEqual(fh._cost_of(both, 1.0), 0.1)
+        parts = "prompt_tokens = 40\ncompletion_tokens = 60"
+        self.assertEqual(fh._cost_of(parts, 1.0), 0.1)
+        two = "total_tokens=100; total_tokens=200"
+        self.assertEqual(fh._cost_of(two, 1.0), 0.3)
+        self.assertEqual(fh._cost_of("nothing", 1.0), 0.0)
+        self.assertEqual(fh._cost_of(both, 0.0), 0.0)
+
+    def test_run_one_mock_e2e(self):
+        import frontierharness as fh
+        fix = self._fixture()
+        tasks = {t["key"]: t for t in fh.load_tasks(fix)}
+        work = Path(tempfile.mkdtemp(prefix="sw-fhe-work-"))
+        t = tasks["weird name task"]
+        row = fh.run_one(t, backend="mock", model=None, timeout=60,
+                         work=work)
+        self.assertIn(row["outcome"], ("DENY", "FAIL"))
+        self.assertGreater(row["seconds"], 0)
+        self.assertEqual(row["task"], "weird name task")
+        self.assertEqual(row["pack"], "terminal-bench")
+        self.assertEqual(row["cost"], 0.0)
+        # the mock run either wrote junk (artifact recorded) or was
+        # denied; either way the row is complete JSONL material
+        self.assertIn("reason", row)
+
+    def test_run_writes_report_and_jsonl(self):
+        import frontierharness as fh
+        fix = self._fixture()
+        tasks = [t for t in fh.load_tasks(fix)
+                 if t["key"] == "weird name task"]
+        out = Path(tempfile.mkdtemp(prefix="sw-fhe-out-"))
+        results, rows = fh.run(tasks, backend="mock", timeout=60,
+                               work=Path(tempfile.mkdtemp(prefix="sw-fhe-w2-")),
+                               results=out, progress=False)
+        self.assertEqual(len(rows), 1)
+        self.assertTrue((out / "report.md").exists())
+        md = (out / "report.md").read_text()
+        self.assertIn("weird name task", md)
+        self.assertIn("Honest caveats", md)
+        lines = [json.loads(l) for l in
+                 (out / "results.jsonl").read_text().splitlines()]
+        self.assertEqual(len(lines), 1)
+        self.assertIn("outcome", lines[0])
 
 
 if __name__ == "__main__":

@@ -154,7 +154,7 @@ class SwarmStateTests(unittest.TestCase):
             self.assertIn("name=Mode", out)
             self.assertIn("calls=twice", out)          # in-file call edge
             self.assertIn("used_by=parse_config", out)  # reverse edge
-            self.assertIn("doc=yes", out)               # leading comment
+            self.assertIn('doc="', out)                 # doc text present
             # filters
             self.assertIn("name=Config", s.symbol_summary(
                 path="src/sample.c", target="Config"))

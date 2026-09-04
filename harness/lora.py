@@ -5,27 +5,40 @@ radio, ...).  This module simulates a REAL narrowband radio link so the
 swarm's adaptation layer can be built and tested without hardware:
 
   - frame cap          real LoRa payloads are ~51-222 bytes
-  - airtime            one frame per slot (half-duplex: the channel is
-                       serial, data and ACKs share it)
-  - loss               configurable drop probability; the ARQ retransmits
-  - stop-and-wait ARQ  per-frame ACK + timeout retransmit (simplest
-                       honest narrowband reliability; throughput shows
-                       the radio bottleneck)
-  - stats              bytes -> frames -> airtime / retransmits
-
-Nodes talk through LoRaStream objects that mimic a socket
-(recv/sendall/settimeout/close), so meshd._handle_conn works unchanged
--- the same seam StdioStream uses for Tailcat.
+  - airtime            one frame per slot (half-duplex)
+  - loss               configurable drop probability; ARQ retransmits
+  - stop-and-wait ARQ  per-frame ACK + timeout retransmit
+  - CBOR               JSON↔CBOR at the radio boundary (byte-saving)
+  - AES-256-GCM        optional PSK encrypt of the CBOR blob (spec §13.3)
+  - priority TX        ACKs and high-priority DATA ahead of bulk
+  - route cache        per-stream ack/timeout RTT + reliability score
 """
 from __future__ import annotations
 
+import json
+import os
 import random
 import socket
 import threading
 import time
+from heapq import heappop, heappush
+
+import cbor as _cbor
+
+try:
+    from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+except ImportError:  # pragma: no cover
+    AESGCM = None  # type: ignore
 
 K_DATA, K_ACK = 0, 1
 _HDR = 8  # side(1) kind(1) msg_id(2) idx(1) total(1) plen(2)
+_ENC_MAGIC = 0xE1
+_NONCE_LEN = 12
+# TX priorities (lower = sooner). ACKs always win.
+P_ACK = 0
+P_HIGH = 1   # inference req/resp, state diffs
+P_NORM = 5
+P_BULK = 9   # registry / heartbeats
 
 
 def _pack(side: int, kind: int, msg_id: int, idx: int, total: int,
@@ -45,33 +58,91 @@ def _unpack(frame: bytes) -> dict:
     }
 
 
+def _psk_from_env_or_arg(psk: bytes | str | None) -> bytes | None:
+    if psk is None:
+        env = os.environ.get("SS_LORA_PSK", "")
+        if not env:
+            return None
+        psk = env
+    if isinstance(psk, str):
+        psk = bytes.fromhex(psk) if all(c in "0123456789abcdefABCDEF"
+                                        for c in psk) and len(psk) == 64 \
+            else psk.encode()
+    if len(psk) not in (16, 24, 32):
+        raise ValueError("LoRa PSK must be 16/24/32 bytes (AES key)")
+    return psk
+
+
+def _encrypt(psk: bytes, plain: bytes) -> bytes:
+    if AESGCM is None:
+        raise RuntimeError("cryptography package required for LoRa AES-GCM")
+    nonce = os.urandom(_NONCE_LEN)
+    ct = AESGCM(psk).encrypt(nonce, plain, None)
+    return bytes([_ENC_MAGIC]) + nonce + ct
+
+
+def _decrypt(psk: bytes, blob: bytes) -> bytes:
+    if AESGCM is None:
+        raise RuntimeError("cryptography package required for LoRa AES-GCM")
+    if len(blob) < 1 + _NONCE_LEN + 16 or blob[0] != _ENC_MAGIC:
+        raise ValueError("not an AES-GCM LoRa blob")
+    nonce, ct = blob[1:1 + _NONCE_LEN], blob[1 + _NONCE_LEN:]
+    return AESGCM(psk).decrypt(nonce, ct, None)
+
+
+def _priority_for_payload(data: bytes) -> int:
+    """Best-effort classify meshd JSON for TX priority (mesh-spec v2)."""
+    try:
+        obj = json.loads(data)
+    except (ValueError, UnicodeDecodeError):
+        return P_NORM
+    if not isinstance(obj, dict):
+        return P_NORM
+    t = str(obj.get("type", ""))
+    if t in ("req", "resp", "hello", "join"):
+        return P_HIGH
+    if t in ("lora_share", "op", "append"):
+        # ops inside share: prefer if any look like state-critical
+        return P_HIGH
+    if t in ("capability", "heartbeat"):
+        return P_BULK
+    return P_NORM
+
+
 class LoRaLink:
     """The shared half-duplex radio channel."""
 
     def __init__(self, frame_cap: int = 96, p_loss: float = 0.05,
                  airtime: float = 0.02, seed: int | None = None,
-                 log=None):
+                 log=None, psk: bytes | str | None = None,
+                 require_psk: bool | None = None):
         self.frame_cap = max(32, frame_cap)
         self.p_loss = p_loss
         self.airtime = airtime
         self.rng = random.Random(seed)
         self.log = log or (lambda *a: None)
+        self.psk = _psk_from_env_or_arg(psk)
+        # H3: field mode fail-closed — SS_LORA_REQUIRE_PSK=1 or require_psk=True
+        if require_psk is None:
+            require_psk = os.environ.get("SS_LORA_REQUIRE_PSK", "") in (
+                "1", "true", "yes")
+        if require_psk and self.psk is None:
+            raise ValueError("LoRa require_psk set but no SS_LORA_PSK/psk")
+        # priority queues: list of (prio, seq, frame_dict)
         self._tx: dict[str, list] = {"A": [], "B": []}
+        self._tx_seq = 0
         self._rx: dict[str, list] = {"A": [], "B": []}
-        # persistent per-side reassembly (partial messages survive
-        # across recv() calls -- frames pulled from the queue must not
-        # vanish when a call times out mid-message)
         self._rbuf: dict[str, dict] = {"A": {}, "B": {}}
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self.stats = {"frames": 0, "dropped": 0, "retransmits": 0,
                       "payload_bytes": 0, "data_frames": 0,
-                      "ack_frames": 0, "airtime_s": 0.0}
+                      "ack_frames": 0, "airtime_s": 0.0,
+                      "cbor_msgs": 0, "enc_msgs": 0, "dec_fail": 0}
         self._thread = threading.Thread(target=self._radio_loop,
                                         daemon=True)
         self._thread.start()
 
-    # -- radio loop ------------------------------------------------------
     def _radio_loop(self):
         """Serial half-duplex channel: one frame per airtime slot."""
         order = ["A", "B"]
@@ -81,7 +152,9 @@ class LoRaLink:
                 side = order[i % 2]
                 i += 1
                 q = self._tx[side]
-                frame = q.pop(0) if q else None
+                frame = None
+                if q:
+                    _prio, _seq, frame = heappop(q)
             if frame is not None:
                 target = "B" if frame["side"] == 0 else "A"
                 self.stats["frames"] += 1
@@ -93,30 +166,34 @@ class LoRaLink:
                 with self._lock:
                     self._rx[target].append(frame)
                 if frame["kind"] == K_DATA:
-                    # the receiver ACKs every delivered data frame (own
-                    # airtime slot -- half-duplex channel, like radio)
                     ack = _pack(1 - frame["side"], K_ACK,
                                 frame["msg_id"], frame["idx"], 0)
-                    with self._lock:
-                        self._tx[target].append(_unpack(ack))
+                    self._enqueue(target, _unpack(ack), P_ACK)
                 self.stats[("ack_frames" if frame["kind"] == K_ACK
                             else "data_frames")] += 1
                 self.stats["payload_bytes"] += frame["plen"]
-                self.log(f"[lora] {target} {'ack' if frame['kind'] == K_ACK else 'frame'} "
+                self.log(f"[lora] {target} "
+                         f"{'ack' if frame['kind'] == K_ACK else 'frame'} "
                          f"m{frame['msg_id']}.{frame['idx']}"
                          + (f"/{frame['total']} ({frame['plen']}B)"
                             if frame["kind"] == K_DATA else ""))
-                # airtime = occupied channel time (data + ack slots)
                 self.stats["airtime_s"] += self.airtime
             self._stop.wait(self.airtime)
 
-    # -- endpoint plumbing ------------------------------------------------
+    def _enqueue(self, side_name: str, frame: dict, priority: int):
+        with self._lock:
+            self._tx_seq += 1
+            heappush(self._tx[side_name],
+                     (priority, self._tx_seq, frame))
+
     def endpoint(self, name: str) -> "LoRaStream":
         return LoRaStream(self, 0 if name == "A" else 1, name)
 
-    def send(self, side: int, frame: bytes):
-        with self._lock:
-            self._tx["A" if side == 0 else "B"].append(_unpack(frame))
+    def send(self, side: int, frame: bytes, priority: int = P_NORM):
+        side_name = "A" if side == 0 else "B"
+        kind = frame[1] if len(frame) > 1 else K_DATA
+        prio = P_ACK if kind == K_ACK else priority
+        self._enqueue(side_name, _unpack(frame), prio)
 
     def _pull(self, side: int, kind: int) -> dict | None:
         key = "A" if side == 0 else "B"
@@ -127,10 +204,6 @@ class LoRaLink:
         return None
 
     def next_message(self, side: int, timeout: float) -> tuple[int, bytes] | None:
-        """(msg_id, reassembled DATA bytes) for the meshd reader.
-        Returns the FIRST complete message seen; the caller dedups by
-        msg_id (retransmitted frames re-deliver complete messages).
-        Partial state persists in _rbuf across calls."""
         deadline = time.monotonic() + timeout
         key = "A" if side == 0 else "B"
         while time.monotonic() < deadline:
@@ -148,7 +221,6 @@ class LoRaLink:
         return None
 
     def next_ack(self, side: int, timeout: float) -> tuple[int, int] | None:
-        """ACK (msg_id, idx) for the sender's stop-and-wait loop."""
         deadline = time.monotonic() + timeout
         while time.monotonic() < deadline:
             f = self._pull(side, K_ACK)
@@ -171,40 +243,69 @@ class LoRaStream:
         self._timeout = 0.5
         self._msg_id = 0
         self._acked: dict[int, set] = {}
-        self._seen: set[int] = set()    # msg_ids already handed to the app
+        self._seen: set[int] = set()
         self._closed = False
-        self._lock = threading.Lock()   # serialize sendall calls
+        self._lock = threading.Lock()
+        # route-reliability cache (per stream / logical peer)
+        self.route = {"acks": 0, "timeouts": 0, "last_rtt_ms": None,
+                      "bytes_ok": 0}
 
     def settimeout(self, t: float):
         self._timeout = t
 
-    def sendall(self, data: bytes):
+    def reliability(self) -> float:
+        """Fraction of ACK waits that succeeded (0..1). Cold → 1.0."""
+        n = self.route["acks"] + self.route["timeouts"]
+        if n == 0:
+            return 1.0
+        return self.route["acks"] / n
+
+    def sendall(self, data: bytes, priority: int | None = None):
         if self._closed:
             raise OSError("stream closed")
         if not data:
             return 0
+        if priority is None:
+            priority = _priority_for_payload(data)
+        try:
+            obj = json.loads(data)
+            wire = _cbor.dumps(obj)
+            self.link.stats["cbor_msgs"] = \
+                self.link.stats.get("cbor_msgs", 0) + 1
+        except (ValueError, UnicodeDecodeError):
+            wire = _cbor.dumps(data)
+        if self.link.psk is not None:
+            wire = _encrypt(self.link.psk, wire)
+            self.link.stats["enc_msgs"] = \
+                self.link.stats.get("enc_msgs", 0) + 1
         with self._lock:
             mid = self._msg_id
             self._msg_id = (self._msg_id + 1) & 0xFFFF
-            payloads = [data[i:i + self.link.frame_cap - _HDR]
-                        for i in range(0, len(data),
+            payloads = [wire[i:i + self.link.frame_cap - _HDR]
+                        for i in range(0, len(wire),
                                        self.link.frame_cap - _HDR)]
             total = len(payloads)
             self._acked[mid] = set()
             for idx, payload in enumerate(payloads):
                 frame = _pack(self.side, K_DATA, mid, idx, total, payload)
                 tries = 0
+                t0 = time.monotonic()
                 while idx not in self._acked[mid]:
                     if tries > 0:
                         self.link.stats["retransmits"] += 1
-                    self.link.send(self.side, frame)
+                    self.link.send(self.side, frame, priority=priority)
                     tries += 1
                     if tries > 40:
+                        self.route["timeouts"] += 1
                         raise OSError(
                             "radio link lost (no ack after 40 retries)")
                     ack = self.link.next_ack(self.side, 0.25)
                     if ack is not None and ack[0] == mid:
-                        self._acked[mid].add(ack[1])  # duplicate-safe
+                        self._acked[mid].add(ack[1])
+                self.route["acks"] += 1
+                self.route["last_rtt_ms"] = round(
+                    (time.monotonic() - t0) * 1000, 1)
+            self.route["bytes_ok"] += len(data)
             return len(data)
 
     def recv(self, n: int) -> bytes:
@@ -219,9 +320,24 @@ class LoRaStream:
                 continue
             mid, data = res
             if mid in self._seen:
-                continue   # retransmitted duplicate of a delivered msg
+                continue
             self._seen.add(mid)
-            return data
+            if data[:1] == bytes([_ENC_MAGIC]):
+                if self.link.psk is None:
+                    self.link.stats["dec_fail"] += 1
+                    raise OSError("encrypted LoRa frame but no PSK configured")
+                try:
+                    data = _decrypt(self.link.psk, data)
+                except Exception as exc:
+                    self.link.stats["dec_fail"] += 1
+                    raise OSError(f"LoRa AES-GCM decrypt failed: {exc}") from exc
+            try:
+                obj = _cbor.loads(data)
+            except ValueError:
+                return data
+            if isinstance(obj, bytes):
+                return obj
+            return json.dumps(obj, separators=(",", ":")).encode() + b"\n"
 
     def close(self):
         self._closed = True

@@ -1,0 +1,7 @@
+# Rust build artifacts (local)
+/target/
+/Cargo.lock
+
+# Editor / OS
+.idea/
+.DS_Store

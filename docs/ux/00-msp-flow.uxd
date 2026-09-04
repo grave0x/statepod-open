@@ -1,0 +1,32 @@
+# SwarmState MSP demo flow (build-plan phase 5)
+# join → diagnose → remediate. uxd render / uxd html
+screen "SwarmState — MSP 10-min flow" w 88 h 28 bg 17
+  col weight 1 pad 1 gap 1
+    text "MSP demo path (scripted)" fg 14 bold 1
+    text "Node web UI · offline · role-aware" fg 8
+    divider
+    row gap 1 weight 1
+      col weight 1 pad 1 border 1
+        text "1. JOIN" fg 10 bold 1
+        text "Admin scans/shows QR" fg 7
+        text "Peer presents invite" fg 7
+        text "Pool roster updates" fg 7
+        spacer h 1
+        button "Open QR widget" fg 15 bg 33
+      col weight 1 pad 1 border 1
+        text "2. DIAGNOSE" fg 11 bold 1
+        text "Watch alerts fire" fg 7
+        text "Status: disk/mem/peers" fg 7
+        text "Tasks: STRAT rates" fg 7
+        spacer h 1
+        button "Open Status" fg 15 bg 33
+      col weight 1 pad 1 border 1
+        text "3. REMEDIATE" fg 9 bold 1
+        text "Gov: approve EXECUTE" fg 7
+        text "D2 reconnect / rejoin" fg 7
+        text "Audit ledger entry" fg 7
+        spacer h 1
+        button "Open Governance" fg 15 bg 33
+    divider
+    text "Roles: field_worker · supervisor · admin · observer" fg 8
+    text "Hard gate: no client-data pilot until Strix pass (phase 4)" fg 52

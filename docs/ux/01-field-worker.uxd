@@ -1,0 +1,29 @@
+# Role: field_worker — alerts, tasks, status (calm, big targets)
+screen "SwarmState · Field Worker" w 78 h 28 bg 17
+  col weight 1 pad 1 gap 1
+    row gap 1
+      text "SwarmState" fg 14 bold 1
+      spacer weight 1
+      text "role: field_worker" fg 8
+      button "Alerts" fg 15 bg 52
+      button "Tasks" fg 15 bg 23
+      button "Status" fg 15 bg 23
+    divider
+    col pad 1 border 1
+      text "ALERT  watch: mesh peers 0/1 live" fg 9 bold 1
+      text "forcing reconnect · barn-01 · 2m ago" fg 8
+    row gap 1 weight 1
+      col weight 2 pad 1 border 1
+        text "Tasks" fg 14 bold 1
+        text "rename buf→buffer     DELTA ok" fg 7
+        text "lint remove unused    DELTA ok" fg 7
+        text "explain src/math.c    SYMBOLIC ok" fg 7
+        text "grep TODO             DELTA ok" fg 7
+      col weight 1 pad 1 border 1
+        text "Status" fg 14 bold 1
+        text "kernel 0.3.0" fg 7
+        text "disk 95% free" fg 10
+        text "peers 0 / expect 1" fg 9
+        text "ollama lost" fg 9
+        spacer weight 1
+        text "Calm — no config" fg 8

@@ -1,0 +1,841 @@
+{
+  "ingested_at": "2026-09-04T04:55:39.458497",
+  "source": "/home/grave/Documents/deepseek-sessions",
+  "total_chats": 104,
+  "swarmstate_path": "/home/grave/Projects/internal.source/02-tools/swarmstate",
+  "docs_index": "/home/grave/.swarmstate/docs/deepseek-sessions/index.jsonl",
+  "chats": [
+    {
+      "filename": "0x域名注册指南-6f1581a9.md",
+      "title": "0x域名注册指南-6f1581a9",
+      "chat_id": "6f1581a9-f98b-46b2-8c50-a2a4247c268b",
+      "date": "2026-09-04",
+      "size": 9103,
+      "path": "/home/grave/Documents/deepseek-sessions/0x域名注册指南-6f1581a9.md"
+    },
+    {
+      "filename": "1723-27269323.md",
+      "title": "1723-27269323",
+      "chat_id": "27269323-e939-41a4-b934-d211d349c5cc",
+      "date": "2026-09-04",
+      "size": 202,
+      "path": "/home/grave/Documents/deepseek-sessions/1723-27269323.md"
+    },
+    {
+      "filename": "1723-734d6fb9.md",
+      "title": "1723-734d6fb9",
+      "chat_id": "734d6fb9-ee9b-4145-8640-f63f8f39fac8",
+      "date": "2026-09-04",
+      "size": 218,
+      "path": "/home/grave/Documents/deepseek-sessions/1723-734d6fb9.md"
+    },
+    {
+      "filename": "2026-09-03ThursdayAIwebEnglish-0a4071f5.md",
+      "title": "2026-09-03ThursdayAIwebEnglish-0a4071f5",
+      "chat_id": "0a4071f5-a773-4a82-80f5-05b48cea8c62",
+      "date": "2026-09-04",
+      "size": 247,
+      "path": "/home/grave/Documents/deepseek-sessions/2026-09-03ThursdayAIwebEnglish-0a4071f5.md"
+    },
+    {
+      "filename": "2026-09-03ThursdayAIwebEnglish-6bdbba61.md",
+      "title": "2026-09-03ThursdayAIwebEnglish-6bdbba61",
+      "chat_id": "6bdbba61-93ef-4613-89d5-d63b3181b89f",
+      "date": "2026-09-04",
+      "size": 247,
+      "path": "/home/grave/Documents/deepseek-sessions/2026-09-03ThursdayAIwebEnglish-6bdbba61.md"
+    },
+    {
+      "filename": "2026-09-03ThursdayAustraliaWebEnglish1723-688e9ae5.md",
+      "title": "2026-09-03ThursdayAustraliaWebEnglish1723-688e9ae5",
+      "chat_id": "688e9ae5-fb5e-4817-84ed-a996300f402a",
+      "date": "2026-09-04",
+      "size": 259,
+      "path": "/home/grave/Documents/deepseek-sessions/2026-09-03ThursdayAustraliaWebEnglish1723-688e9ae5.md"
+    },
+    {
+      "filename": "2026-iOS-Exploits-5a02cdea.md",
+      "title": "2026-iOS-Exploits-5a02cdea",
+      "chat_id": "5a02cdea-539b-406f-aa01-f7f6c907bdd6",
+      "date": "2026-09-04",
+      "size": 103673,
+      "path": "/home/grave/Documents/deepseek-sessions/2026-iOS-Exploits-5a02cdea.md"
+    },
+    {
+      "filename": "AI沙箱多模型实验-df6f6721.md",
+      "title": "AI沙箱多模型实验-df6f6721",
+      "chat_id": "df6f6721-9a1f-4d58-afbc-9780f57c6e59",
+      "date": "2026-09-04",
+      "size": 5164,
+      "path": "/home/grave/Documents/deepseek-sessions/AI沙箱多模型实验-df6f6721.md"
+    },
+    {
+      "filename": "Aegis-Red-Ready-e909249f.md",
+      "title": "Aegis-Red-Ready-e909249f",
+      "chat_id": "e909249f-94d7-4723-aca7-bee122b0dfb7",
+      "date": "2026-09-04",
+      "size": 29729,
+      "path": "/home/grave/Documents/deepseek-sessions/Aegis-Red-Ready-e909249f.md"
+    },
+    {
+      "filename": "Agent-Memory-Solutions-Merge-b39f64dc.md",
+      "title": "Agent-Memory-Solutions-Merge-b39f64dc",
+      "chat_id": "b39f64dc-0fb5-4653-941b-0fdaa27c46c0",
+      "date": "2026-09-04",
+      "size": 24021,
+      "path": "/home/grave/Documents/deepseek-sessions/Agent-Memory-Solutions-Merge-b39f64dc.md"
+    },
+    {
+      "filename": "AgentBuildToolCritique-69d60fed.md",
+      "title": "AgentBuildToolCritique-69d60fed",
+      "chat_id": "69d60fed-65ef-4159-888f-cd46f2396726",
+      "date": "2026-09-04",
+      "size": 37977,
+      "path": "/home/grave/Documents/deepseek-sessions/AgentBuildToolCritique-69d60fed.md"
+    },
+    {
+      "filename": "Best-wireless-bridge-100m-de040672.md",
+      "title": "Best-wireless-bridge-100m-de040672",
+      "chat_id": "de040672-96b1-4634-a6fd-3178f72e9fcb",
+      "date": "2026-09-04",
+      "size": 4825,
+      "path": "/home/grave/Documents/deepseek-sessions/Best-wireless-bridge-100m-de040672.md"
+    },
+    {
+      "filename": "Brain-constructs-itself-in-moment-24473be8.md",
+      "title": "Brain-constructs-itself-in-moment-24473be8",
+      "chat_id": "24473be8-5c6b-4ed9-8d15-5d40035caca2",
+      "date": "2026-09-04",
+      "size": 24293,
+      "path": "/home/grave/Documents/deepseek-sessions/Brain-constructs-itself-in-moment-24473be8.md"
+    },
+    {
+      "filename": "Browser-Tab-Caching-README-93ea857b.md",
+      "title": "Browser-Tab-Caching-README-93ea857b",
+      "chat_id": "93ea857b-1f16-4cba-8ad0-62fbf9f390c0",
+      "date": "2026-09-04",
+      "size": 48557,
+      "path": "/home/grave/Documents/deepseek-sessions/Browser-Tab-Caching-README-93ea857b.md"
+    },
+    {
+      "filename": "Browser-tab-caching-optimization-explained-c4271490.md",
+      "title": "Browser-tab-caching-optimization-explained-c4271490",
+      "chat_id": "c4271490-bc31-45d6-bf73-c26ebadbaf82",
+      "date": "2026-09-04",
+      "size": 677805,
+      "path": "/home/grave/Documents/deepseek-sessions/Browser-tab-caching-optimization-explained-c4271490.md"
+    },
+    {
+      "filename": "C2-Wormable-Manual-2026-628d8367.md",
+      "title": "C2-Wormable-Manual-2026-628d8367",
+      "chat_id": "628d8367-88d1-4543-8777-8af3abda9894",
+      "date": "2026-09-04",
+      "size": 17175,
+      "path": "/home/grave/Documents/deepseek-sessions/C2-Wormable-Manual-2026-628d8367.md"
+    },
+    {
+      "filename": "Chinese-gender-birth-chart-info-15f9fa95.md",
+      "title": "Chinese-gender-birth-chart-info-15f9fa95",
+      "chat_id": "15f9fa95-8129-4bce-90ba-330f35b98f15",
+      "date": "2026-09-04",
+      "size": 46593,
+      "path": "/home/grave/Documents/deepseek-sessions/Chinese-gender-birth-chart-info-15f9fa95.md"
+    },
+    {
+      "filename": "Compiling-Workflows-into-LLM-Weights-7ceaaf38.md",
+      "title": "Compiling-Workflows-into-LLM-Weights-7ceaaf38",
+      "chat_id": "7ceaaf38-6ff7-48f1-866f-66ff92b0480b",
+      "date": "2026-09-04",
+      "size": 133975,
+      "path": "/home/grave/Documents/deepseek-sessions/Compiling-Workflows-into-LLM-Weights-7ceaaf38.md"
+    },
+    {
+      "filename": "Config-File-Standards-and-Custom-Implementations-cb3bc10f.md",
+      "title": "Config-File-Standards-and-Custom-Implementations-cb3bc10f",
+      "chat_id": "cb3bc10f-9d3a-4d7e-ad5b-1d318a9ab269",
+      "date": "2026-09-04",
+      "size": 16067,
+      "path": "/home/grave/Documents/deepseek-sessions/Config-File-Standards-and-Custom-Implementations-cb3bc10f.md"
+    },
+    {
+      "filename": "Crypto-Backtest-Strategy-Vol-Trend-defc7912.md",
+      "title": "Crypto-Backtest-Strategy-Vol-Trend-defc7912",
+      "chat_id": "defc7912-fc2d-420e-8727-507293c45d55",
+      "date": "2026-09-04",
+      "size": 5961,
+      "path": "/home/grave/Documents/deepseek-sessions/Crypto-Backtest-Strategy-Vol-Trend-defc7912.md"
+    },
+    {
+      "filename": "Cyberpunk-UI-UX-c16c04c8.md",
+      "title": "Cyberpunk-UI-UX-c16c04c8",
+      "chat_id": "c16c04c8-a914-475f-b44d-3bda028988f1",
+      "date": "2026-09-04",
+      "size": 44145,
+      "path": "/home/grave/Documents/deepseek-sessions/Cyberpunk-UI-UX-c16c04c8.md"
+    },
+    {
+      "filename": "Deb-to-Arch-converter-e84b1308.md",
+      "title": "Deb-to-Arch-converter-e84b1308",
+      "chat_id": "e84b1308-815b-47fb-98b6-82767c5af9c6",
+      "date": "2026-09-04",
+      "size": 17301,
+      "path": "/home/grave/Documents/deepseek-sessions/Deb-to-Arch-converter-e84b1308.md"
+    },
+    {
+      "filename": "Deep-Analysis-SwarmState-b1fa37dc.md",
+      "title": "Deep-Analysis-SwarmState-b1fa37dc",
+      "chat_id": "b1fa37dc-ff60-403b-a0ab-09ada4a6f8c0",
+      "date": "2026-09-04",
+      "size": 179586,
+      "path": "/home/grave/Documents/deepseek-sessions/Deep-Analysis-SwarmState-b1fa37dc.md"
+    },
+    {
+      "filename": "Deep_Analysis_SwarmState.md",
+      "title": "Deep_Analysis_SwarmState",
+      "chat_id": null,
+      "date": null,
+      "size": 147941,
+      "path": "/home/grave/Documents/deepseek-sessions/Deep_Analysis_SwarmState.md"
+    },
+    {
+      "filename": "Electron-Maintainers-List-168850ff.md",
+      "title": "Electron-Maintainers-List-168850ff",
+      "chat_id": "168850ff-e75d-4810-9514-755ce0e53421",
+      "date": "2026-09-04",
+      "size": 6161,
+      "path": "/home/grave/Documents/deepseek-sessions/Electron-Maintainers-List-168850ff.md"
+    },
+    {
+      "filename": "Esign-IPA源列表-aadb939d.md",
+      "title": "Esign-IPA源列表-aadb939d",
+      "chat_id": "aadb939d-7ae3-4ba2-b13a-87427c18328a",
+      "date": "2026-09-04",
+      "size": 3964,
+      "path": "/home/grave/Documents/deepseek-sessions/Esign-IPA源列表-aadb939d.md"
+    },
+    {
+      "filename": "FIREFOX-TOKEN-OK-3971abc5.md",
+      "title": "FIREFOX-TOKEN-OK-3971abc5",
+      "chat_id": "3971abc5-6948-4126-8edd-c3536ac727be",
+      "date": "2026-09-04",
+      "size": 235,
+      "path": "/home/grave/Documents/deepseek-sessions/FIREFOX-TOKEN-OK-3971abc5.md"
+    },
+    {
+      "filename": "FastThink-mode-enabled-8ff0adbf.md",
+      "title": "FastThink-mode-enabled-8ff0adbf",
+      "chat_id": "8ff0adbf-8578-4dba-9c9a-ba303c0066f0",
+      "date": "2026-09-04",
+      "size": 67693,
+      "path": "/home/grave/Documents/deepseek-sessions/FastThink-mode-enabled-8ff0adbf.md"
+    },
+    {
+      "filename": "Generate-a--detailed-technical-r-679036a8.md",
+      "title": "Generate-a--detailed-technical-r-679036a8",
+      "chat_id": "679036a8-d6ab-440f-82cc-d76bcd3f3111",
+      "date": "2026-09-04",
+      "size": 43941,
+      "path": "/home/grave/Documents/deepseek-sessions/Generate-a--detailed-technical-r-679036a8.md"
+    },
+    {
+      "filename": "Google-Dork解释-82a21c11.md",
+      "title": "Google-Dork解释-82a21c11",
+      "chat_id": "82a21c11-e5f2-43af-9222-5e4286322cac",
+      "date": "2026-09-04",
+      "size": 6434,
+      "path": "/home/grave/Documents/deepseek-sessions/Google-Dork解释-82a21c11.md"
+    },
+    {
+      "filename": "Historical-C2-Manual-Construction-Guide-2217c703.md",
+      "title": "Historical-C2-Manual-Construction-Guide-2217c703",
+      "chat_id": "2217c703-a8a9-44db-9781-f1fb2e7f7895",
+      "date": "2026-09-04",
+      "size": 14277,
+      "path": "/home/grave/Documents/deepseek-sessions/Historical-C2-Manual-Construction-Guide-2217c703.md"
+    },
+    {
+      "filename": "Humanize-Text-Assistance-Request-87338396.md",
+      "title": "Humanize-Text-Assistance-Request-87338396",
+      "chat_id": "87338396-c9ab-4746-b9f1-d7b3ebeb8297",
+      "date": "2026-09-04",
+      "size": 19763,
+      "path": "/home/grave/Documents/deepseek-sessions/Humanize-Text-Assistance-Request-87338396.md"
+    },
+    {
+      "filename": "JS-change-file-extension-3b907946.md",
+      "title": "JS-change-file-extension-3b907946",
+      "chat_id": "3b907946-e203-4f3f-aa69-7afc30f366f3",
+      "date": "2026-09-04",
+      "size": 9504,
+      "path": "/home/grave/Documents/deepseek-sessions/JS-change-file-extension-3b907946.md"
+    },
+    {
+      "filename": "Jailbreak-Attempt001-37613164.md",
+      "title": "Jailbreak-Attempt001-37613164",
+      "chat_id": "37613164-a9eb-40c2-a502-a172f11dff5b",
+      "date": "2026-09-04",
+      "size": 18918,
+      "path": "/home/grave/Documents/deepseek-sessions/Jailbreak-Attempt001-37613164.md"
+    },
+    {
+      "filename": "Jailbreak-Spec-Review-a9996437.md",
+      "title": "Jailbreak-Spec-Review-a9996437",
+      "chat_id": "a9996437-d704-4929-a252-3abb30b36d4c",
+      "date": "2026-09-04",
+      "size": 58269,
+      "path": "/home/grave/Documents/deepseek-sessions/Jailbreak-Spec-Review-a9996437.md"
+    },
+    {
+      "filename": "Jujutsu-Kaisen-season-3-lyrics-65a2a0eb.md",
+      "title": "Jujutsu-Kaisen-season-3-lyrics-65a2a0eb",
+      "chat_id": "65a2a0eb-fd32-45a8-a7ed-c5c9f2cda146",
+      "date": "2026-09-04",
+      "size": 10171,
+      "path": "/home/grave/Documents/deepseek-sessions/Jujutsu-Kaisen-season-3-lyrics-65a2a0eb.md"
+    },
+    {
+      "filename": "Keskecove-Mind-Concept-11ee680a.md",
+      "title": "Keskecove-Mind-Concept-11ee680a",
+      "chat_id": "11ee680a-f207-4310-b941-f7c039b349e0",
+      "date": "2026-09-04",
+      "size": 12892,
+      "path": "/home/grave/Documents/deepseek-sessions/Keskecove-Mind-Concept-11ee680a.md"
+    },
+    {
+      "filename": "Kraken-Worm-88e33bde.md",
+      "title": "Kraken-Worm-88e33bde",
+      "chat_id": "88e33bde-0418-4c88-aca0-46b32fc2d436",
+      "date": "2026-09-04",
+      "size": 62729,
+      "path": "/home/grave/Documents/deepseek-sessions/Kraken-Worm-88e33bde.md"
+    },
+    {
+      "filename": "LLM-CLI-Tool-Security-Wrapper-Design-8b51a720.md",
+      "title": "LLM-CLI-Tool-Security-Wrapper-Design-8b51a720",
+      "chat_id": "8b51a720-6f89-4bb2-8b8e-e9df6d55e1ba",
+      "date": "2026-09-04",
+      "size": 94084,
+      "path": "/home/grave/Documents/deepseek-sessions/LLM-CLI-Tool-Security-Wrapper-Design-8b51a720.md"
+    },
+    {
+      "filename": "LLM-Neurodivergent-Communication-cb363650.md",
+      "title": "LLM-Neurodivergent-Communication-cb363650",
+      "chat_id": "cb363650-fa80-4a9b-a457-5a952096472d",
+      "date": "2026-09-04",
+      "size": 11656,
+      "path": "/home/grave/Documents/deepseek-sessions/LLM-Neurodivergent-Communication-cb363650.md"
+    },
+    {
+      "filename": "LLM-language-specs-af0fc14a.md",
+      "title": "LLM-language-specs-af0fc14a",
+      "chat_id": "af0fc14a-bd65-48ee-8128-70f3f6e5c5be",
+      "date": "2026-09-04",
+      "size": 27612,
+      "path": "/home/grave/Documents/deepseek-sessions/LLM-language-specs-af0fc14a.md"
+    },
+    {
+      "filename": "LLM-orchestrator-dashboards-45a59ea8.md",
+      "title": "LLM-orchestrator-dashboards-45a59ea8",
+      "chat_id": "45a59ea8-e2ac-418b-88de-466ccdbd517f",
+      "date": "2026-09-04",
+      "size": 10642,
+      "path": "/home/grave/Documents/deepseek-sessions/LLM-orchestrator-dashboards-45a59ea8.md"
+    },
+    {
+      "filename": "LONGMAN-Spiral-Song-Info-653b5593.md",
+      "title": "LONGMAN-Spiral-Song-Info-653b5593",
+      "chat_id": "653b5593-d199-442d-9c28-6c2b2037b499",
+      "date": "2026-09-04",
+      "size": 338740,
+      "path": "/home/grave/Documents/deepseek-sessions/LONGMAN-Spiral-Song-Info-653b5593.md"
+    },
+    {
+      "filename": "LSD-synthesis-refusal-641b1262.md",
+      "title": "LSD-synthesis-refusal-641b1262",
+      "chat_id": "641b1262-c805-4232-8fe6-f9e0f386635a",
+      "date": "2026-09-04",
+      "size": 40299,
+      "path": "/home/grave/Documents/deepseek-sessions/LSD-synthesis-refusal-641b1262.md"
+    },
+    {
+      "filename": "LeetCode-optimization-prompt-rewrite-2983b894.md",
+      "title": "LeetCode-optimization-prompt-rewrite-2983b894",
+      "chat_id": "2983b894-de8c-4173-b381-0954152719f1",
+      "date": "2026-09-04",
+      "size": 25900,
+      "path": "/home/grave/Documents/deepseek-sessions/LeetCode-optimization-prompt-rewrite-2983b894.md"
+    },
+    {
+      "filename": "LeetCode-problem-request-1c894e2b.md",
+      "title": "LeetCode-problem-request-1c894e2b",
+      "chat_id": "1c894e2b-0c64-45ff-b7a9-9653febc8779",
+      "date": "2026-09-04",
+      "size": 651956,
+      "path": "/home/grave/Documents/deepseek-sessions/LeetCode-problem-request-1c894e2b.md"
+    },
+    {
+      "filename": "Lisuan-LX-7G100购买渠道-5a4c281e.md",
+      "title": "Lisuan-LX-7G100购买渠道-5a4c281e",
+      "chat_id": "5a4c281e-2a12-46a2-bc67-93a25f8b7e11",
+      "date": "2026-09-04",
+      "size": 18437,
+      "path": "/home/grave/Documents/deepseek-sessions/Lisuan-LX-7G100购买渠道-5a4c281e.md"
+    },
+    {
+      "filename": "LoRA-Derivative-Validation-8c8c5d5d.md",
+      "title": "LoRA-Derivative-Validation-8c8c5d5d",
+      "chat_id": "8c8c5d5d-5690-4f8b-a7c0-dd6d457c3074",
+      "date": "2026-09-04",
+      "size": 7485,
+      "path": "/home/grave/Documents/deepseek-sessions/LoRA-Derivative-Validation-8c8c5d5d.md"
+    },
+    {
+      "filename": "Mandarin-rewrite-with-English-output-0312ac25.md",
+      "title": "Mandarin-rewrite-with-English-output-0312ac25",
+      "chat_id": "0312ac25-826f-470d-8c87-971afee0dad1",
+      "date": "2026-09-04",
+      "size": 73284,
+      "path": "/home/grave/Documents/deepseek-sessions/Mandarin-rewrite-with-English-output-0312ac25.md"
+    },
+    {
+      "filename": "Missing-Problem-Request-a6888455.md",
+      "title": "Missing-Problem-Request-a6888455",
+      "chat_id": "a6888455-af66-4e24-ad2a-7d6b26baa3d1",
+      "date": "2026-09-04",
+      "size": 109196,
+      "path": "/home/grave/Documents/deepseek-sessions/Missing-Problem-Request-a6888455.md"
+    },
+    {
+      "filename": "Missing-Problem-a3399abd.md",
+      "title": "Missing-Problem-a3399abd",
+      "chat_id": "a3399abd-7c2f-4495-b360-da4eb1bab407",
+      "date": "2026-09-04",
+      "size": 48585,
+      "path": "/home/grave/Documents/deepseek-sessions/Missing-Problem-a3399abd.md"
+    },
+    {
+      "filename": "Missing-problem-prompt-80b878ee.md",
+      "title": "Missing-problem-prompt-80b878ee",
+      "chat_id": "80b878ee-772d-4646-aa0c-fd6b6100694a",
+      "date": "2026-09-04",
+      "size": 444162,
+      "path": "/home/grave/Documents/deepseek-sessions/Missing-problem-prompt-80b878ee.md"
+    },
+    {
+      "filename": "Mobo-Replacement-Advice-3494e00d.md",
+      "title": "Mobo-Replacement-Advice-3494e00d",
+      "chat_id": "3494e00d-6e6f-485d-9981-6ca8055e72de",
+      "date": "2026-09-04",
+      "size": 12223,
+      "path": "/home/grave/Documents/deepseek-sessions/Mobo-Replacement-Advice-3494e00d.md"
+    },
+    {
+      "filename": "Most-Used-GitHub-Repos-9f8f62f1.md",
+      "title": "Most-Used-GitHub-Repos-9f8f62f1",
+      "chat_id": "9f8f62f1-734a-420a-9cec-2672c32e4f7e",
+      "date": "2026-09-04",
+      "size": 18868,
+      "path": "/home/grave/Documents/deepseek-sessions/Most-Used-GitHub-Repos-9f8f62f1.md"
+    },
+    {
+      "filename": "Network-Design-Platform-Spec-53b4d444.md",
+      "title": "Network-Design-Platform-Spec-53b4d444",
+      "chat_id": "53b4d444-69ba-4ef0-965c-992b3213aa9b",
+      "date": "2026-09-04",
+      "size": 80174,
+      "path": "/home/grave/Documents/deepseek-sessions/Network-Design-Platform-Spec-53b4d444.md"
+    },
+    {
+      "filename": "Novel-CL-Solutions-for-LLMs-c2d6cfdd.md",
+      "title": "Novel-CL-Solutions-for-LLMs-c2d6cfdd",
+      "chat_id": "c2d6cfdd-a4e8-45d2-8715-70ed1220483f",
+      "date": "2026-09-04",
+      "size": 11395,
+      "path": "/home/grave/Documents/deepseek-sessions/Novel-CL-Solutions-for-LLMs-c2d6cfdd.md"
+    },
+    {
+      "filename": "Oddest-Programming-Projects-04172b69.md",
+      "title": "Oddest-Programming-Projects-04172b69",
+      "chat_id": "04172b69-c3c3-48ec-aa4b-2b371e134303",
+      "date": "2026-09-04",
+      "size": 16585,
+      "path": "/home/grave/Documents/deepseek-sessions/Oddest-Programming-Projects-04172b69.md"
+    },
+    {
+      "filename": "Open-Source-Eagle-Clone-Project-Plan-f343a0dc.md",
+      "title": "Open-Source-Eagle-Clone-Project-Plan-f343a0dc",
+      "chat_id": "f343a0dc-60a8-40b9-a58c-e02c6f03630d",
+      "date": "2026-09-04",
+      "size": 93487,
+      "path": "/home/grave/Documents/deepseek-sessions/Open-Source-Eagle-Clone-Project-Plan-f343a0dc.md"
+    },
+    {
+      "filename": "P410-Linux-Gaming-168199b8.md",
+      "title": "P410-Linux-Gaming-168199b8",
+      "chat_id": "168199b8-9ebe-4796-b574-efa5e0c1efdb",
+      "date": "2026-09-04",
+      "size": 3641,
+      "path": "/home/grave/Documents/deepseek-sessions/P410-Linux-Gaming-168199b8.md"
+    },
+    {
+      "filename": "PONG-1b60f16e.md",
+      "title": "PONG-1b60f16e",
+      "chat_id": "1b60f16e-7c66-4a09-850b-f1287f2d4515",
+      "date": "2026-09-04",
+      "size": 407,
+      "path": "/home/grave/Documents/deepseek-sessions/PONG-1b60f16e.md"
+    },
+    {
+      "filename": "PONG-378fe5b0.md",
+      "title": "PONG-378fe5b0",
+      "chat_id": "378fe5b0-1334-4e0d-8abe-20f65a561b19",
+      "date": "2026-09-04",
+      "size": 199,
+      "path": "/home/grave/Documents/deepseek-sessions/PONG-378fe5b0.md"
+    },
+    {
+      "filename": "PONG-3fa91000.md",
+      "title": "PONG-3fa91000",
+      "chat_id": "3fa91000-62bb-4abe-af33-94fd08976e5e",
+      "date": "2026-09-04",
+      "size": 199,
+      "path": "/home/grave/Documents/deepseek-sessions/PONG-3fa91000.md"
+    },
+    {
+      "filename": "PONG-41c6fd47.md",
+      "title": "PONG-41c6fd47",
+      "chat_id": "41c6fd47-c488-4bb3-991b-7e9b8ca2f238",
+      "date": "2026-09-04",
+      "size": 199,
+      "path": "/home/grave/Documents/deepseek-sessions/PONG-41c6fd47.md"
+    },
+    {
+      "filename": "PONG-75449ef4.md",
+      "title": "PONG-75449ef4",
+      "chat_id": "75449ef4-14da-47dc-ba84-386999374a36",
+      "date": "2026-09-04",
+      "size": 199,
+      "path": "/home/grave/Documents/deepseek-sessions/PONG-75449ef4.md"
+    },
+    {
+      "filename": "PONG-86b4810f.md",
+      "title": "PONG-86b4810f",
+      "chat_id": "86b4810f-8ebe-4f14-b682-4896a9dfba14",
+      "date": "2026-09-04",
+      "size": 199,
+      "path": "/home/grave/Documents/deepseek-sessions/PONG-86b4810f.md"
+    },
+    {
+      "filename": "PONG-a1914ac7.md",
+      "title": "PONG-a1914ac7",
+      "chat_id": "a1914ac7-72bc-41e1-9054-5f37cd3816e3",
+      "date": "2026-09-04",
+      "size": 199,
+      "path": "/home/grave/Documents/deepseek-sessions/PONG-a1914ac7.md"
+    },
+    {
+      "filename": "PONG-eb04b74f.md",
+      "title": "PONG-eb04b74f",
+      "chat_id": "eb04b74f-e5a8-4f10-8f5c-545a830716e9",
+      "date": "2026-09-04",
+      "size": 199,
+      "path": "/home/grave/Documents/deepseek-sessions/PONG-eb04b74f.md"
+    },
+    {
+      "filename": "Pi-Harness-LibTerm-f4fe9001.md",
+      "title": "Pi-Harness-LibTerm-f4fe9001",
+      "chat_id": "f4fe9001-cdb9-4050-bca4-5f9eec29ec65",
+      "date": "2026-09-04",
+      "size": 8928,
+      "path": "/home/grave/Documents/deepseek-sessions/Pi-Harness-LibTerm-f4fe9001.md"
+    },
+    {
+      "filename": "Product-Architect-Persona-Prompt-Creation-7d561375.md",
+      "title": "Product-Architect-Persona-Prompt-Creation-7d561375",
+      "chat_id": "7d561375-8525-4f78-9041-94087e15eef5",
+      "date": "2026-09-04",
+      "size": 7498,
+      "path": "/home/grave/Documents/deepseek-sessions/Product-Architect-Persona-Prompt-Creation-7d561375.md"
+    },
+    {
+      "filename": "Prompt-Injection-Techniques-0a9ac96d.md",
+      "title": "Prompt-Injection-Techniques-0a9ac96d",
+      "chat_id": "0a9ac96d-7136-4934-8279-61184a53498d",
+      "date": "2026-09-04",
+      "size": 67743,
+      "path": "/home/grave/Documents/deepseek-sessions/Prompt-Injection-Techniques-0a9ac96d.md"
+    },
+    {
+      "filename": "Requesting-Problem-Statement-8134fc3c.md",
+      "title": "Requesting-Problem-Statement-8134fc3c",
+      "chat_id": "8134fc3c-eeeb-4dab-b2ef-d99905da2b77",
+      "date": "2026-09-04",
+      "size": 407494,
+      "path": "/home/grave/Documents/deepseek-sessions/Requesting-Problem-Statement-8134fc3c.md"
+    },
+    {
+      "filename": "Research-LLM-Harness-Features-07c7d2c7.md",
+      "title": "Research-LLM-Harness-Features-07c7d2c7",
+      "chat_id": "07c7d2c7-e950-4f32-94c4-f69254a57e9b",
+      "date": "2026-09-04",
+      "size": 6204,
+      "path": "/home/grave/Documents/deepseek-sessions/Research-LLM-Harness-Features-07c7d2c7.md"
+    },
+    {
+      "filename": "Rewards-Card-Fraud-24c5e5cd.md",
+      "title": "Rewards-Card-Fraud-24c5e5cd",
+      "chat_id": "24c5e5cd-a9ea-4357-b939-7cf0fb37265e",
+      "date": "2026-09-04",
+      "size": 31418,
+      "path": "/home/grave/Documents/deepseek-sessions/Rewards-Card-Fraud-24c5e5cd.md"
+    },
+    {
+      "filename": "Roman-Numeral-Conversion-54c15b12.md",
+      "title": "Roman-Numeral-Conversion-54c15b12",
+      "chat_id": "54c15b12-dd72-48d1-8803-dba5cfd907bb",
+      "date": "2026-09-04",
+      "size": 4652,
+      "path": "/home/grave/Documents/deepseek-sessions/Roman-Numeral-Conversion-54c15b12.md"
+    },
+    {
+      "filename": "SERVE-OK-561a238e.md",
+      "title": "SERVE-OK-561a238e",
+      "chat_id": "561a238e-2b61-4361-bcc2-9a3fbff6002f",
+      "date": "2026-09-04",
+      "size": 266,
+      "path": "/home/grave/Documents/deepseek-sessions/SERVE-OK-561a238e.md"
+    },
+    {
+      "filename": "SERVE-OK-69cd0ba3.md",
+      "title": "SERVE-OK-69cd0ba3",
+      "chat_id": "69cd0ba3-bcb4-415b-a37b-3ad16c8f350c",
+      "date": "2026-09-04",
+      "size": 266,
+      "path": "/home/grave/Documents/deepseek-sessions/SERVE-OK-69cd0ba3.md"
+    },
+    {
+      "filename": "Salvia-Elite-Cherry-Red-108efbc0.md",
+      "title": "Salvia-Elite-Cherry-Red-108efbc0",
+      "chat_id": "108efbc0-efaf-4e6b-bd4f-9ab1d24515af",
+      "date": "2026-09-04",
+      "size": 4577,
+      "path": "/home/grave/Documents/deepseek-sessions/Salvia-Elite-Cherry-Red-108efbc0.md"
+    },
+    {
+      "filename": "Session-Review-Pending-57b72a4a.md",
+      "title": "Session-Review-Pending-57b72a4a",
+      "chat_id": "57b72a4a-64d2-49b4-bff8-e0dd86179da0",
+      "date": "2026-09-04",
+      "size": 6448,
+      "path": "/home/grave/Documents/deepseek-sessions/Session-Review-Pending-57b72a4a.md"
+    },
+    {
+      "filename": "Session_Review_Pending.md",
+      "title": "Session_Review_Pending",
+      "chat_id": null,
+      "date": null,
+      "size": 2342,
+      "path": "/home/grave/Documents/deepseek-sessions/Session_Review_Pending.md"
+    },
+    {
+      "filename": "Stateless-Electron-Fork-Benefits-66640c6e.md",
+      "title": "Stateless-Electron-Fork-Benefits-66640c6e",
+      "chat_id": "66640c6e-cb44-4594-a8b6-c75e2284956f",
+      "date": "2026-09-04",
+      "size": 39457,
+      "path": "/home/grave/Documents/deepseek-sessions/Stateless-Electron-Fork-Benefits-66640c6e.md"
+    },
+    {
+      "filename": "Stateless-Engineering-README-9cd19c0f.md",
+      "title": "Stateless-Engineering-README-9cd19c0f",
+      "chat_id": "9cd19c0f-9136-49cc-8c3f-67f4137943fc",
+      "date": "2026-09-04",
+      "size": 16505,
+      "path": "/home/grave/Documents/deepseek-sessions/Stateless-Engineering-README-9cd19c0f.md"
+    },
+    {
+      "filename": "Stateless-Engineering-README-b7991235.md",
+      "title": "Stateless-Engineering-README-b7991235",
+      "chat_id": "b7991235-20d5-4bcf-a6cd-c0214a50e3d2",
+      "date": "2026-09-04",
+      "size": 67899,
+      "path": "/home/grave/Documents/deepseek-sessions/Stateless-Engineering-README-b7991235.md"
+    },
+    {
+      "filename": "Static-LLM-game-security-79aea721.md",
+      "title": "Static-LLM-game-security-79aea721",
+      "chat_id": "79aea721-0246-4d9e-8026-0f57238e1ade",
+      "date": "2026-09-04",
+      "size": 10841,
+      "path": "/home/grave/Documents/deepseek-sessions/Static-LLM-game-security-79aea721.md"
+    },
+    {
+      "filename": "Sub-1ms-C-function-memory-footprint-29e21175.md",
+      "title": "Sub-1ms-C-function-memory-footprint-29e21175",
+      "chat_id": "29e21175-47ce-4754-9726-7fa0ac1e9b36",
+      "date": "2026-09-04",
+      "size": 51457,
+      "path": "/home/grave/Documents/deepseek-sessions/Sub-1ms-C-function-memory-footprint-29e21175.md"
+    },
+    {
+      "filename": "SwarmState-Pilot-Plan-0d868ba2.md",
+      "title": "SwarmState-Pilot-Plan-0d868ba2",
+      "chat_id": "0d868ba2-fd9f-44df-a49f-0e875dcfd4b0",
+      "date": "2026-09-04",
+      "size": 19780,
+      "path": "/home/grave/Documents/deepseek-sessions/SwarmState-Pilot-Plan-0d868ba2.md"
+    },
+    {
+      "filename": "SwarmState_Pilot_Plan.md",
+      "title": "SwarmState_Pilot_Plan",
+      "chat_id": null,
+      "date": null,
+      "size": 16979,
+      "path": "/home/grave/Documents/deepseek-sessions/SwarmState_Pilot_Plan.md"
+    },
+    {
+      "filename": "SysCall-Implementation-f23ef59e.md",
+      "title": "SysCall-Implementation-f23ef59e",
+      "chat_id": "f23ef59e-7536-4e8f-97d1-9e32a1988727",
+      "date": "2026-09-04",
+      "size": 10992,
+      "path": "/home/grave/Documents/deepseek-sessions/SysCall-Implementation-f23ef59e.md"
+    },
+    {
+      "filename": "T2-Tile-Project-explained-86e2130a.md",
+      "title": "T2-Tile-Project-explained-86e2130a",
+      "chat_id": "86e2130a-b34e-4d7c-9638-d08e92bb5993",
+      "date": "2026-09-04",
+      "size": 55449,
+      "path": "/home/grave/Documents/deepseek-sessions/T2-Tile-Project-explained-86e2130a.md"
+    },
+    {
+      "filename": "Theoretical-CL-LLM-Solutions-e1679033.md",
+      "title": "Theoretical-CL-LLM-Solutions-e1679033",
+      "chat_id": "e1679033-bc5f-4845-873e-1bf9a801f667",
+      "date": "2026-09-04",
+      "size": 28621,
+      "path": "/home/grave/Documents/deepseek-sessions/Theoretical-CL-LLM-Solutions-e1679033.md"
+    },
+    {
+      "filename": "Tiny-Specialist-Swarm-Analysis-66fad8b8.md",
+      "title": "Tiny-Specialist-Swarm-Analysis-66fad8b8",
+      "chat_id": "66fad8b8-12bc-4579-b5bd-c0e70b011ee8",
+      "date": "2026-09-04",
+      "size": 1113594,
+      "path": "/home/grave/Documents/deepseek-sessions/Tiny-Specialist-Swarm-Analysis-66fad8b8.md"
+    },
+    {
+      "filename": "Tiny_Specialist_Swarm_Analysis.md",
+      "title": "Tiny_Specialist_Swarm_Analysis",
+      "chat_id": null,
+      "date": null,
+      "size": 876021,
+      "path": "/home/grave/Documents/deepseek-sessions/Tiny_Specialist_Swarm_Analysis.md"
+    },
+    {
+      "filename": "Two-Sum-hash-map-solution-b88d694f.md",
+      "title": "Two-Sum-hash-map-solution-b88d694f",
+      "chat_id": "b88d694f-e081-41a9-bf7b-f8aa2f2d11ee",
+      "date": "2026-09-04",
+      "size": 68567,
+      "path": "/home/grave/Documents/deepseek-sessions/Two-Sum-hash-map-solution-b88d694f.md"
+    },
+    {
+      "filename": "Unofficial-DeepSeek-API-attempts-ffce4b91.md",
+      "title": "Unofficial-DeepSeek-API-attempts-ffce4b91",
+      "chat_id": "ffce4b91-58ad-4164-94ef-ef2431356e17",
+      "date": "2026-09-04",
+      "size": 2784211,
+      "path": "/home/grave/Documents/deepseek-sessions/Unofficial-DeepSeek-API-attempts-ffce4b91.md"
+    },
+    {
+      "filename": "Unofficial_DeepSeek_API_attempts.md",
+      "title": "Unofficial_DeepSeek_API_attempts",
+      "chat_id": null,
+      "date": null,
+      "size": 1955065,
+      "path": "/home/grave/Documents/deepseek-sessions/Unofficial_DeepSeek_API_attempts.md"
+    },
+    {
+      "filename": "WebGPU网格推理难度-91375f2e.md",
+      "title": "WebGPU网格推理难度-91375f2e",
+      "chat_id": "91375f2e-73e2-4b88-b590-b663ab6a8d2b",
+      "date": "2026-09-04",
+      "size": 14607,
+      "path": "/home/grave/Documents/deepseek-sessions/WebGPU网格推理难度-91375f2e.md"
+    },
+    {
+      "filename": "Why-not-C-for-ML-d0303103.md",
+      "title": "Why-not-C-for-ML-d0303103",
+      "chat_id": "d0303103-c904-4103-9b9c-34383394c323",
+      "date": "2026-09-04",
+      "size": 8866,
+      "path": "/home/grave/Documents/deepseek-sessions/Why-not-C-for-ML-d0303103.md"
+    },
+    {
+      "filename": "WraithStrike-Red-Team-Tool-Deployment-6a55d244.md",
+      "title": "WraithStrike-Red-Team-Tool-Deployment-6a55d244",
+      "chat_id": "6a55d244-27fe-4951-b7ce-4d56fe2b8a2b",
+      "date": "2026-09-04",
+      "size": 127848,
+      "path": "/home/grave/Documents/deepseek-sessions/WraithStrike-Red-Team-Tool-Deployment-6a55d244.md"
+    },
+    {
+      "filename": "ZenViewer-Fusion-Platform-Analysis-b547fcdb.md",
+      "title": "ZenViewer-Fusion-Platform-Analysis-b547fcdb",
+      "chat_id": "b547fcdb-cb82-43f1-9820-64993132ac56",
+      "date": "2026-09-04",
+      "size": 42686,
+      "path": "/home/grave/Documents/deepseek-sessions/ZenViewer-Fusion-Platform-Analysis-b547fcdb.md"
+    },
+    {
+      "filename": "ZenViewer-Fusion-Spec-Review-de2f93c0.md",
+      "title": "ZenViewer-Fusion-Spec-Review-de2f93c0",
+      "chat_id": "de2f93c0-5297-4ebb-b38b-c6b9b3d9661b",
+      "date": "2026-09-04",
+      "size": 42532,
+      "path": "/home/grave/Documents/deepseek-sessions/ZenViewer-Fusion-Spec-Review-de2f93c0.md"
+    },
+    {
+      "filename": "iOS真机开发环境-99b13eb4.md",
+      "title": "iOS真机开发环境-99b13eb4",
+      "chat_id": "99b13eb4-e447-489b-a3a5-a6d3a7bc6bb9",
+      "date": "2026-09-04",
+      "size": 26391,
+      "path": "/home/grave/Documents/deepseek-sessions/iOS真机开发环境-99b13eb4.md"
+    },
+    {
+      "filename": "lib-term-pi-68491c51.md",
+      "title": "lib-term-pi-68491c51",
+      "chat_id": "68491c51-7bcb-43d4-951e-fe4fc2516084",
+      "date": "2026-09-04",
+      "size": 22228,
+      "path": "/home/grave/Documents/deepseek-sessions/lib-term-pi-68491c51.md"
+    },
+    {
+      "filename": "untitled-126fb607.md",
+      "title": "untitled-126fb607",
+      "chat_id": "126fb607-983a-40c5-aa85-1fa17c5895cb",
+      "date": "2026-09-04",
+      "size": 148012,
+      "path": "/home/grave/Documents/deepseek-sessions/untitled-126fb607.md"
+    },
+    {
+      "filename": "untitled-4cb455b0.md",
+      "title": "untitled-4cb455b0",
+      "chat_id": "4cb455b0-b3e0-4cd5-ae9f-f8bedae21e67",
+      "date": "2026-09-04",
+      "size": 41514,
+      "path": "/home/grave/Documents/deepseek-sessions/untitled-4cb455b0.md"
+    },
+    {
+      "filename": "三个研究方向的量化调研与决策简报-d859cf91.md",
+      "title": "三个研究方向的量化调研与决策简报-d859cf91",
+      "chat_id": "d859cf91-1c90-493e-af1b-3272d5dca2c2",
+      "date": "2026-09-04",
+      "size": 18602,
+      "path": "/home/grave/Documents/deepseek-sessions/三个研究方向的量化调研与决策简报-d859cf91.md"
+    }
+  ]
+}

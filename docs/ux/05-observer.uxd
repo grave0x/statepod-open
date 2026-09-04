@@ -1,0 +1,19 @@
+# Role: observer — read-only status + alerts
+screen "SwarmState · Observer" w 70 h 22 bg 17
+  col weight 1 pad 1 gap 1
+    row gap 1
+      text "SwarmState" fg 14 bold 1
+      spacer weight 1
+      text "role: observer (read-only)" fg 8
+      button "Status" fg 15 bg 23
+      button "Alerts" fg 15 bg 23
+    divider
+    row gap 1 weight 1
+      col weight 1 pad 1 border 1
+        text "Status" fg 14 bold 1
+        text "kernel ok · mesh 2 peers" fg 10
+        text "disk ok · load1 0.4" fg 7
+        text "no EXECUTE from this role" fg 8
+      col weight 1 pad 1 border 1
+        text "Alerts" fg 14 bold 1
+        list "a" text "all quiet" fg 10

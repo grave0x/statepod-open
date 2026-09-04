@@ -1,0 +1,42 @@
+# Role: supervisor — overview + governance (approve/deny target state)
+screen "SwarmState · Supervisor" w 90 h 30 bg 17
+  col weight 1 pad 1 gap 1
+    row gap 1
+      text "SwarmState" fg 14 bold 1
+      text "pool: farm-east" fg 8
+      spacer weight 1
+      text "supervisor" fg 11 bold 1
+    row gap 1
+      button "Status" fg 15 bg 23
+      button "Alerts" fg 15 bg 52
+      button "Roster" fg 15 bg 23
+      button "Gov" fg 15 bg 33
+      button "Tasks" fg 15 bg 23
+      button "QR" fg 15 bg 23
+    divider
+    row gap 1
+      col weight 1 pad 1 border 1
+        text "ALERT  load1 2.1 > 8.0" fg 11
+      col weight 1 pad 1 border 1
+        text "ALERT  ollama lost barn-01" fg 9
+    row gap 1 weight 1
+      col weight 1 pad 1 border 1
+        text "Roster" fg 14 bold 1
+        text "barn-01  field  peers 0" fg 7
+        text "hub-0    admin  peers 2" fg 7
+        text "truck-2  field  peers 1" fg 7
+      col weight 1 pad 1 border 1
+        text "Governance — pending" fg 14 bold 1
+        text "EXECUTE Restart-Service Foo" fg 7
+        text "reason: hung after update" fg 8
+        text "barn-01 · token TTL 300s" fg 8
+        spacer h 1
+        row gap 1
+          button "Approve" fg 15 bg 34 weight 1
+          button "Deny" fg 15 bg 52 weight 1
+        text "copy-token (phase 5)" fg 8
+      col weight 1 pad 1 border 1
+        text "Tasks (STRAT rates)" fg 14 bold 1
+        text "WRITE   DELTA    100% n=12" fg 7
+        text "READ    TARGETED  83% n=6" fg 7
+        text "SYMBOL  SYMBOLIC 100% n=3" fg 7

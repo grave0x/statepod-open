@@ -1,0 +1,379 @@
+{
+  "projects": {
+    "embedded_inference_engine": {
+      "name": "Embedded Inference Engine",
+      "description": "llama.cpp static integration with C kernel, prefix caching, GBNF grammar enforcement, auto-tuning GPU layers",
+      "priority": "Critical",
+      "estimated_days": 2,
+      "dependencies": [],
+      "outputs": [
+        "libllama.a",
+        "kernel/c/src/lora.c modifications",
+        "bindings/swarmstate.py updates"
+      ],
+      "phase": "Phase 1: Kernel Spike",
+      "milestone": "Working LLM inference in C daemon",
+      "source": [
+        "Pilot Plan",
+        "Deep Analysis"
+      ],
+      "status": "Not Started"
+    },
+    "governance_ui_enhancement": {
+      "name": "Governance UI Enhancement",
+      "description": "Recommendation card, approve/deny buttons, context panel, audit log, emergency override for CFS pilot",
+      "priority": "Critical",
+      "estimated_days": 2,
+      "dependencies": [],
+      "outputs": [
+        "harness/main.py UI components",
+        "kernel/c/src/state.c approval flags",
+        "docs/ui-kit-spec-v1.md"
+      ],
+      "phase": "Phase 1: Kernel Spike",
+      "milestone": "Interactive governance console with safety features",
+      "source": [
+        "Pilot Plan"
+      ],
+      "status": "Not Started"
+    },
+    "lora_hardware_validation": {
+      "name": "LoRa Hardware Validation & Procurement",
+      "description": "Field testing of Heltec LoRa32 V3, TTGO T-Beam V1.2, RakWireless RAK4631 for mesh deployment",
+      "priority": "Critical",
+      "estimated_days": 3,
+      "dependencies": [],
+      "outputs": [
+        "Hardware procured",
+        "Field test results",
+        "Antenna configurations"
+      ],
+      "phase": "Phase 1: Kernel Spike",
+      "milestone": "Three-node mesh ready for deployment",
+      "source": [
+        "Pilot Plan"
+      ],
+      "status": "Not Started"
+    },
+    "kernel_core_ops": {
+      "name": "Kernel Core Operations (READ/WRITE/GREP/AST)",
+      "description": "Implement core filesystem operations in C kernel with AST_QUERY pre-check",
+      "priority": "High",
+      "estimated_days": 3,
+      "dependencies": [],
+      "outputs": [
+        "kernel/c/src/ops.c",
+        "kernel/c/src/state.h API",
+        "bindings/swarmstate.py"
+      ],
+      "phase": "Phase 1: Kernel Spike",
+      "milestone": "Basic file operations functional",
+      "source": [
+        "Spec v1",
+        "Deep Analysis"
+      ],
+      "status": "Not Started"
+    },
+    "mesh_routing_network": {
+      "name": "Mesh Routing & Network Resilience",
+      "description": "Gossip protocol, DHT, CRDT synchronization, peer-to-peer mesh networking",
+      "priority": "High",
+      "estimated_days": 5,
+      "dependencies": [
+        "kernel_core_ops"
+      ],
+      "outputs": [
+        "harness/bridge.py",
+        "kernel/c/src/registry.c",
+        "docs/mesh-spec-v2.md"
+      ],
+      "phase": "Phase 2: State & Persistence",
+      "milestone": "Self-healing mesh network operational",
+      "source": [
+        "Deep Analysis",
+        "Tiny Specialist"
+      ],
+      "status": "Not Started"
+    },
+    "state_persistence": {
+      "name": "State Persistence & Checkpoint/Rollback",
+      "description": "Event log JSONL, checkpoint/rollback mechanisms, state save/load",
+      "priority": "High",
+      "estimated_days": 4,
+      "dependencies": [
+        "kernel_core_ops"
+      ],
+      "outputs": [
+        "kernel/c/src/state.c persistence",
+        "scripts/build_kernel.sh",
+        "docs/development.md"
+      ],
+      "phase": "Phase 2: State & Persistence",
+      "milestone": "Crash-resistant state persistence",
+      "source": [
+        "Spec v1"
+      ],
+      "status": "Not Started"
+    },
+    "ctypes_python_binding": {
+      "name": "C Kernel Python ctypes Binding",
+      "description": "Complete Python FFI wrapper for kernel operations",
+      "priority": "High",
+      "estimated_days": 3,
+      "dependencies": [
+        "kernel_core_ops"
+      ],
+      "outputs": [
+        "harness/state.py",
+        "bindings/swarmstate.py",
+        "harness/orchestrator.py"
+      ],
+      "phase": "Phase 2: State & Persistence",
+      "milestone": "Python can control kernel operations",
+      "source": [
+        "Spec v1"
+      ],
+      "status": "Not Started"
+    },
+    "maturity_bench": {
+      "name": "Maturity Bench Script & Test Suite",
+      "description": "Automated maturity testing for kernel performance and correctness",
+      "priority": "Medium",
+      "estimated_days": 2,
+      "dependencies": [
+        "state_persistence",
+        "ctypes_python_binding"
+      ],
+      "outputs": [
+        "scripts/maturity_bench.py",
+        "harness/test_maturity_bench.py",
+        "docs/build-plan-v1.md"
+      ],
+      "phase": "Phase 3: Context Strategy",
+      "milestone": "Automated performance regression testing",
+      "source": [
+        "Build Plan v1"
+      ],
+      "status": "Not Started"
+    },
+    "ui_shell_widgets": {
+      "name": "UI Shell with Six Core Widgets",
+      "description": "Map, Task List, Alert Banner, Roster, Govern, and Context widgets served from C node",
+      "priority": "Medium",
+      "estimated_days": 4,
+      "dependencies": [
+        "governance_ui_enhancement",
+        "ctypes_python_binding"
+      ],
+      "outputs": [
+        "mobile/flutter/",
+        "harness/ui.py",
+        "docs/ui-kit-spec-v1.md"
+      ],
+      "phase": "Phase 3: Context Strategy",
+      "milestone": "Functional mobile/web UI for mesh nodes",
+      "source": [
+        "UI Kit Spec v1"
+      ],
+      "status": "Not Started"
+    },
+    "third_party_widgets": {
+      "name": "Third-Party Domain Widget System",
+      "description": "Extensibility framework for community-developed mesh node widgets",
+      "priority": "Medium",
+      "estimated_days": 3,
+      "dependencies": [
+        "ui_shell_widgets"
+      ],
+      "outputs": [
+        "docs/federation-multihoming-spec.md",
+        "harness/widget_loader.py"
+      ],
+      "phase": "Phase 4: Security Gate",
+      "milestone": "Plugin architecture for community contributions",
+      "source": [
+        "Deep Analysis"
+      ],
+      "status": "Not Started"
+    },
+    "energy_harvesting": {
+      "name": "Energy Harvesting & Autonomous Power Management",
+      "description": "Solar/battery management systems for remote mesh nodes",
+      "priority": "Medium",
+      "estimated_days": 3,
+      "dependencies": [
+        "lora_hardware_validation"
+      ],
+      "outputs": [
+        "hardware/solar_controller.py",
+        "docs/field-node-quickstart.md"
+      ],
+      "phase": "Phase 3: Context Strategy",
+      "milestone": "Mesh nodes can operate off-grid for 7+ days",
+      "source": [
+        "Tiny Specialist"
+      ],
+      "status": "Not Started"
+    },
+    "msf_pilot": {
+      "name": "MSP Pilot Program Preparation",
+      "description": "Port Augusta MSP offering preparation (deferred until field test success)",
+      "priority": "Low",
+      "estimated_days": 5,
+      "dependencies": [
+        "embedded_inference_engine",
+        "governance_ui_enhancement",
+        "lora_hardware_validation",
+        "maturity_bench"
+      ],
+      "outputs": [
+        "docs/support-ops-msp-spec-v1.md",
+        "pilot_brief_document",
+        "msp_partnership_agreements"
+      ],
+      "phase": "Phase 4: Security Gate",
+      "milestone": "MSP-ready SwarmState deployment",
+      "source": [
+        "Pilot Plan"
+      ],
+      "status": "Not Started"
+    },
+    "stigmergic_prefetch": {
+      "name": "Stigmergic Kernel Prefetch (Pheromone Context)",
+      "description": "Context preloading based on access patterns and predictive caching",
+      "priority": "Low",
+      "estimated_days": 4,
+      "dependencies": [
+        "state_persistence",
+        "mesh_routing_network"
+      ],
+      "outputs": [
+        "kernel/c/src/state.c prefetch logic",
+        "docs/technical-spec.tex"
+      ],
+      "phase": "Phase 4: Security Gate",
+      "milestone": "Predictive context loading reduces latency by 40%",
+      "source": [
+        "Deep Analysis"
+      ],
+      "status": "Not Started"
+    },
+    "allosteric_lora_blending": {
+      "name": "Allosteric LoRA Blending (Token-Level Adapter Fusion)",
+      "description": "Dynamic LoRA adapter combination based on context and task requirements",
+      "priority": "Low",
+      "estimated_days": 5,
+      "dependencies": [
+        "embedded_inference_engine",
+        "stigmergic_prefetch"
+      ],
+      "outputs": [
+        "kernel/c/src/lora.c enhancements",
+        "harness/lora_blender.py"
+      ],
+      "phase": "Phase 4: Security Gate",
+      "milestone": "Adaptive model specialization for different tasks",
+      "source": [
+        "Deep Analysis"
+      ],
+      "status": "Not Started"
+    },
+    "environmental_sensing": {
+      "name": "Environmental Sensing & Bushfire Prediction",
+      "description": "Mesh-based early warning system for environmental hazards",
+      "priority": "Low",
+      "estimated_days": 4,
+      "dependencies": [
+        "lora_hardware_validation",
+        "energy_harvesting"
+      ],
+      "outputs": [
+        "hardware/sensor_integration.py",
+        "docs/native-app-scope-v1.md"
+      ],
+      "phase": "Phase 4: Security Gate",
+      "milestone": "Deployable environmental monitoring mesh",
+      "source": [
+        "Tiny Specialist"
+      ],
+      "status": "Not Started"
+    }
+  },
+  "improvement_loop": {
+    "name": "SwarmState Self-Referential Improvement Loop (SRIL)",
+    "description": "A system that continuously evaluates and improves its own project planning and execution",
+    "components": {
+      "feedback_collection": {
+        "purpose": "Collect metrics on project execution accuracy",
+        "inputs": [
+          "Actual vs Estimated time",
+          "Dependency resolution success",
+          "Output quality"
+        ],
+        "process": "After each project completion, record actual metrics",
+        "outputs": [
+          "improvement_metrics.jsonl"
+        ]
+      },
+      "priority_adjustment": {
+        "purpose": "Dynamically adjust project priorities based on feedback",
+        "inputs": [
+          "improvement_metrics.jsonl",
+          "business_impact_scores",
+          "risk_assessments"
+        ],
+        "process": "Weekly re-prioritization based on learned patterns",
+        "outputs": [
+          "updated_priority_matrix.json"
+        ]
+      },
+      "dependency_optimizer": {
+        "purpose": "Identify and optimize dependency chains",
+        "inputs": [
+          "project_completion_times",
+          "blocking_dependencies",
+          "parallelization_opportunities"
+        ],
+        "process": "Critical path analysis and dependency minimization",
+        "outputs": [
+          "optimized_dependency_graph.json"
+        ]
+      },
+      "planning_accuracy_trainer": {
+        "purpose": "Improve estimation accuracy over time",
+        "inputs": [
+          "historical_estimates",
+          "actual_outcomes",
+          "task_complexity_factors"
+        ],
+        "process": "Machine learning model for better estimations",
+        "outputs": [
+          "estimation_model.pkl",
+          "estimation_accuracy_report.json"
+        ]
+      }
+    },
+    "execution_cycle": {
+      "frequency": "Weekly",
+      "steps": [
+        "1. Collect feedback from completed projects",
+        "2. Update estimation models",
+        "3. Re-prioritize backlog based on new data",
+        "4. Optimize dependency graph",
+        "5. Generate updated project plan",
+        "6. Execute next sprint based on plan"
+      ]
+    }
+  },
+  "generated_at": "2026-09-04T05:02:04.521026",
+  "summary": {
+    "total_projects": 15,
+    "by_priority": {
+      "Critical": 3,
+      "High": 4,
+      "Medium": 4,
+      "Low": 4
+    },
+    "total_estimated_days": 52
+  }
+}

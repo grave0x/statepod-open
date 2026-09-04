@@ -124,6 +124,7 @@ class MeshDaemon:
             from pool import PoolHub
             self.pool_hub = PoolHub(pool_secret, name, allow)
         self._join_done = threading.Event()
+        self._join_sock = None  # only this sock may deliver join_ok
         # node_id -> socket (hello handshake; enables DIRECTED sends,
         # which the capability broker uses to route to a picked node)
         self._peers_by_id: dict[str, object] = {}
@@ -152,7 +153,8 @@ class MeshDaemon:
         # to this stream (stderr in --stdio mode, stdout for TCP).
         self.log_stream = log_stream if log_stream is not None else sys.stdout
         self.peers = peers              # [(host, port), ...]
-        self.allow = set(allow) if allow else None
+        # None = open mesh; empty set = deny all remote origins (H2)
+        self.allow = None if allow is None else set(allow)
         self.history = deque(maxlen=history_max)
         self.socks = []                 # live sockets (outbound + accepted)
         self.lock = threading.Lock()
@@ -277,6 +279,9 @@ class MeshDaemon:
             self._send_catchup(src_sock)   # joiner gets pool history
             return
         if mtype == "join_ok":
+            # only the hub we presented an invite to may rewrite allow
+            if self._join_sock is None or src_sock is not self._join_sock:
+                return
             members = obj.get("members") or []
             if members:
                 self.allow = set(members)
@@ -286,6 +291,14 @@ class MeshDaemon:
                 self._send_catchup(src_sock)  # hub gets OUR history
             return
         if mtype == "member_added":
+            # only an already-allowlisted peer (hub) may extend allow
+            sender = None
+            for n, s in self._peers_by_id.items():
+                if s is src_sock:
+                    sender = n
+                    break
+            if self.allow is None or sender not in self.allow:
+                return
             n = obj.get("name")
             if n and self.allow is not None:
                 self.allow.add(n)
@@ -536,6 +549,7 @@ class MeshDaemon:
         if self.join_invite:
             self.send_control({"type": "join", "invite": self.join_invite,
                                "name": self.name}, sock=sock)
+            self._join_sock = sock
         # catch-up: snapshot under the lock, then send OUTSIDE it (a slow
         # peer must not block local mutation or the reader loop).
         self._send_catchup(sock)
@@ -703,6 +717,8 @@ def main(argv=None):
                     metavar="HOST:PORT", help="outbound peer (repeatable)")
     ap.add_argument("--allow", default="",
                     help="comma-separated peer ids allowed to inject ops")
+    ap.add_argument("--open-mesh", action="store_true",
+                    help="demo only: accept ops from any origin")
     ap.add_argument("--publish", action="append", default=[],
                     metavar="TARGET\\tVALUE", help="publish an op at startup")
     ap.add_argument("--hash-interval", type=float, default=1.0)
@@ -747,7 +763,12 @@ def main(argv=None):
     for spec in args.peer:
         host, _, port = spec.rpartition(":")
         peers.append((host or "127.0.0.1", int(port)))
-    allow = [x for x in args.allow.split(",") if x] or None
+    if args.open_mesh:
+        allow = None
+    elif args.allow:
+        allow = [x for x in args.allow.split(",") if x]
+    else:
+        allow = []  # default-deny (empty allowlist)
     pubs = [tuple(p.split("\t", 1)) if "\t" in p else
             tuple(p.split(None, 1)) for p in args.publish]
 

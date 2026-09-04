@@ -1,0 +1,35 @@
+# Role: admin — QR invite + status + roster
+screen "SwarmState · Admin · Join" w 78 h 30 bg 17
+  col weight 1 pad 1 gap 1
+    row gap 1
+      text "SwarmState" fg 14 bold 1
+      spacer weight 1
+      text "role: admin" fg 13 bold 1
+      button "Status" fg 15 bg 23
+      button "Roster" fg 15 bg 23
+      button "Gov" fg 15 bg 23
+      button "QR" fg 15 bg 33
+      button "Alerts" fg 15 bg 23
+    divider
+    row gap 1 weight 1
+      col weight 1 pad 1 border 1
+        text "QR / Invite" fg 14 bold 1
+        box h 10 border 1
+          text "█████ ████ █████" fg 15
+          text "█   █ ██ █ █   █" fg 15
+          text "█ ███ ██ █ █ ███" fg 15
+          text "█   █ █  █ █   █" fg 15
+          text "█████ █ ██ █████" fg 15
+          text "  pool invite QR  " fg 8
+        button "Copy invite" fg 15 bg 33
+        text "Scan to join farm-east" fg 8
+      col weight 1 pad 1 border 1
+        text "Status" fg 14 bold 1
+        text "kernel 0.3.0 (f589b09)" fg 7
+        text "mesh :7700  web :8080" fg 7
+        text "disk 7.3 / 7.6 GiB free" fg 10
+        text "ops pub 128 · apply 128" fg 7
+        text "watch: all quiet" fg 10
+        divider
+        text "Roster" fg 14 bold 1
+        list "r" text "hub-0 (you)\nbarn-01\ntruck-2" fg 7

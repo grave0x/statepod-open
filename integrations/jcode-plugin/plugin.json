@@ -1,0 +1,11 @@
+{
+  "name": "swarmstate",
+  "version": "0.1.0",
+  "description": "SwarmState delegation \u2014 run lean-ctx reads and `sw` from inside jcode sessions. Shares ~/.swarmstate/omp.json with prime-agent and Grok.",
+  "skills": [
+    "skills/swarmstate"
+  ],
+  "commands": [
+    "commands"
+  ]
+}

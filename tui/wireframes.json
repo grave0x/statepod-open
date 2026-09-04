@@ -1,0 +1,1519 @@
+{
+  "$schema": "swarmtui/wireframe.v1",
+  "name": "swarmtui",
+  "version": "0.1.0-dev",
+  "description": "Swarmstate orchestrator and management TUI",
+  "design": {
+    "font": "monospace",
+    "engine": "ratatui",
+    "borders": "unicode-box-drawing",
+    "color_palette": {
+      "ok": "green",
+      "warning": "yellow",
+      "error": "red",
+      "idle": "cyan",
+      "selected": "white_on_blue",
+      "header": "bold_white",
+      "dim": "dim"
+    },
+    "glyphs": {
+      "running": "●",
+      "idle": "○",
+      "offline": "◌",
+      "paused": "⏸",
+      "escalation": "⚠",
+      "pending": "?",
+      "success": "✓",
+      "fail": "✗",
+      "in_progress": "⏳",
+      "ok_box": "█",
+      "mid_box": "▓▒",
+      "low_box": "░",
+      "sparkline_chars": "▁▂▃▄▅▆▇█"
+    }
+  },
+  "layout": {
+    "type": "3-pane horizontal + 2 header/footer rows",
+    "header_rows": 2,
+    "status_rows": 1,
+    "panes": [
+      {
+        "id": "left",
+        "name": "node_tree",
+        "x": 0,
+        "w_pct": 25,
+        "scrollable": true
+      },
+      {
+        "id": "center",
+        "name": "workspace",
+        "x": 1,
+        "w_pct": 50,
+        "scrollable": true
+      },
+      {
+        "id": "right",
+        "name": "inspector_logs",
+        "x": 2,
+        "w_pct": 25,
+        "scrollable": true
+      }
+    ]
+  },
+  "header_bar": {
+    "row_1": {
+      "left": [
+        "app_name",
+        "version"
+      ],
+      "center": [
+        "swarm_name",
+        "mode_indicator"
+      ],
+      "right": [
+        "clock"
+      ]
+    },
+    "row_2": {
+      "left": [
+        "load_avg_1_5_15"
+      ],
+      "center": [
+        "mem_used_total",
+        "disk_free_total",
+        "battery"
+      ],
+      "right": [
+        "node_count",
+        "active_ops",
+        "escalations"
+      ]
+    }
+  },
+  "footer_status_bar": {
+    "fields": [
+      "mode",
+      "selected_node",
+      "selected_node_status",
+      "strategy",
+      "checkpoint_id",
+      "escalation_count",
+      "token_budget",
+      "notifications",
+      "help_hint",
+      "quit_hint"
+    ]
+  },
+  "modes": [
+    "ORCHESTRATE",
+    "MONITOR",
+    "EXPERIMENT",
+    "AUTO-IMPROVE",
+    "RESEARCH",
+    "EVAL",
+    "MESH"
+  ],
+  "left_pane": {
+    "id": "node_tree",
+    "sections": [
+      {
+        "id": "filter_bar",
+        "type": "text_input",
+        "placeholder": "🔍 Filter nodes...",
+        "key": "/"
+      },
+      {
+        "id": "node_tree_view",
+        "type": "tree",
+        "root_label": "swarm-root",
+        "node_status_dots": {
+          "running": "●",
+          "idle": "○",
+          "offline": "◌",
+          "paused": "⏸",
+          "escalation": "⚠",
+          "pending": "?"
+        },
+        "edge_badges": [
+          "TCP",
+          "WG",
+          "STREAM",
+          "BRIDGE"
+        ],
+        "expand_keys": "←/→",
+        "navigate_keys": "↑/↓",
+        "context_keys": [
+          "Enter",
+          "n",
+          "d",
+          "r"
+        ]
+      },
+      {
+        "id": "selected_node_info",
+        "type": "key_value",
+        "fields": [
+          "name",
+          "path",
+          "type",
+          "status",
+          "strategy",
+          "ops_count",
+          "lora_file",
+          "checkpoint_id",
+          "peers_count",
+          "last_op"
+        ],
+        "actions": [
+          "Edit",
+          "Logs",
+          "Connect",
+          "Kill"
+        ]
+      },
+      {
+        "id": "add_node_buttons",
+        "type": "button_row",
+        "buttons": [
+          "+ Add Local",
+          "+ Connect Peer",
+          "Scan"
+        ]
+      }
+    ]
+  },
+  "center_pane": {
+    "id": "workspace",
+    "submodes": {
+      "ORCHESTRATE": {
+        "tabs": [
+          "PLAN",
+          "EXECUTE",
+          "DIFF",
+          "RESULTS"
+        ],
+        "panels": [
+          "operation_composer",
+          "execute_runner",
+          "diff_viewer",
+          "results_table"
+        ]
+      },
+      "MONITOR": {
+        "panels": [
+          "live_metrics",
+          "alerts",
+          "node_focus_log"
+        ]
+      },
+      "EXPERIMENT": {
+        "panels": [
+          "template_gallery",
+          "experiment_builder",
+          "run_queue",
+          "comparison_table"
+        ]
+      },
+      "AUTO-IMPROVE": {
+        "panels": [
+          "target_config",
+          "iterations_log",
+          "iteration_detail",
+          "trend_chart"
+        ]
+      },
+      "RESEARCH": {
+        "panels": [
+          "query_bar",
+          "source_chips",
+          "kit_browser",
+          "synthesis"
+        ]
+      },
+      "EVAL": {
+        "panels": [
+          "pack_selector",
+          "live_progress",
+          "results"
+        ]
+      },
+      "MESH": {
+        "panels": [
+          "topology",
+          "peer_list",
+          "traffic",
+          "pool",
+          "bridge",
+          "gov_audit"
+        ]
+      }
+    }
+  },
+  "right_pane": {
+    "id": "inspector",
+    "tabs": [
+      "NODE",
+      "LOGS",
+      "REGISTRY",
+      "GOV",
+      "MESH"
+    ],
+    "panels": {
+      "NODE": [
+        "selected_node",
+        "system_info",
+        "checkpoint_chain",
+        "lora_info",
+        "actions"
+      ],
+      "LOGS": [
+        "level_filter",
+        "node_filter",
+        "op_filter",
+        "log_stream"
+      ],
+      "REGISTRY": [
+        "signature_table",
+        "sparkline_per_sig",
+        "actions"
+      ],
+      "GOV": [
+        "audit_log",
+        "pending_decisions",
+        "identity_chain",
+        "hash_status"
+      ],
+      "MESH": [
+        "topology_diagram",
+        "peer_table",
+        "pool_status",
+        "bridge_config",
+        "traffic_stats"
+      ]
+    }
+  },
+  "wireframes": [
+    {
+      "id": "orchestrate",
+      "name": "ORCHESTRATE mode",
+      "size": {
+        "cols": 80,
+        "rows": 32
+      },
+      "header": {
+        "row_1": "SWARMTUI  v0.1.0-dev  │  SWARM: default  │  Mode: [ORCHESTRATE]  │ 14:32:05",
+        "row_2": "load: 25.6/23.1 │ mem: 6139/15666MB │ disk: 158/472GB │ bat: 100%⚡ │ nodes: 4"
+      },
+      "left_pane": {
+        "title": "NODES",
+        "blocks": [
+          {
+            "id": "filter",
+            "type": "input",
+            "text": "🔍 Filter..."
+          },
+          {
+            "id": "tree",
+            "type": "tree",
+            "nodes": [
+              {
+                "id": "my-app",
+                "status": "running",
+                "children": [
+                  {
+                    "id": "app-v2",
+                    "status": "running",
+                    "children": [
+                      {
+                        "id": "core",
+                        "status": "running"
+                      },
+                      {
+                        "id": "api",
+                        "status": "idle"
+                      }
+                    ]
+                  },
+                  {
+                    "id": "lib-core",
+                    "status": "offline"
+                  }
+                ]
+              },
+              {
+                "id": "bridge-hw",
+                "status": "idle",
+                "children": [
+                  {
+                    "id": "peer-qwen",
+                    "status": "idle"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "buttons",
+            "type": "buttons",
+            "items": [
+              "+ Add",
+              "Peer",
+              "Scan"
+            ]
+          }
+        ]
+      },
+      "center_pane": {
+        "title": "WORKSPACE",
+        "submode": "ORCHESTRATE",
+        "active_tab": "PLAN",
+        "tabs": [
+          {
+            "id": "PLAN",
+            "label": "PLAN",
+            "active": true
+          },
+          {
+            "id": "EXECUTE",
+            "label": "EXECUTE",
+            "active": false
+          },
+          {
+            "id": "DIFF",
+            "label": "DIFF",
+            "active": false
+          },
+          {
+            "id": "RESULTS",
+            "label": "RESULTS",
+            "active": false
+          }
+        ],
+        "blocks": [
+          {
+            "id": "op_composer",
+            "type": "form",
+            "title": "OPERATION COMPOSER",
+            "header_controls": [
+              {
+                "id": "add_op_read",
+                "label": "READ ▼"
+              },
+              {
+                "id": "add_op_grep",
+                "label": "GREP ▼"
+              },
+              {
+                "id": "add_op_ast",
+                "label": "AST ▼"
+              },
+              {
+                "id": "add_op_more",
+                "label": "+more"
+              }
+            ],
+            "ops_queue": [
+              {
+                "idx": 1,
+                "op": "READ",
+                "target": "src/main.go",
+                "params": "lines 1-100"
+              },
+              {
+                "idx": 2,
+                "op": "GREP",
+                "target": "\"TODO\"",
+                "params": "max 50"
+              },
+              {
+                "idx": 3,
+                "op": "AST_Q",
+                "target": "*.go",
+                "params": "pattern=\"Handler\""
+              }
+            ],
+            "strategy": {
+              "label": "Strategy",
+              "value": "SYMBOLIC",
+              "kind": "select"
+            },
+            "targets": {
+              "label": "Target paths",
+              "value": "3 added"
+            },
+            "max_loops": {
+              "label": "Max loops",
+              "value": "20"
+            },
+            "timeout": {
+              "label": "Timeout",
+              "value": "30s"
+            },
+            "footer_actions": [
+              {
+                "id": "preview",
+                "label": "Preview  62k tok"
+              },
+              {
+                "id": "save_tpl",
+                "label": "Save Tmpl"
+              },
+              {
+                "id": "execute",
+                "label": "▶ Execute"
+              },
+              {
+                "id": "json",
+                "label": "📋 JSON"
+              },
+              {
+                "id": "save",
+                "label": "💾 Save"
+              }
+            ]
+          },
+          {
+            "id": "execute_runner",
+            "type": "live_progress",
+            "title": "EXECUTE",
+            "progress": {
+              "done": 8,
+              "total": 12,
+              "bar": "▓▓▓▓▓▓▓░░░░░░░░"
+            },
+            "ops_stream": [
+              {
+                "op": "READ",
+                "target": "src/main.go",
+                "ms": 12,
+                "status": "success"
+              },
+              {
+                "op": "GREP",
+                "target": "\"TODO\"",
+                "ms": 8,
+                "status": "success"
+              },
+              {
+                "op": "AST_Q",
+                "target": "pattern=x",
+                "ms": 23,
+                "status": "success"
+              },
+              {
+                "op": "WRITE",
+                "target": "src/foo.go",
+                "ms": 31,
+                "status": "success"
+              },
+              {
+                "op": "ESCAL",
+                "target": "need_auth",
+                "ms": 0,
+                "status": "escalation"
+              },
+              {
+                "op": "DIFF",
+                "target": "--staged",
+                "ms": 5,
+                "status": "in_progress"
+              }
+            ],
+            "footer_actions": [
+              {
+                "id": "run",
+                "label": "▶▶ Run"
+              },
+              {
+                "id": "abort",
+                "label": "⏹ Abort"
+              }
+            ]
+          },
+          {
+            "id": "results_table",
+            "type": "table",
+            "title": "RESULTS",
+            "columns": [
+              "Op",
+              "File",
+              "ms",
+              "✓"
+            ],
+            "rows": [
+              [
+                "READ",
+                "main.go",
+                12,
+                "✓"
+              ],
+              [
+                "GREP",
+                "\"TODO\"",
+                8,
+                "✓"
+              ],
+              [
+                "AST_Q",
+                "pattern=x",
+                23,
+                "✓"
+              ],
+              [
+                "WRITE",
+                "foo.go",
+                31,
+                "✓"
+              ],
+              [
+                "DIFF",
+                "--staged",
+                5,
+                "⏳"
+              ]
+            ],
+            "footer_actions": [
+              {
+                "id": "export_json",
+                "label": "Export JSON"
+              },
+              {
+                "id": "export_csv",
+                "label": "Export CSV"
+              },
+              {
+                "id": "export_md",
+                "label": "Export Markdown"
+              },
+              {
+                "id": "feedback_good",
+                "label": "👍 Good"
+              },
+              {
+                "id": "feedback_bad",
+                "label": "👎 Bad"
+              },
+              {
+                "id": "feedback_meh",
+                "label": "🤔 Meh"
+              }
+            ]
+          }
+        ]
+      },
+      "right_pane": {
+        "title": "INSPECTOR",
+        "tabs": [
+          {
+            "id": "NODE",
+            "active": true
+          },
+          {
+            "id": "LOGS",
+            "active": false
+          },
+          {
+            "id": "REGISTRY",
+            "active": false
+          },
+          {
+            "id": "GOV",
+            "active": false
+          },
+          {
+            "id": "MESH",
+            "active": false
+          }
+        ],
+        "blocks": [
+          {
+            "id": "node",
+            "type": "key_value",
+            "title": "my-app",
+            "fields": [
+              {
+                "k": "type",
+                "v": "local"
+              },
+              {
+                "k": "status",
+                "v": "●"
+              },
+              {
+                "k": "ops",
+                "v": "1,247"
+              },
+              {
+                "k": "lora",
+                "v": "model.sft"
+              },
+              {
+                "k": "checkpoint",
+                "v": "#42 (2h)"
+              },
+              {
+                "k": "sysinfo",
+                "v": "—",
+                "nested": [
+                  {
+                    "k": "load",
+                    "v": "25.6"
+                  },
+                  {
+                    "k": "mem",
+                    "v": "6139"
+                  },
+                  {
+                    "k": "disk",
+                    "v": "158"
+                  },
+                  {
+                    "k": "bat",
+                    "v": "100%"
+                  },
+                  {
+                    "k": "up",
+                    "v": "9h31m"
+                  }
+                ]
+              }
+            ],
+            "actions": [
+              {
+                "id": "checkpoint",
+                "label": "Checkpoint"
+              },
+              {
+                "id": "rollback",
+                "label": "Rollback"
+              },
+              {
+                "id": "lora",
+                "label": "Lora..."
+              },
+              {
+                "id": "symbol_idx",
+                "label": "SymbolIdx"
+              }
+            ]
+          },
+          {
+            "id": "registry",
+            "type": "table",
+            "title": "REGISTRY",
+            "columns": [
+              "sig",
+              "μs"
+            ],
+            "rows": [
+              [
+                "ask-gpt",
+                1240
+              ],
+              [
+                "plan-claud",
+                890
+              ],
+              [
+                "ask-grok",
+                210
+              ]
+            ],
+            "summary": {
+              "best": "grok",
+              "rate": 0.89
+            },
+            "actions": [
+              {
+                "id": "clear",
+                "label": "Clear"
+              },
+              {
+                "id": "export",
+                "label": "→"
+              }
+            ]
+          }
+        ]
+      },
+      "footer": "Mode: ORCH │ Node: app-v2 ● │ Strategy: SYMBOLIC │ Chkpt: #42 │ Esc: 0 │ ⚙ ?help"
+    },
+    {
+      "id": "monitor",
+      "name": "MONITOR mode",
+      "size": {
+        "cols": 80,
+        "rows": 32
+      },
+      "header": {
+        "row_1": "SWARMTUI  │  SWARM: default  │  Mode: [MONITOR]  │  14:32:05  │  uptime: 9h31m",
+        "row_2": "load: 25.6 │ mem: 6139/15666MB (39%) │ disk: 158GB │ bat: 100%⚡ │ 5 nodes ●"
+      },
+      "left_pane": {
+        "title": "NODES",
+        "blocks": [
+          {
+            "id": "filter",
+            "type": "input",
+            "text": "🔍 filter..."
+          },
+          {
+            "id": "tree",
+            "type": "tree",
+            "nodes": [
+              {
+                "id": "swarm-root",
+                "status": "running",
+                "children": [
+                  {
+                    "id": "app-v2",
+                    "status": "running",
+                    "note": "[live]"
+                  },
+                  {
+                    "id": "core",
+                    "status": "running",
+                    "note": "[live]"
+                  },
+                  {
+                    "id": "api",
+                    "status": "idle",
+                    "note": "[idle 2m]"
+                  },
+                  {
+                    "id": "lib",
+                    "status": "offline",
+                    "note": "[offline]"
+                  }
+                ]
+              },
+              {
+                "id": "bridge-hw",
+                "status": "idle",
+                "note": "[idle 12m]"
+              },
+              {
+                "id": "eval-run",
+                "status": "pending",
+                "note": "[running]"
+              }
+            ]
+          },
+          {
+            "id": "summary",
+            "type": "badges",
+            "counts": {
+              "running": 3,
+              "idle": 2,
+              "offline": 1,
+              "pending": 1
+            }
+          }
+        ]
+      },
+      "center_pane": {
+        "title": "LIVE METRICS",
+        "blocks": [
+          {
+            "id": "load_chart",
+            "type": "sparkline_chart",
+            "title": "LOAD (1m)",
+            "y_max": 30,
+            "current": {
+              "y": 25.6
+            },
+            "threshold": 20
+          },
+          {
+            "id": "memory_bar",
+            "type": "progress_bar",
+            "title": "MEMORY",
+            "value": 39,
+            "total": 100,
+            "text": "6139/15666MB",
+            "blocks": "▓▓▓▓▓▓░░░░"
+          },
+          {
+            "id": "op_rate",
+            "type": "gauge",
+            "title": "OPERATION RATE",
+            "rate": 12,
+            "unit": "ops/min",
+            "avg_latency_ms": 18,
+            "success_rate": 0.94,
+            "failures": 2
+          },
+          {
+            "id": "sparklines",
+            "type": "sparkline_set",
+            "title": "SPARKLINES (last 60s)",
+            "lines": [
+              {
+                "label": "LOAD",
+                "chars": "▁▂▃▅▆▇█▇▆▅▃▂▁▂▃▅▆█▇"
+              },
+              {
+                "label": "MEM%",
+                "chars": "████████████████████░░░░░"
+              },
+              {
+                "label": "DISK",
+                "chars": "▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁"
+              },
+              {
+                "label": "OPS",
+                "chars": "▁▂▃▂▄▆▄▃▂▃▄▆▇▆▄▃▂▃▄▆▅▃▂▁"
+              },
+              {
+                "label": "BAT",
+                "chars": "████████████████████████████████"
+              }
+            ]
+          },
+          {
+            "id": "latency_hist",
+            "type": "histogram",
+            "title": "LATENCY HISTOGRAM",
+            "buckets": [
+              {
+                "label": "<5ms",
+                "value": 2
+              },
+              {
+                "label": "5-10",
+                "value": 4
+              },
+              {
+                "label": "10-20",
+                "value": 10
+              },
+              {
+                "label": "20-50",
+                "value": 5
+              },
+              {
+                "label": "50+",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "id": "actions",
+            "type": "buttons",
+            "items": [
+              "⏸ Pause",
+              "📊 Export CSV",
+              "🔄 Refresh"
+            ]
+          }
+        ]
+      },
+      "right_pane": {
+        "title": "INSPECTOR",
+        "tabs": [
+          {
+            "id": "NODE",
+            "active": true
+          },
+          {
+            "id": "LOGS",
+            "active": false
+          },
+          {
+            "id": "REGISTRY",
+            "active": false
+          },
+          {
+            "id": "GOV",
+            "active": false
+          },
+          {
+            "id": "MESH",
+            "active": false
+          }
+        ],
+        "blocks": [
+          {
+            "id": "alerts",
+            "type": "alert_list",
+            "title": "ALERTS",
+            "items": [
+              {
+                "level": "warning",
+                "ts": "14:31",
+                "node": "app-v2",
+                "msg": "escalation: need_auth for write op"
+              },
+              {
+                "level": "warning",
+                "ts": "14:29",
+                "node": "lib-core",
+                "msg": "offline: last seen 12m ago"
+              },
+              {
+                "level": "info",
+                "ts": "14:25",
+                "node": "bridge",
+                "msg": "connected: peer-qwen TCP up"
+              }
+            ]
+          },
+          {
+            "id": "node_focus",
+            "type": "filtered_log",
+            "title": "NODE FOCUS",
+            "filters": {
+              "op_type": "all ops",
+              "node": "● all"
+            },
+            "rows": [
+              {
+                "ts": "14:32:01",
+                "status": "●",
+                "op": "READ",
+                "target": "main.go"
+              },
+              {
+                "ts": "14:32:01",
+                "status": "✓",
+                "op": "GREP",
+                "target": "\"TODO\""
+              },
+              {
+                "ts": "14:32:02",
+                "status": "✓",
+                "op": "AST_Q",
+                "target": "pattern=x"
+              },
+              {
+                "ts": "14:32:03",
+                "status": "✓",
+                "op": "WRITE",
+                "target": "src/foo.go"
+              },
+              {
+                "ts": "14:32:04",
+                "status": "⚠",
+                "op": "ESCAL",
+                "target": "need_auth"
+              },
+              {
+                "ts": "14:32:05",
+                "status": "⏳",
+                "op": "DIFF",
+                "target": "--staged"
+              }
+            ],
+            "nav": {
+              "search": "/",
+              "top": "g",
+              "bottom": "G"
+            }
+          }
+        ]
+      },
+      "footer": "Mode: MONITOR │ load: 25.6 │ mem: 39% │ ops: 12/m │ esc: 1 │ [▶ Live] [⏸]"
+    },
+    {
+      "id": "auto-improve",
+      "name": "AUTO-IMPROVE mode",
+      "size": {
+        "cols": 80,
+        "rows": 32
+      },
+      "header": {
+        "row_1": "SWARMTUI  │  SWARM: default  │  Mode: [AUTO-IMPROVE]  │  iter 47/∞  │  ●RUN",
+        "row_2": "load: 25.6 │ mem: 39% │ disk: 158GB │ iter/s: 3.2 │ accepted: 31/46 │ best #38"
+      },
+      "center_pane": {
+        "title": "AUTO-IMPROVE",
+        "blocks": [
+          {
+            "id": "target_config",
+            "type": "form",
+            "title": "TARGET",
+            "fields": [
+              {
+                "k": "Path",
+                "v": "/home/grave/Projects/internal.source/02-tools/swarmstate",
+                "kind": "path_input"
+              },
+              {
+                "k": "Strategy",
+                "v": "CONTINUOUS",
+                "kind": "select"
+              },
+              {
+                "k": "Metric",
+                "v": "latency",
+                "kind": "select"
+              },
+              {
+                "k": "Threshold",
+                "v": "5% to accept",
+                "kind": "input"
+              },
+              {
+                "k": "Rollback",
+                "v": true,
+                "kind": "checkbox"
+              },
+              {
+                "k": "LoRA pool",
+                "v": "model-{v1,v2,v3}.safetensors"
+              },
+              {
+                "k": "Eval",
+                "v": "tasks/s",
+                "kind": "select"
+              }
+            ],
+            "progress": {
+              "current": 47,
+              "total": null,
+              "bar": "▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒"
+            },
+            "actions": [
+              {
+                "id": "pause",
+                "label": "⏸ Pause"
+              },
+              {
+                "id": "step",
+                "label": "⏭ Step"
+              },
+              {
+                "id": "stop",
+                "label": "⏹ Stop"
+              },
+              {
+                "id": "rollback",
+                "label": "↶ Rollback"
+              },
+              {
+                "id": "config",
+                "label": "⚙ Config"
+              }
+            ]
+          },
+          {
+            "id": "iterations_log",
+            "type": "table",
+            "title": "ITERATIONS LOG",
+            "columns": [
+              "#",
+              "lat μs",
+              "tok",
+              "acc",
+              "rss",
+              "status",
+              "lora",
+              "note"
+            ],
+            "rows": [
+              {
+                "num": 47,
+                "lat": 890,
+                "tok": "62k",
+                "acc": 0.94,
+                "rss": "8.2M",
+                "status": "running",
+                "lora": "v3",
+                "note": "optimize grep",
+                "trend": "down"
+              },
+              {
+                "num": 46,
+                "lat": 920,
+                "tok": "62k",
+                "acc": 0.94,
+                "rss": "8.2M",
+                "status": "accepted",
+                "lora": "v3",
+                "note": "3% faster",
+                "trend": null
+              },
+              {
+                "num": 45,
+                "lat": 948,
+                "tok": "64k",
+                "acc": 0.93,
+                "rss": "8.3M",
+                "status": "rollback",
+                "lora": "v2",
+                "note": "regressed: -1%",
+                "trend": "up"
+              },
+              {
+                "num": 44,
+                "lat": 902,
+                "tok": "62k",
+                "acc": 0.95,
+                "rss": "8.1M",
+                "status": "accepted",
+                "lora": "v3",
+                "note": "new best",
+                "trend": "down"
+              },
+              {
+                "num": 43,
+                "lat": 940,
+                "tok": "64k",
+                "acc": 0.93,
+                "rss": "8.3M",
+                "status": "rejected",
+                "lora": "v2",
+                "note": "tokens +3%",
+                "trend": null
+              },
+              {
+                "num": 38,
+                "lat": 880,
+                "tok": "60k",
+                "acc": 0.96,
+                "rss": "8.0M",
+                "status": "accepted",
+                "lora": "v2",
+                "note": "all-time best",
+                "trend": null,
+                "star": true
+              }
+            ]
+          },
+          {
+            "id": "iteration_detail",
+            "type": "diff_viewer",
+            "title": "ITERATION #47 DETAIL",
+            "current_change": {
+              "file": "graph_engine.c",
+              "diff": "+    /* v3: cache symbol index across runs */\n+    if (cache_hit) return cached_summary;\n+\n     for (size_t i = 0; i < n; ++i) {",
+              "collapsed": true
+            },
+            "eval_results": {
+              "columns": [
+                "task",
+                "pass/fail",
+                "ms",
+                "tok",
+                "score"
+              ],
+              "rows": [
+                {
+                  "task": "a",
+                  "pf": "✓",
+                  "ms": 890,
+                  "tok": "62k",
+                  "score": 0.94
+                },
+                {
+                  "task": "b",
+                  "pf": "✓",
+                  "ms": 1203,
+                  "tok": "64k",
+                  "score": 0.91
+                },
+                {
+                  "task": "c",
+                  "pf": "✗",
+                  "ms": 2100,
+                  "tok": "72k",
+                  "score": 0.0
+                }
+              ]
+            },
+            "actions": [
+              {
+                "id": "run_next",
+                "label": "▶▶ Run next"
+              },
+              {
+                "id": "reject",
+                "label": "↶ Reject"
+              },
+              {
+                "id": "accept",
+                "label": "✓ Accept"
+              },
+              {
+                "id": "checkpoint",
+                "label": "⤓ Save checkpoint"
+              }
+            ]
+          },
+          {
+            "id": "trend_chart",
+            "type": "line_chart",
+            "title": "ITERATION TREND (last 30)",
+            "x_label": "iteration",
+            "y_label": "lat μs",
+            "y_min": 600,
+            "y_max": 1000,
+            "points": [
+              [
+                38,
+                880
+              ],
+              [
+                40,
+                930
+              ],
+              [
+                42,
+                895
+              ],
+              [
+                43,
+                940
+              ],
+              [
+                44,
+                902
+              ],
+              [
+                46,
+                920
+              ],
+              [
+                47,
+                890
+              ]
+            ],
+            "best": {
+              "x": 38,
+              "y": 880,
+              "label": "★ best"
+            }
+          }
+        ]
+      },
+      "footer": "Mode: AUTO-IMPROVE │ iter: 47/200 │ best: 880μs (#38) │ acc: 96% │ ⏸[?]"
+    },
+    {
+      "id": "mesh",
+      "name": "MESH / FEDERATION mode",
+      "size": {
+        "cols": 80,
+        "rows": 32
+      },
+      "header": {
+        "row_1": "SWARMTUI  │  SWARM: default  │  Mode: [MESH]  │  peers: 4  │  3 connected",
+        "row_2": "load: 25.6 │ mem: 39% │ disk: 158GB │ bat: 100%⚡ │ msg/s: 142 │ bytes/s: 12.4kB"
+      },
+      "left_pane": {
+        "title": "TOPOLOGY",
+        "blocks": [
+          {
+            "id": "network_diagram",
+            "type": "ascii_diagram",
+            "lines": [
+              "  [node-A] ──TCP── [B]",
+              "      │╲         │╱",
+              "     WG       BRIDGE",
+              "      │╲         │╱",
+              " [node-C]──TCP──[remote]"
+            ],
+            "legend": [
+              {
+                "label": "3 online",
+                "status": "●"
+              },
+              {
+                "label": "1 escalation",
+                "status": "⚠"
+              }
+            ]
+          }
+        ]
+      },
+      "center_pane": {
+        "title": "FEDERATION",
+        "blocks": [
+          {
+            "id": "peer_list",
+            "type": "table",
+            "title": "PEER LIST",
+            "columns": [
+              "Name",
+              "Type",
+              "Conn",
+              "ms",
+              "Status"
+            ],
+            "rows": [
+              {
+                "name": "app-v2",
+                "type": "local",
+                "conn": "TCP",
+                "ms": 3,
+                "status": "running"
+              },
+              {
+                "name": "api",
+                "type": "local",
+                "conn": "TCP",
+                "ms": 5,
+                "status": "running"
+              },
+              {
+                "name": "bridge",
+                "type": "bridge",
+                "conn": "wg",
+                "ms": 12,
+                "status": "idle"
+              },
+              {
+                "name": "peer-qwen",
+                "type": "remote",
+                "conn": "stream",
+                "ms": 28,
+                "status": "running"
+              }
+            ],
+            "actions": [
+              {
+                "id": "add_peer",
+                "label": "Add"
+              },
+              {
+                "id": "rem_peer",
+                "label": "Rem"
+              },
+              {
+                "id": "reconnect_all",
+                "label": "Reconnect All"
+              }
+            ]
+          },
+          {
+            "id": "traffic",
+            "type": "table",
+            "title": "TRAFFIC",
+            "columns": [
+              "msg/s",
+              "bytes/s",
+              "peer"
+            ],
+            "rows": [
+              {
+                "msgs": 142,
+                "bytes": "12.4kB/s",
+                "peer": "app"
+              },
+              {
+                "msgs": 38,
+                "bytes": "3.1kB/s",
+                "peer": "api"
+              },
+              {
+                "msgs": 9,
+                "bytes": "0.8kB/s",
+                "peer": "pr"
+              }
+            ]
+          }
+        ]
+      },
+      "right_pane": {
+        "title": "MESH / GOV",
+        "tabs": [
+          {
+            "id": "MESH",
+            "active": true
+          },
+          {
+            "id": "GOV",
+            "active": false
+          }
+        ],
+        "blocks": [
+          {
+            "id": "pool",
+            "type": "key_value",
+            "title": "POOL",
+            "fields": [
+              {
+                "k": "size",
+                "v": "12"
+              },
+              {
+                "k": "in-use",
+                "v": "3"
+              },
+              {
+                "k": "queue",
+                "v": "0"
+              }
+            ],
+            "actions": [
+              {
+                "id": "status",
+                "label": "Status"
+              },
+              {
+                "id": "flush",
+                "label": "Flush"
+              }
+            ]
+          },
+          {
+            "id": "bridge",
+            "type": "key_value",
+            "title": "BRIDGE",
+            "fields": [
+              {
+                "k": "endpoint",
+                "v": "tcp://..."
+              },
+              {
+                "k": "auth",
+                "v": "✓"
+              }
+            ],
+            "actions": [
+              {
+                "id": "edit",
+                "label": "Edit"
+              }
+            ]
+          },
+          {
+            "id": "gov_audit",
+            "type": "table",
+            "title": "GOV / AUDIT",
+            "columns": [
+              "#",
+              "action",
+              "actor",
+              "ts"
+            ],
+            "rows": [
+              {
+                "idx": 42,
+                "action": "write",
+                "actor": "grok",
+                "ts": "14:32:01"
+              },
+              {
+                "idx": 43,
+                "action": "checkpoint",
+                "actor": "brain",
+                "ts": "14:32:05"
+              },
+              {
+                "idx": 44,
+                "action": "escalate",
+                "actor": "agent",
+                "ts": "14:32:08"
+              }
+            ],
+            "summary": {
+              "hash": "a3f2…8c",
+              "verified": true
+            }
+          }
+        ]
+      },
+      "footer": "Mode: MESH │ peers: 4/3 conn │ msg/s: 142 │ bytes/s: 12.4kB │ ⚙ ?help"
+    }
+  ]
+}

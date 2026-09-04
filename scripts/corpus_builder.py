@@ -188,9 +188,7 @@ def main() -> int:
             with Orchestrator(str(root), backend=args.backend,
                               model=args.model,
                               models=args.models.split(",") if args.models
-                              else None, mesh=mesh,
-                              governance=gov,
-                              mock_auth_token=args.mock_auth_token) as orch:
+                              else None, mesh=mesh) as orch:
                 current_state["s"] = orch.state
                 if mesh is not None and pending_ops:
                     # re-seed this task's fresh registry with the full

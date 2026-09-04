@@ -7,6 +7,7 @@ kernel; the kernel holds and executes the context locally.
 """
 from __future__ import annotations
 
+import os
 import sys
 import time
 from pathlib import Path
@@ -83,7 +84,8 @@ class Orchestrator:
                  model: str | None = None,
                  models: list[str] | None = None, verbose: bool = False,
                  mesh=None, governance=None, mock_auth_token=None,
-                 plan_grammar: str = "lenient"):
+                 plan_grammar: str = "lenient",
+                 use_registry_strategy: bool = True):
         self.plan_grammar = plan_grammar
         if governance is None:
             from governance import Governance
@@ -94,6 +96,9 @@ class Orchestrator:
         # would include auth for real backends; prompt-injection of
         # short-lived tokens is future work).
         self.mock_auth_token = mock_auth_token
+        # use_registry_strategy=False forces the op-shape heuristic
+        # (maturity bench A/B baseline). Default True = §9.3 rates.
+        self.use_registry_strategy = use_registry_strategy
         self.state = SwarmState(root)
         # mesh=None (default) or a MeshDaemon (harness/meshd.py): when
         # set, every feedback() call also publishes the learning as mesh
@@ -101,6 +106,18 @@ class Orchestrator:
         self.mesh = mesh
         self.root = str(root)
         self.backend = backend
+        # Auto-start ollama serve if we need a local model
+        if backend == "ollama":
+            # Default store: swarmstate/models/ -> ~/.ollama/models
+            repo_root = Path(__file__).resolve().parent.parent
+            store_path = repo_root / "models"
+            try:
+                from model_store import ensure_ollama_running
+                base_url = ensure_ollama_running(shared_store=store_path)
+                # Set the base URL for planner.ollama so it uses the right port
+                os.environ.setdefault("SWARMSTATE_OLLAMA", base_url)
+            except Exception as exc:
+                print(f"[orchestrator] WARNING: could not auto-start ollama ({exc})")
         self.model = model
         # models= enables per-task routing (harness/router.py): the
         # first entry is the fallback default, and a schema-rejected
@@ -357,7 +374,8 @@ class Orchestrator:
         if ok:
             confidence = plan_confidence(self.state, plan["ops"])
             strategy, targets = decide_strategy(plan["ops"], plan.get("strategy"),
-                                                    registry=self.state)
+                                                    registry=(self.state if self.use_registry_strategy
+                                                               else None))
             if self.verbose:
                 print(f"  [plan] {plan} -> {strategy} conf={confidence:.2f}",
                       file=sys.stderr)
@@ -385,7 +403,8 @@ class Orchestrator:
                 confidence = plan_confidence(self.state, plan["ops"])
                 strategy, targets = decide_strategy(plan["ops"],
                                                         plan.get("strategy"),
-                                                        registry=self.state)
+                                                        registry=(self.state if self.use_registry_strategy
+                                                               else None))
                 result = _exec(self.state, plan["ops"], strategy, targets)
             # cross-model rung: the same model failed the schema twice;
             # try the next configured model once before giving up (the
@@ -414,7 +433,8 @@ class Orchestrator:
                                                      plan["ops"])
                         strategy, targets = decide_strategy(
                             plan["ops"], plan.get("strategy"),
-                            registry=self.state)
+                            registry=(self.state if self.use_registry_strategy
+                                                               else None))
                         result = _exec(self.state, plan["ops"],
                                        strategy, targets)
                     else:
@@ -436,7 +456,8 @@ class Orchestrator:
             if ok:
                 confidence = plan_confidence(self.state, plan["ops"])
                 strategy, targets = decide_strategy(plan["ops"], plan.get("strategy"),
-                                                        registry=self.state)
+                                                        registry=(self.state if self.use_registry_strategy
+                                                               else None))
                 result = _exec(self.state, plan["ops"], strategy, targets)
             else:
                 result = None
@@ -467,7 +488,8 @@ class Orchestrator:
                     confidence = plan_confidence(self.state, plan["ops"])
                     strategy, targets = decide_strategy(plan["ops"],
                                                             plan.get("strategy"),
-                                                            registry=self.state)
+                                                            registry=(self.state if self.use_registry_strategy
+                                                               else None))
                     result = _exec(self.state, plan["ops"], strategy, targets)
                 else:
                     result = None
@@ -509,7 +531,8 @@ class Orchestrator:
             if ok:
                 confidence = plan_confidence(self.state, plan["ops"])
                 strategy, targets = decide_strategy(plan["ops"], plan.get("strategy"),
-                                                        registry=self.state)
+                                                        registry=(self.state if self.use_registry_strategy
+                                                               else None))
                 result = _exec(self.state, plan["ops"], strategy, targets)
             else:
                 result = None
