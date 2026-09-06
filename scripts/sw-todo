@@ -427,6 +427,171 @@ async def cmd_scaffold(pos, flags):
     return 0
 
 
+async def cmd_auto(pos, flags):
+    """Auto-generate a 4-layer todo chain from a goal phrase.
+    
+    Usage: sw todo auto "<goal>"
+    
+    Creates: Vision -> Epic -> Story -> Task
+    Each layer depends on its parent.
+    """
+    if not pos:
+        err("auto requires a goal phrase")
+    goal = " ".join(pos)
+    priority = flags.get("priority", "P1")
+    
+    # Step 1: Create Vision
+    v_title = goal[:80] if len(goal) <= 80 else goal[:77] + "..."
+    v_id = await tm.add(
+        title=v_title,
+        description="Auto-generated vision: " + goal,
+        priority=priority,
+        category="vision",
+        layer="vision",
+        tags=["auto", "4-layer"],
+    )
+    print("Created Vision: " + v_id + " - " + v_title)
+    
+    # Step 2: Create Epic (depends on Vision)
+    e_title = "Implement: " + goal[:74]
+    e_id = await tm.add(
+        title=e_title,
+        description="Deliverable for vision " + v_id + ": " + goal,
+        priority=priority,
+        category="epic",
+        layer="epic",
+        deps=[v_id],
+    )
+    print("Created Epic:   " + e_id + " - " + e_title)
+    
+    # Step 3: Create Story (depends on Epic)
+    s_title = "Story: " + goal[:71]
+    s_id = await tm.add(
+        title=s_title,
+        description="One-commit story for " + e_id + ": " + goal,
+        priority=priority,
+        category="story",
+        layer="story",
+        deps=[e_id],
+    )
+    print("Created Story:  " + s_id + " - " + s_title)
+    
+    # Step 4: Create Task (depends on Story)
+    t_title = "Task: " + goal[:74]
+    t_id = await tm.add(
+        title=t_title,
+        description="Atomic task for " + s_id + ": " + goal,
+        priority=priority,
+        category="task",
+        layer="task",
+        deps=[s_id],
+    )
+    print("Created Task:   " + t_id + " - " + t_title)
+    print()
+    print("Chain: " + v_id + " -> " + e_id + " -> " + s_id + " -> " + t_id)
+    return 0
+
+
+async def cmd_git(pos, flags):
+    """Auto-create tasks from recent git commits.
+    
+    Usage: sw todo git [--repo PATH] [--count N] [--skip-merge]
+    
+    Walks recent commits, extracts meaningful messages, creates a 4-layer
+    todo chain for each. Skips chore/ci/merge commits by default.
+    """
+    import subprocess, re, asyncio
+    
+    repo = flags.get("repo", ".")
+    count = int(flags.get("count", 5))
+    skip_merge = "merge" not in flags  # default: skip merges
+    
+    # Get commit messages
+    fmt = "%H|%s|%an"
+    r = subprocess.run(
+        ["git", "log", f"--format={fmt}", f"-{count}"],
+        capture_output=True, text=True, cwd=repo
+    )
+    if r.returncode != 0:
+        err("git log failed: " + r.stderr)
+    
+    # Parse commits
+    commits = []
+    for line in r.stdout.strip().split("\n"):
+        if not line:
+            continue
+        parts = line.split("|", 2)
+        if len(parts) < 2:
+            continue
+        sha, msg, author = parts[0], parts[1], parts[2] if len(parts) > 2 else ""
+        
+        # Skip merges unless --no-skip-merge
+        if skip_merge and "merge" in msg.lower():
+            continue
+        # Skip chore/ci/boot/deps commits
+        skip_prefixes = ["chore:", "ci:", "deps:", "build:", "bump:", "fixup!", "squash!"]
+        if any(msg.lower().startswith(p) for p in skip_prefixes):
+            continue
+        
+        commits.append((sha, msg.strip(), author))
+    
+    if not commits:
+        print("No meaningful commits found.")
+        return 0
+    
+    print(f"Found {len(commits)} commits -> creating {len(commits)} task chains")
+    print()
+    
+    # Create a chain per commit
+    created = []
+    for sha, msg, author in commits:
+        # Strip prefix like "fix: " or "feat: "
+        clean = re.sub(r"^\w+(\([\w-]+\))?:\s*", "", msg).strip()
+        if not clean:
+            clean = msg  # fallback
+        
+        # Create chain
+        v_id = await tm.add(
+            title=clean[:80],
+            description=f"From commit {sha[:8]}: {msg} (by {author})",
+            priority="P2",
+            category="vision",
+            layer="vision",
+            tags=["git-hook", "auto"],
+        )
+        e_id = await tm.add(
+            title="Implement: " + clean[:74],
+            description=f"Epic from commit {sha[:8]}: {msg}",
+            priority="P2",
+            category="epic",
+            layer="epic",
+            deps=[v_id],
+        )
+        s_id = await tm.add(
+            title="Story: " + clean[:71],
+            description=f"Story from commit {sha[:8]}: {msg}",
+            priority="P2",
+            category="story",
+            layer="story",
+            deps=[e_id],
+        )
+        t_id = await tm.add(
+            title="Task: " + clean[:74],
+            description=f"Task from commit {sha[:8]}: {msg}",
+            priority="P2",
+            category="task",
+            layer="task",
+            deps=[s_id],
+        )
+        print(f"  {sha[:8]}: {v_id} -> {e_id} -> {s_id} -> {t_id}")
+        print(f"    {msg[:80]}")
+        created.append((v_id, e_id, s_id, t_id))
+    
+    print()
+    print(f"Created {len(created)} chains. Start with: sw todo start {created[0][0]}")
+    return 0
+
+
 async def cmd_field(pos, flags):
     # Field catalog: ls|show|add
     sub = pos[0] if pos else "ls"
@@ -486,14 +651,328 @@ async def cmd_version(pos, flags):
 
 
 async def cmd_sync(pos, flags):
-    print("(sync not implemented — PR welcome)")
-    return 0
+    """Sync tasks to/from a remote git repo.
+    
+    Usage:
+      sw todo sync push          Push local tasks to remote
+      sw todo sync pull          Pull tasks from remote
+      sw todo sync status        Show sync status
+    
+    Requires a swarmstate-tasks git remote configured at:
+      ~/.swarmstate/tasks-remote (git@github.com:grave0x/swarmstate-tasks.git)
+    """
+    import subprocess, asyncio
+    
+    sub = pos[0] if pos else "status"
+    remote_path = os.path.expanduser("~/.swarmstate/tasks-remote")
+    
+    if sub == "status":
+        # Check if tasks dir is a git repo
+        tasks_dir = os.path.expanduser("~/.swarmstate/tasks")
+        r = subprocess.run(["git", "rev-parse", "--git-dir"],
+                          capture_output=True, text=True, cwd=tasks_dir)
+        if r.returncode == 0:
+            # Get status
+            r2 = subprocess.run(["git", "status", "--porcelain"],
+                               capture_output=True, text=True, cwd=tasks_dir)
+            changes = len(r2.stdout.strip().split("\n")) if r2.stdout.strip() else 0
+            print(f"Tasks dir is a git repo. {changes} uncommitted changes.")
+            # Show ahead/behind
+            r3 = subprocess.run(["git", "log", "--oneline", "@{u}..HEAD"],
+                               capture_output=True, text=True, cwd=tasks_dir)
+            ahead = len(r3.stdout.strip().split("\n")) if r3.stdout.strip() else 0
+            print(f"  Local commits ahead of remote: {ahead}")
+        else:
+            print("Tasks dir is not a git repo.")
+            if os.path.exists(remote_path):
+                print(f"  Remote configured: {open(remote_path).read().strip()}")
+            else:
+                print("  No remote configured. Run: sw todo sync init <git-url>")
+        return 0
+    
+    if sub == "init":
+        url = pos[1] if len(pos) > 1 else ""
+        if not url:
+            err("sync init requires a git URL")
+        tasks_dir = os.path.expanduser("~/.swarmstate/tasks")
+        # Init git repo
+        r = subprocess.run(["git", "init"], capture_output=True, text=True, cwd=tasks_dir)
+        if r.returncode != 0 and "already exists" not in r.stderr:
+            err("git init failed: " + r.stderr)
+        # Add remote
+        r2 = subprocess.run(["git", "remote", "add", "origin", url],
+                           capture_output=True, text=True, cwd=tasks_dir)
+        if r2.returncode != 0:
+            # Remote might already exist
+            r3 = subprocess.run(["git", "remote", "set-url", "origin", url],
+                              capture_output=True, text=True, cwd=tasks_dir)
+        # Save remote path
+        os.makedirs(os.path.dirname(remote_path), exist_ok=True)
+        with open(remote_path, "w") as f:
+            f.write(url + "\n")
+        # Create initial commit
+        r4 = subprocess.run(["git", "add", "."], capture_output=True, text=True, cwd=tasks_dir)
+        r5 = subprocess.run(["git", "commit", "-m", "Initial: swarmstate tasks"],
+                          capture_output=True, text=True, cwd=tasks_dir)
+        print(f"Initialized tasks git repo at {tasks_dir}")
+        print(f"Remote: {url}")
+        print(f"Run: sw todo sync push")
+        return 0
+    
+    if sub == "push":
+        tasks_dir = os.path.expanduser("~/.swarmstate/tasks")
+        r = subprocess.run(["git", "add", "."], capture_output=True, text=True, cwd=tasks_dir)
+        r2 = subprocess.run(["git", "commit", "-m", "Auto-sync tasks"],
+                          capture_output=True, text=True, cwd=tasks_dir)
+        if "nothing to commit" in r2.stdout:
+            print("Nothing to push — tasks are up to date.")
+        else:
+            print("Committed changes.")
+        r3 = subprocess.run(["git", "push", "-u", "origin", "main"],
+                           capture_output=True, text=True, cwd=tasks_dir, timeout=30)
+        if r3.returncode != 0:
+            print("Push failed: " + r3.stderr)
+        else:
+            print("Pushed to remote.")
+        return 0
+    
+    if sub == "pull":
+        tasks_dir = os.path.expanduser("~/.swarmstate/tasks")
+        r = subprocess.run(["git", "pull", "--rebase", "origin", "main"],
+                          capture_output=True, text=True, cwd=tasks_dir, timeout=30)
+        if r.returncode != 0:
+            print("Pull failed: " + r.stderr)
+        else:
+            print("Pulled from remote.")
+            print(r.stdout[:500])
+        return 0
+    
+    err("unknown sync subcommand: " + repr(sub) + ". try: push | pull | status | init <url>")
 
 
 async def cmd_serve(pos, flags):
+    """Serve tasks as a JSON HTTP API (text-mode, subprocess-based).
+    
+    Usage: sw todo serve [--port PORT] [--all-interfaces]
+    
+    Endpoints:
+      GET /           — list tasks as JSON
+      GET /<id>      — task details as JSON
+      GET /graph     — task graph
+    """
+    import json, subprocess, threading
+    from http.server import HTTPServer, BaseHTTPRequestHandler
+    from urllib.parse import urlparse, parse_qs
+    
     port = int(flags.get("port", 7741))
-    print("(serve not implemented — PR welcome; port=" + str(port) + ")")
+    host = "0.0.0.0" if flags.get("all-interfaces") else "127.0.0.1"
+    sw_path = "/home/grave/.local/bin/sw-todo"
+    
+    class Handler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            try:
+                parsed = urlparse(self.path)
+                path = parsed.path
+                qs = parse_qs(parsed.query)
+                
+                if path == "/" or path == "":
+                    args = ["ls", "--limit", "200"]
+                    for k, v in qs.items():
+                        if k in ("status", "layer", "priority"):
+                            args += ["--" + k, v[0]]
+                    r = subprocess.run(
+                        [sys.executable, sw_path] + args,
+                        capture_output=True, text=True, timeout=10
+                    )
+                    tasks = []
+                    for line in r.stdout.split("\n"):
+                        parts = line.split(None, 4)
+                        if len(parts) >= 4 and parts[0].startswith("T-"):
+                            tasks.append({
+                                "id": parts[0],
+                                "status": parts[1],
+                                "priority": parts[2],
+                                "title": parts[3] if len(parts) > 3 else "",
+                                "category": parts[4].strip() if len(parts) > 4 else "",
+                            })
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(json.dumps(tasks, indent=2).encode())
+                
+                elif path == "/graph":
+                    r = subprocess.run(
+                        [sys.executable, sw_path, "graph", "--root",
+                         qs.get("root", [""])[0]],
+                        capture_output=True, text=True, timeout=10
+                    )
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/json")
+                    self.send_header("Access-Control-Allow-Origin", "*")
+                    self.end_headers()
+                    self.wfile.write(json.dumps({"graph": r.stdout}).encode())
+                
+                elif path.startswith("/") and len(path) > 1:
+                    task_id = path[1:]
+                    r = subprocess.run(
+                        [sys.executable, sw_path, "show", task_id],
+                        capture_output=True, text=True, timeout=10
+                    )
+                    if r.returncode == 0:
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/json")
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        self.end_headers()
+                        self.wfile.write(r.stdout.encode())
+                    else:
+                        self.send_response(404)
+                        self.send_header("Content-Type", "application/json")
+                        self.end_headers()
+                        self.wfile.write(b'{"error":"not found"}')
+                else:
+                    self.send_response(404)
+                    self.end_headers()
+            
+            except Exception as e:
+                self.send_response(500)
+                self.end_headers()
+                self.wfile.write(json.dumps({"error": str(e)}).encode())
+        
+        def log_message(self, fmt, *args):
+            pass
+    
+    print(f"Task server running at http://{host}:{port}/")
+    print("Endpoints: GET /, GET /<id>, GET /graph")
+    print("Press Ctrl+C to stop.")
+    
+    server = HTTPServer((host, port), Handler)
+    
+    def run():
+        server.serve_forever()
+    
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+    
+    try:
+        while thread.is_alive():
+            thread.join(timeout=1)
+    except KeyboardInterrupt:
+        server.shutdown()
+        print("\nServer stopped.")
+    
     return 0
+
+
+
+
+async def cmd_dogfood(pos, flags):
+    """Self-check: verify the 4-layer system works end-to-end.
+    
+    Usage: sw todo dogfood
+    
+    Runs a complete cycle: create chain → verify schema → complete → graph.
+    Exits 0 if all checks pass.
+    """
+    import asyncio, subprocess, sys
+    
+    test_goal = "Auto-dogfood test: " + __import__("datetime").datetime.now().isoformat()
+    
+    print("=== swarmstate dogfood self-check ===")
+    print()
+    
+    # 1. Create a chain
+    print("1. Creating 4-layer chain...")
+    r = await tm.add(
+        title=test_goal,
+        description="Dogfood test: auto-generated",
+        priority="P3",
+        category="vision",
+        layer="vision",
+        tags=["dogfood", "test"],
+    )
+    v_id = r
+    e_id = await tm.add(
+        title="Implement: " + test_goal[:74],
+        description="Dogfood epic",
+        priority="P3",
+        category="epic",
+        layer="epic",
+        deps=[v_id],
+    )
+    s_id = await tm.add(
+        title="Story: " + test_goal[:71],
+        description="Dogfood story",
+        priority="P3",
+        category="story",
+        layer="story",
+        deps=[e_id],
+    )
+    t_id = await tm.add(
+        title="Task: " + test_goal[:74],
+        description="Dogfood task",
+        priority="P3",
+        category="task",
+        layer="task",
+        deps=[s_id],
+    )
+    print(f"   Created: {v_id} -> {e_id} -> {s_id} -> {t_id}")
+    
+    # 2. Verify dependencies (each layer depends on its parent)
+    print("2. Verifying schema invariants...")
+    task_d = await tm.show(t_id)
+    story_d = await tm.show(s_id)
+    epic_d = await tm.show(e_id)
+    vision_d = await tm.show(v_id)
+    
+    deps_ok = True
+    
+    # Verify task -> story -> epic -> vision chain
+    if s_id not in task_d:
+        deps_ok = False
+        print(f"   FAIL: task {t_id} missing story dep {s_id}")
+    if e_id not in story_d:
+        deps_ok = False
+        print(f"   FAIL: story {s_id} missing epic dep {e_id}")
+    if v_id not in epic_d:
+        deps_ok = False
+        print(f"   FAIL: epic {e_id} missing vision dep {v_id}")
+    
+    # Vision should have no parent deps
+    if "depends" in vision_d and vision_d.count("depends") > 1:
+        deps_ok = False
+        print(f"   FAIL: vision {v_id} has unexpected deps")
+    
+    print(f"   Schema invariants: {'PASS' if deps_ok else 'FAIL'}")
+    
+    # 3. Mark complete
+    print("3. Marking task complete...")
+    await tm.complete(t_id)
+    print(f"   Completed: {t_id}")
+    
+    # 4. Verify graph
+    print("4. Verifying graph output...")
+    graph = await tm.graph(fmt="ascii", task_id=v_id)
+    graph_ok = v_id in graph and e_id in graph
+    print(f"   Graph contains chain: {'YES' if graph_ok else 'NO'}")
+    
+    # 5. Cleanup
+    print("5. Cleaning up test chain...")
+    await tm.cancel(v_id)
+    print(f"   Cleaned up: {v_id}")
+    
+    all_ok = deps_ok and graph_ok
+    print()
+    if all_ok:
+        print("=== dogfood PASSED ===")
+    else:
+        print("=== dogfood FAILED ===")
+        print("Schema or graph invariants violated.")
+    
+    return 0 if all_ok else 1
+
+
+
 
 
 SUBCOMMANDS = {
@@ -509,6 +988,9 @@ SUBCOMMANDS = {
     "next":     cmd_next,
     "check":    cmd_check,
     "scaffold": cmd_scaffold,
+    "auto":      cmd_auto,
+    "git":       cmd_git,
+    "dogfood":   cmd_dogfood,
     "field":    cmd_field,
     "sync":     cmd_sync,
     "serve":    cmd_serve,

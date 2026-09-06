@@ -71,3 +71,22 @@ The node links the shared C mesh base and the kernel; see `NOTICE` and
 Open-core port for evaluation, field trials, and community feedback. See
 the UI Kit spec (`ui/ui-kit-spec-v1.md`) and `win/README.txt` for the
 shipped feature surface.
+
+
+## Task Manager (`sw-todo`)
+
+A 4-layer task manager (Vision → Epic → Story → Task) with CLI, MCP server, and HTTP API.
+
+```bash
+sw-todo ls --status todo               # list open tasks
+sw-todo auto "I want to build X"      # auto-generate 4-layer chain
+sw-todo graph --root T-0058           # dependency graph
+sw-todo sync push                     # push to remote git repo
+sw-todo serve --port 7741            # HTTP JSON API
+sw-todo dogfood                       # self-check (schema invariant verification)
+
+# MCP server: ~/.local/bin/swarmstate-todo-mcp.py
+# Docs: docs/todo.md
+```
+
+The CLI is also accessible as a `swarmcli todo` subcommand.
