@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# pitch_demo.sh — SwarmState Pitch Mode: the acceptance demo in slow,
+# pitch_demo.sh — StatePod Pitch Mode: the acceptance demo in slow,
 # plain-English stages.  One sentence per stage, press Enter to advance,
 # no flags/logs/jargon.  Ends with a verdict table.
 set -euo pipefail
@@ -11,7 +11,7 @@ step() {
   printf "\n\033[1;33m—— %s ——\033[0m\n" "$1"
 }
 
-say "SwarmState — a small network of AI workers that live on your machines,"
+say "StatePod — a small network of AI workers that live on your machines,"
 say "share what they learn, and do work without any cloud in the middle."
 say "This is the whole system, running live, end to end."
 say "(The demo needs about two minutes and a local AI model that is already running.)"
@@ -87,7 +87,7 @@ echo "  │ governance + audit            │ live ✓   │"
 echo "  │ no cloud required             │ live ✓   │"
 echo "  └───────────────────────────────┴──────────┘"
 echo
-say "SwarmState: a control tower for your machines, with no cloud in the middle."
+say "StatePod: a control tower for your machines, with no cloud in the middle."
 pkill -f "run_named.py --mesh-name pitch-" 2>/dev/null || true
 pkill -f "meshd.py --name pitch-hub" 2>/dev/null || true
 echo "  (demo processes stopped)"

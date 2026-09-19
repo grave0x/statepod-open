@@ -6,8 +6,8 @@
  *   statvfs -> sys/statvfs.h shim (GetDiskFreeSpaceExA)
  *   S_ISDIR/S_ISREG etc. -> from sys/stat.h or defined here
  */
-#ifndef SS_WIN_COMPAT_H
-#define SS_WIN_COMPAT_H
+#ifndef SP_WIN_COMPAT_H
+#define SP_WIN_COMPAT_H
 #ifdef _WIN32
 #include <errno.h>
 #include <stdlib.h>
@@ -50,7 +50,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static int ss_win_is_cmdlet(const char* t)
+static int sp_win_is_cmdlet(const char* t)
 {
     static const char* const cmdlets[] = {
         "Get-ChildItem", "Get-Content", "Get-Process", "Get-Service",
@@ -66,7 +66,7 @@ static int ss_win_is_cmdlet(const char* t)
 
 /* Service-management cmdlets (MSP story): WRITE ops, gated by the
  * kernel's allow_service_mgmt flag (default OFF). */
-static int ss_win_is_service_cmdlet(const char* t)
+static int sp_win_is_service_cmdlet(const char* t)
 {
     static const char* const svc[] = {
         "Start-Service", "Stop-Service", "Restart-Service", "Set-Service", NULL
@@ -79,14 +79,14 @@ static int ss_win_is_service_cmdlet(const char* t)
 }
 
 /* kernel.c's exec_binary_allowed() hook (Windows build only). */
-static int ss_win_exec_binary_allowed(const char* t)
+static int sp_win_exec_binary_allowed(const char* t)
 {
-    return ss_win_is_cmdlet(t) || ss_win_is_service_cmdlet(t);
+    return sp_win_is_cmdlet(t) || sp_win_is_service_cmdlet(t);
 }
 
 /* Space-join validated tokens into a single-line command.  token_is_safe
  * guarantees no quoting is needed (no spaces, quotes, or metacharacters). */
-static int ss_win_join(char* out, size_t cap, char* const argv[], int argc)
+static int sp_win_join(char* out, size_t cap, char* const argv[], int argc)
 {
     size_t used = 0;
     int i;
@@ -106,10 +106,10 @@ static int ss_win_join(char* out, size_t cap, char* const argv[], int argc)
  * Captures stdout+stderr into a caller-owned buffer capped at `cap`
  * bytes; the child is drained past the cap so it never blocks on a full
  * pipe.  Returns 0 on success, -1 on spawn failure. */
-static int ss_win_run_capture(char* const argv[], const char* cwd, size_t cap,
+static int sp_win_run_capture(char* const argv[], const char* cwd, size_t cap,
                               char** out, int* status)
 {
-    char cmdline[4096 + 128];   /* SS_MAX_EXEC_CMD == 4096 (kernel.c) */
+    char cmdline[4096 + 128];   /* SP_MAX_EXEC_CMD == 4096 (kernel.c) */
     char inner[4096 + 8];
     HANDLE rd, wr;
     SECURITY_ATTRIBUTES sa;
@@ -124,13 +124,13 @@ static int ss_win_run_capture(char* const argv[], const char* cwd, size_t cap,
     while (argv[argc]) argc++;
     if (argc == 0) return -1;
 
-    if (ss_win_is_cmdlet(argv[0]) || ss_win_is_service_cmdlet(argv[0])) {
-        if (ss_win_join(inner, sizeof(inner), argv, argc) != 0) return -1;
+    if (sp_win_is_cmdlet(argv[0]) || sp_win_is_service_cmdlet(argv[0])) {
+        if (sp_win_join(inner, sizeof(inner), argv, argc) != 0) return -1;
         if (snprintf(cmdline, sizeof(cmdline),
                      "powershell.exe -NoProfile -NonInteractive -Command \"%s\"",
                      inner) >= (int)sizeof(cmdline)) return -1;
     } else {
-        if (ss_win_join(cmdline, sizeof(cmdline), argv, argc) != 0) return -1;
+        if (sp_win_join(cmdline, sizeof(cmdline), argv, argc) != 0) return -1;
     }
 
     sa.nLength = sizeof(sa); sa.bInheritHandle = TRUE; sa.lpSecurityDescriptor = NULL;
@@ -144,7 +144,7 @@ static int ss_win_run_capture(char* const argv[], const char* cwd, size_t cap,
     if (!CreateProcessA(NULL, cmdline, NULL, NULL, TRUE, CREATE_NO_WINDOW,
                         NULL, (cwd && *cwd) ? cwd : NULL, &si, &pi)) {
         DWORD le = GetLastError();
-        fprintf(stderr, "ss_win_run_capture: CreateProcess failed (%lu): %s\n",
+        fprintf(stderr, "sp_win_run_capture: CreateProcess failed (%lu): %s\n",
                 (unsigned long)le, cmdline);
         CloseHandle(rd); CloseHandle(wr);
         return -1;
@@ -177,7 +177,7 @@ static int ss_win_run_capture(char* const argv[], const char* cwd, size_t cap,
     *out = buf;
     return 0;
 }
-#define run_capture ss_win_run_capture
+#define run_capture sp_win_run_capture
 
 #ifndef popen
 #define popen  _popen
@@ -186,22 +186,22 @@ static int ss_win_run_capture(char* const argv[], const char* cwd, size_t cap,
 #define pclose _pclose
 #endif
 
-static inline int ss_win_mkdir(const char* p, unsigned m) { (void)m; return _mkdir(p); }
-#define mkdir ss_win_mkdir
+static inline int sp_win_mkdir(const char* p, unsigned m) { (void)m; return _mkdir(p); }
+#define mkdir sp_win_mkdir
 
 #ifndef access
 #define access _access
 #endif
 
-static inline char* ss_win_realpath(const char* p, char* out) {
+static inline char* sp_win_realpath(const char* p, char* out) {
     return _fullpath(out, p, PATH_MAX);
 }
-#define realpath ss_win_realpath
+#define realpath sp_win_realpath
 #ifndef lstat
 #define lstat stat
 #endif
 
-static inline char* ss_win_strtok_r(char* str, const char* delim, char** save) {
+static inline char* sp_win_strtok_r(char* str, const char* delim, char** save) {
     char* tok;
     if (!str) str = *save;
     str += strspn(str, delim);
@@ -212,7 +212,7 @@ static inline char* ss_win_strtok_r(char* str, const char* delim, char** save) {
     *save = str;
     return tok;
 }
-#define strtok_r ss_win_strtok_r
+#define strtok_r sp_win_strtok_r
 
 #endif /* _WIN32 */
 #endif

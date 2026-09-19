@@ -1,10 +1,10 @@
-"""SwarmState Python binding — ctypes, Phase 1 spike.
+"""StatePod Python binding — ctypes, Phase 1 spike.
 
-Loads libswarmstate.so (build with `make` in the repo root) and
+Loads libstatepod.so (build with `make` in the repo root) and
 exposes the C kernel API as a small, typed Python class.
 
-    from swarmstate import SwarmState, SS_CONTEXT_DELTA
-    with SwarmState("~/repo") as s:
+    from statepod import StatePod, SP_CONTEXT_DELTA
+    with StatePod("~/repo") as s:
         s.write("a.c", "int main(void) { return 0; }\\n")
         print(s.grep("main"))
 """
@@ -18,9 +18,9 @@ from pathlib import Path
 # Library loading
 # ------------------------------------------------------------------
 _LIB_CANDIDATES = [
-    os.environ.get("SWARMSTATE_LIB", ""),
-    str(Path(__file__).resolve().parent.parent / "libswarmstate.so"),
-    "libswarmstate.so",
+    os.environ.get("STATEPOD_LIB", ""),
+    str(Path(__file__).resolve().parent.parent / "libstatepod.so"),
+    "libstatepod.so",
 ]
 
 
@@ -35,8 +35,8 @@ def _load_library() -> C.CDLL:
         except OSError:
             continue
     raise OSError(
-        "libswarmstate.so not found — run `make` in the SwarmState repo root "
-        "(or set SWARMSTATE_LIB)"
+        "libstatepod.so not found — run `make` in the StatePod repo root "
+        "(or set STATEPOD_LIB)"
     )
 
 
@@ -45,45 +45,45 @@ lib = _load_library()
 # ------------------------------------------------------------------
 # Kernel version (open-core: fail loudly on binary/harness drift)
 # ------------------------------------------------------------------
-lib.ss_version.restype = C.c_char_p
-KERNEL_VERSION = (lib.ss_version() or b"").decode()
-_EXPECT = os.environ.get("SS_EXPECT_KERNEL", "")
+lib.sp_version.restype = C.c_char_p
+KERNEL_VERSION = (lib.sp_version() or b"").decode()
+_EXPECT = os.environ.get("SP_EXPECT_KERNEL", "")
 if _EXPECT and _EXPECT not in KERNEL_VERSION:
     raise RuntimeError(
-        f"SwarmState kernel version mismatch: expected {_EXPECT!r} but "
+        f"StatePod kernel version mismatch: expected {_EXPECT!r} but "
         f"loaded {KERNEL_VERSION!r} from {lib._ss_lib_path}. "
-        "Rebuild with `make` or point SWARMSTATE_LIB at a matching binary."
+        "Rebuild with `make` or point STATEPOD_LIB at a matching binary."
     )
 
 # ------------------------------------------------------------------
 # Enums (mirror kernel.h)
 # ------------------------------------------------------------------
-SS_OP_READ = 0
-SS_OP_WRITE = 1
-SS_OP_GREP = 2
-SS_OP_DIFF = 3
-SS_OP_STATUS = 4
-SS_OP_EXECUTE = 5
-SS_OP_AST_PARSE = 6
-SS_OP_AST_QUERY = 7
-SS_OP_SYMBOL_SUMMARY = 8
+SP_OP_READ = 0
+SP_OP_WRITE = 1
+SP_OP_GREP = 2
+SP_OP_DIFF = 3
+SP_OP_STATUS = 4
+SP_OP_EXECUTE = 5
+SP_OP_AST_PARSE = 6
+SP_OP_AST_QUERY = 7
+SP_OP_SYMBOL_SUMMARY = 8
 
 _OP_TYPES = {
-    "READ": SS_OP_READ, "WRITE": SS_OP_WRITE, "GREP": SS_OP_GREP,
-    "DIFF": SS_OP_DIFF, "STATUS": SS_OP_STATUS, "EXECUTE": SS_OP_EXECUTE,
-    "AST_PARSE": SS_OP_AST_PARSE, "AST_QUERY": SS_OP_AST_QUERY,
-    "SYMBOL_SUMMARY": SS_OP_SYMBOL_SUMMARY,
+    "READ": SP_OP_READ, "WRITE": SP_OP_WRITE, "GREP": SP_OP_GREP,
+    "DIFF": SP_OP_DIFF, "STATUS": SP_OP_STATUS, "EXECUTE": SP_OP_EXECUTE,
+    "AST_PARSE": SP_OP_AST_PARSE, "AST_QUERY": SP_OP_AST_QUERY,
+    "SYMBOL_SUMMARY": SP_OP_SYMBOL_SUMMARY,
 }
 
-SS_CONTEXT_DELTA = 0
-SS_CONTEXT_TARGETED = 1
-SS_CONTEXT_FULL = 2
-SS_CONTEXT_SYMBOLIC = 3
+SP_CONTEXT_DELTA = 0
+SP_CONTEXT_TARGETED = 1
+SP_CONTEXT_FULL = 2
+SP_CONTEXT_SYMBOLIC = 3
 
 # ------------------------------------------------------------------
 # Structs (must match kernel.h exactly)
 # ------------------------------------------------------------------
-class SS_Operation(C.Structure):
+class SP_Operation(C.Structure):
     _fields_ = [
         ("type", C.c_int),
         ("path", C.c_char_p),
@@ -97,9 +97,9 @@ class SS_Operation(C.Structure):
     ]
 
 
-class SS_Plan(C.Structure):
+class SP_Plan(C.Structure):
     _fields_ = [
-        ("ops", C.POINTER(SS_Operation)),
+        ("ops", C.POINTER(SP_Operation)),
         ("op_count", C.c_size_t),
         ("context_strategy", C.c_int),
         ("target_paths", C.POINTER(C.c_char_p)),
@@ -108,7 +108,7 @@ class SS_Plan(C.Structure):
     ]
 
 
-class SS_Result(C.Structure):
+class SP_Result(C.Structure):
     _fields_ = [
         ("logs", C.POINTER(C.c_char_p)),
         ("log_count", C.c_size_t),
@@ -121,7 +121,7 @@ class SS_Result(C.Structure):
         ("escalation_reason", C.c_char_p),
     ]
 
-class SS_RegistryStats(C.Structure):
+class SP_RegistryStats(C.Structure):
     _fields_ = [
         ("samples", C.c_uint64),
         ("fb_samples", C.c_uint64),
@@ -132,7 +132,7 @@ class SS_RegistryStats(C.Structure):
     ]
 
 
-class SS_SystemInfo(C.Structure):
+class SP_SystemInfo(C.Structure):
     _fields_ = [
         ("mem_total_kb", C.c_uint64),
         ("mem_avail_kb", C.c_uint64),
@@ -151,50 +151,50 @@ class SS_SystemInfo(C.Structure):
 # ------------------------------------------------------------------
 # Function prototypes
 # ------------------------------------------------------------------
-lib.ss_state_new.argtypes = [C.c_char_p]
-lib.ss_state_new.restype = C.c_void_p
-lib.ss_state_free.argtypes = [C.c_void_p]
-lib.ss_state_free.restype = None
-lib.ss_sysinfo.argtypes = [C.c_void_p, C.POINTER(SS_SystemInfo)]
-lib.ss_sysinfo.restype = C.c_int
-lib.ss_resource_tag.argtypes = [C.c_void_p]
-lib.ss_resource_tag.restype = C.c_char_p
-lib.ss_journal_hash.argtypes = [C.c_void_p]
-lib.ss_journal_hash.restype = C.c_char_p
-lib.ss_registry_timing.argtypes = [C.c_void_p, C.c_char_p, C.POINTER(SS_RegistryStats)]
-lib.ss_registry_timing.restype = C.c_int
-lib.ss_build_symbol_index.argtypes = [C.c_void_p, C.c_char_p]
-lib.ss_build_symbol_index.restype = C.c_int
-lib.ss_invalidate_symbols.argtypes = [C.c_void_p, C.POINTER(C.c_char_p), C.c_size_t]
-lib.ss_invalidate_symbols.restype = C.c_int
-lib.ss_execute.argtypes = [C.c_void_p, C.POINTER(SS_Plan)]
-lib.ss_execute.restype = C.POINTER(SS_Result)
-lib.ss_result_free.argtypes = [C.POINTER(SS_Result)]
-lib.ss_result_free.restype = None
-lib.ss_state_save.argtypes = [C.c_void_p, C.c_char_p]
-lib.ss_state_save.restype = C.c_int
-lib.ss_state_load.argtypes = [C.c_char_p]
-lib.ss_state_load.restype = C.c_void_p
-lib.ss_read_file.argtypes = [C.c_void_p, C.c_char_p]
-lib.ss_read_file.restype = C.c_char_p
-lib.ss_write_file.argtypes = [C.c_void_p, C.c_char_p, C.c_char_p]
-lib.ss_write_file.restype = C.c_int
-lib.ss_checkpoint.argtypes = [C.c_void_p]
-lib.ss_checkpoint.restype = C.c_uint64
-lib.ss_rollback.argtypes = [C.c_void_p, C.c_uint64]
-lib.ss_rollback.restype = C.c_int
-lib.ss_apply_lora.argtypes = [C.c_void_p, C.c_char_p]
-lib.ss_apply_lora.restype = C.c_int
-lib.ss_record_latency.argtypes = [C.c_void_p, C.c_char_p, C.c_char_p, C.c_uint64]
-lib.ss_record_latency.restype = C.c_int
-lib.ss_get_best_kernel.argtypes = [C.c_void_p, C.c_char_p]
-lib.ss_get_best_kernel.restype = C.c_double
-lib.ss_get_success_rate.argtypes = [C.c_void_p, C.c_char_p]
-lib.ss_get_success_rate.restype = C.c_double
-lib.ss_record_result.argtypes = [C.c_void_p, C.c_char_p, C.c_char_p, C.c_int]
-lib.ss_record_result.restype = C.c_int
-lib.ss_best_kernel_name.argtypes = [C.c_void_p, C.c_char_p]
-lib.ss_best_kernel_name.restype = C.c_char_p
+lib.sp_state_new.argtypes = [C.c_char_p]
+lib.sp_state_new.restype = C.c_void_p
+lib.sp_state_free.argtypes = [C.c_void_p]
+lib.sp_state_free.restype = None
+lib.sp_sysinfo.argtypes = [C.c_void_p, C.POINTER(SP_SystemInfo)]
+lib.sp_sysinfo.restype = C.c_int
+lib.sp_resource_tag.argtypes = [C.c_void_p]
+lib.sp_resource_tag.restype = C.c_char_p
+lib.sp_journal_hash.argtypes = [C.c_void_p]
+lib.sp_journal_hash.restype = C.c_char_p
+lib.sp_registry_timing.argtypes = [C.c_void_p, C.c_char_p, C.POINTER(SP_RegistryStats)]
+lib.sp_registry_timing.restype = C.c_int
+lib.sp_build_symbol_index.argtypes = [C.c_void_p, C.c_char_p]
+lib.sp_build_symbol_index.restype = C.c_int
+lib.sp_invalidate_symbols.argtypes = [C.c_void_p, C.POINTER(C.c_char_p), C.c_size_t]
+lib.sp_invalidate_symbols.restype = C.c_int
+lib.sp_execute.argtypes = [C.c_void_p, C.POINTER(SP_Plan)]
+lib.sp_execute.restype = C.POINTER(SP_Result)
+lib.sp_result_free.argtypes = [C.POINTER(SP_Result)]
+lib.sp_result_free.restype = None
+lib.sp_state_save.argtypes = [C.c_void_p, C.c_char_p]
+lib.sp_state_save.restype = C.c_int
+lib.sp_state_load.argtypes = [C.c_char_p]
+lib.sp_state_load.restype = C.c_void_p
+lib.sp_read_file.argtypes = [C.c_void_p, C.c_char_p]
+lib.sp_read_file.restype = C.c_char_p
+lib.sp_write_file.argtypes = [C.c_void_p, C.c_char_p, C.c_char_p]
+lib.sp_write_file.restype = C.c_int
+lib.sp_checkpoint.argtypes = [C.c_void_p]
+lib.sp_checkpoint.restype = C.c_uint64
+lib.sp_rollback.argtypes = [C.c_void_p, C.c_uint64]
+lib.sp_rollback.restype = C.c_int
+lib.sp_apply_lora.argtypes = [C.c_void_p, C.c_char_p]
+lib.sp_apply_lora.restype = C.c_int
+lib.sp_record_latency.argtypes = [C.c_void_p, C.c_char_p, C.c_char_p, C.c_uint64]
+lib.sp_record_latency.restype = C.c_int
+lib.sp_get_best_kernel.argtypes = [C.c_void_p, C.c_char_p]
+lib.sp_get_best_kernel.restype = C.c_double
+lib.sp_get_success_rate.argtypes = [C.c_void_p, C.c_char_p]
+lib.sp_get_success_rate.restype = C.c_double
+lib.sp_record_result.argtypes = [C.c_void_p, C.c_char_p, C.c_char_p, C.c_int]
+lib.sp_record_result.restype = C.c_int
+lib.sp_best_kernel_name.argtypes = [C.c_void_p, C.c_char_p]
+lib.sp_best_kernel_name.restype = C.c_char_p
 
 # ------------------------------------------------------------------
 # Result wrapper
@@ -246,7 +246,7 @@ def _parse_result(ptr) -> PlanResult:
         needs_escalation=bool(r.needs_escalation),
         escalation_reason=_decode(r.escalation_reason),
     )
-    lib.ss_result_free(ptr)
+    lib.sp_result_free(ptr)
     return pr
 
 
@@ -260,14 +260,14 @@ def _b(s):
 # ------------------------------------------------------------------
 # Main class
 # ------------------------------------------------------------------
-class SwarmState:
+class StatePod:
     """A repo-scoped handle to the C kernel."""
 
     def __init__(self, root: str):
-        self._ptr = lib.ss_state_new(_b(root))
+        self._ptr = lib.sp_state_new(_b(root))
         if not self._ptr:
             raise ValueError(
-                f"ss_state_new failed for {root!r}: must be an existing directory "
+                f"sp_state_new failed for {root!r}: must be an existing directory "
                 "without single quotes in its path"
             )
         self._closed = False
@@ -275,14 +275,14 @@ class SwarmState:
     # -- lifecycle ---------------------------------------------------
     def close(self):
         if not self._closed:
-            lib.ss_state_free(self._ptr)
+            lib.sp_state_free(self._ptr)
             self._closed = True
 
     def _check(self):
         """Raise if the kernel handle was already freed (use-after-free
         guard for the lazy-access methods)."""
         if self._closed:
-            raise RuntimeError("SwarmState is closed")
+            raise RuntimeError("StatePod is closed")
 
     def __enter__(self):
         return self
@@ -298,7 +298,7 @@ class SwarmState:
             pass
 
     # -- batch execution ----------------------------------------------
-    def execute(self, ops, strategy=SS_CONTEXT_TARGETED,
+    def execute(self, ops, strategy=SP_CONTEXT_TARGETED,
                 target_paths=None, max_loops=0) -> PlanResult:
         """ops: list of dicts with keys type/path/content/pattern/target/
         command/line_start/line_end/max_results.
@@ -308,11 +308,11 @@ class SwarmState:
         if self._closed:
             raise RuntimeError("state closed")
         n = len(ops)
-        arr = (SS_Operation * max(n, 1))()
+        arr = (SP_Operation * max(n, 1))()
         for i, o in enumerate(ops):
-            otype = o.get("type", SS_OP_READ)
+            otype = o.get("type", SP_OP_READ)
             if isinstance(otype, str):
-                otype = _OP_TYPES.get(otype.upper(), SS_OP_READ)
+                otype = _OP_TYPES.get(otype.upper(), SP_OP_READ)
             content = o.get("content")
             if content is not None:
                 if isinstance(content, str):
@@ -321,7 +321,7 @@ class SwarmState:
                     raise ValueError(
                         f"op[{i}] binary content (NUL bytes) is not supported "
                         "by the text-oriented kernel API")
-            arr[i] = SS_Operation(
+            arr[i] = SP_Operation(
                 type=int(otype),
                 path=_b(o.get("path")),
                 content=_b(content),
@@ -337,65 +337,65 @@ class SwarmState:
         if target_paths:
             targets = (C.c_char_p * len(target_paths))(*[_b(t) for t in target_paths])
             tcount = len(target_paths)
-        plan = SS_Plan(
-            ops=C.cast(arr, C.POINTER(SS_Operation)) if n else None,
+        plan = SP_Plan(
+            ops=C.cast(arr, C.POINTER(SP_Operation)) if n else None,
             op_count=n,
             context_strategy=int(strategy),
             target_paths=C.cast(targets, C.POINTER(C.c_char_p)) if targets else None,
             target_path_count=tcount,
             max_loops=max_loops,
         )
-        ptr = lib.ss_execute(self._ptr, C.byref(plan))
+        ptr = lib.sp_execute(self._ptr, C.byref(plan))
         if not ptr:
-            raise RuntimeError("ss_execute returned NULL")
+            raise RuntimeError("sp_execute returned NULL")
         return _parse_result(ptr)
 
     # -- convenience ops ----------------------------------------------
     def read(self, path, line_start=0, line_end=0,
-             strategy=SS_CONTEXT_DELTA) -> str:
+             strategy=SP_CONTEXT_DELTA) -> str:
         r = self.execute([{
-            "type": SS_OP_READ, "path": path,
+            "type": SP_OP_READ, "path": path,
             "line_start": line_start, "line_end": line_end,
         }], strategy=strategy)
         return r.logs[0] if r.logs else ""
 
     def write(self, path, content) -> str:
-        r = self.execute([{"type": SS_OP_WRITE, "path": path, "content": content}])
+        r = self.execute([{"type": SP_OP_WRITE, "path": path, "content": content}])
         return r.logs[0] if r.logs else ""
 
     def grep(self, pattern, target=None, max_results=0) -> str:
         r = self.execute([{
-            "type": SS_OP_GREP, "pattern": pattern, "target": target,
+            "type": SP_OP_GREP, "pattern": pattern, "target": target,
             "max_results": max_results,
         }])
         return r.logs[0] if r.logs else ""
 
     def diff(self, path=None) -> str:
-        r = self.execute([{"type": SS_OP_DIFF, "path": path}])
+        r = self.execute([{"type": SP_OP_DIFF, "path": path}])
         return r.logs[0] if r.logs else ""
 
     def status(self) -> str:
-        r = self.execute([{"type": SS_OP_STATUS}])
+        r = self.execute([{"type": SP_OP_STATUS}])
         return r.logs[0] if r.logs else ""
 
     def ast_parse(self, path, mode="summary") -> str:
         """mode: 'summary' (default) or 'sexp' (full tree)."""
-        r = self.execute([{"type": SS_OP_AST_PARSE, "path": path, "pattern": mode}])
+        r = self.execute([{"type": SP_OP_AST_PARSE, "path": path, "pattern": mode}])
         return r.logs[0] if r.logs else ""
 
     def ast_query(self, path, pattern) -> str:
         """Run a tree-sitter query; returns 'path:row:col:capture:type:text' lines."""
-        r = self.execute([{"type": SS_OP_AST_QUERY, "path": path, "pattern": pattern}])
+        r = self.execute([{"type": SP_OP_AST_QUERY, "path": path, "pattern": pattern}])
         return r.logs[0] if r.logs else ""
 
     def execute_cmd(self, command) -> str:
-        r = self.execute([{"type": SS_OP_EXECUTE, "command": command}])
+        r = self.execute([{"type": SP_OP_EXECUTE, "command": command}])
         return r.logs[0] if r.logs else ""
 
     # -- lazy file access ---------------------------------------------
     def read_file(self, path) -> str:
         self._check()
-        raw = lib.ss_read_file(self._ptr, _b(path))
+        raw = lib.sp_read_file(self._ptr, _b(path))
         if raw is None:
             raise FileNotFoundError(path)
         return _decode(raw)
@@ -407,29 +407,29 @@ class SwarmState:
         if b"\x00" in content:
             raise ValueError("binary content (NUL bytes) is not supported "
                              "by the text-oriented kernel API")
-        if lib.ss_write_file(self._ptr, _b(path), _b(content)) != 0:
-            raise OSError(f"ss_write_file failed for {path!r}")
+        if lib.sp_write_file(self._ptr, _b(path), _b(content)) != 0:
+            raise OSError(f"sp_write_file failed for {path!r}")
 
     # -- state persistence / recovery ----------------------------------
     def checkpoint(self) -> int:
         self._check()
-        return int(lib.ss_checkpoint(self._ptr))
+        return int(lib.sp_checkpoint(self._ptr))
 
     def rollback(self, checkpoint_id) -> None:
         self._check()
-        if lib.ss_rollback(self._ptr, checkpoint_id) != 0:
+        if lib.sp_rollback(self._ptr, checkpoint_id) != 0:
             raise ValueError(f"unknown checkpoint {checkpoint_id}")
 
     def save(self, path) -> None:
         self._check()
-        if lib.ss_state_save(self._ptr, _b(path)) != 0:
-            raise OSError(f"ss_state_save failed for {path!r}")
+        if lib.sp_state_save(self._ptr, _b(path)) != 0:
+            raise OSError(f"sp_state_save failed for {path!r}")
 
     @classmethod
-    def load(cls, path) -> "SwarmState":
-        ptr = lib.ss_state_load(_b(path))
+    def load(cls, path) -> "StatePod":
+        ptr = lib.sp_state_load(_b(path))
         if not ptr:
-            raise ValueError(f"ss_state_load failed for {path!r}")
+            raise ValueError(f"sp_state_load failed for {path!r}")
         st = cls.__new__(cls)
         st._ptr = ptr
         st._closed = False
@@ -437,14 +437,14 @@ class SwarmState:
 
     # -- documentation layer (symbol summaries) ---------------------------
     def symbol_summary(self, path=None, pattern=None, target=None) -> str:
-        """SS_OP_SYMBOL_SUMMARY: compact symbol summaries (functions/
+        """SP_OP_SYMBOL_SUMMARY: compact symbol summaries (functions/
         structs/enums with signature, line range, in-file calls/callers).
 
         path limits to one file (None = whole repo); pattern = name
         substring; target = exact symbol name. Returns the kernel's
         rendered text; requires a tree-sitter build (else escalates)."""
         self._check()
-        op = {"type": SS_OP_SYMBOL_SUMMARY}
+        op = {"type": SP_OP_SYMBOL_SUMMARY}
         if path:
             op["path"] = path
         if pattern:
@@ -458,15 +458,15 @@ class SwarmState:
         """Build/refresh the symbol cache (whole repo or one file).
         Returns the number of symbols indexed (-1 without tree-sitter)."""
         self._check()
-        return int(lib.ss_build_symbol_index(self._ptr, _b(path_filter)))
+        return int(lib.sp_build_symbol_index(self._ptr, _b(path_filter)))
 
     def invalidate_symbols(self, paths) -> None:
         """Drop cached summaries for repo-relative paths (out-of-band
         edits). Returns None; raises OSError on failure."""
         self._check()
         arr = (C.c_char_p * max(len(paths), 1))(*[_b(p) for p in paths])
-        if lib.ss_invalidate_symbols(self._ptr, arr, len(paths)) != 0:
-            raise OSError("ss_invalidate_symbols failed")
+        if lib.sp_invalidate_symbols(self._ptr, arr, len(paths)) != 0:
+            raise OSError("sp_invalidate_symbols failed")
 
     # -- machine snapshot (sysinfo) --------------------------------------
     def sysinfo(self) -> dict:
@@ -474,9 +474,9 @@ class SwarmState:
         disk free/total (bytes), battery (pct/charging), uptime (s).
         Refreshed on every call — cheap /proc + statvfs reads."""
         self._check()
-        si = SS_SystemInfo()
-        if lib.ss_sysinfo(self._ptr, C.byref(si)) != 0:
-            raise OSError("ss_sysinfo failed")
+        si = SP_SystemInfo()
+        if lib.sp_sysinfo(self._ptr, C.byref(si)) != 0:
+            raise OSError("sp_sysinfo failed")
         return {
             "mem_total_kb": si.mem_total_kb,
             "mem_avail_kb": si.mem_avail_kb,
@@ -494,35 +494,35 @@ class SwarmState:
         state hash, so plan outcomes in the registry are tied to the
         resource conditions they ran under."""
         self._check()
-        tag = lib.ss_resource_tag(self._ptr)
+        tag = lib.sp_resource_tag(self._ptr)
         return _decode(tag) or ""
 
     def journal_hash(self) -> str:
         """Rolling SHA-256 hash (SNAP-6 tamper-evidence) folding every
         registry record and audit ledger event."""
         self._check()
-        h = lib.ss_journal_hash(self._ptr)
+        h = lib.sp_journal_hash(self._ptr)
         return _decode(h) or ""
 
     # -- performance registry -------------------------------------------
     def record_latency(self, signature, kernel, latency_us) -> None:
         self._check()
-        if lib.ss_record_latency(self._ptr, _b(signature), _b(kernel), latency_us) != 0:
-            raise OSError("ss_record_latency failed")
+        if lib.sp_record_latency(self._ptr, _b(signature), _b(kernel), latency_us) != 0:
+            raise OSError("sp_record_latency failed")
 
     def best_kernel(self, signature) -> float:
         self._check()
-        return float(lib.ss_get_best_kernel(self._ptr, _b(signature)))
+        return float(lib.sp_get_best_kernel(self._ptr, _b(signature)))
 
     def best_kernel_name(self, signature):
         self._check()
-        name = lib.ss_best_kernel_name(self._ptr, _b(signature))
+        name = lib.sp_best_kernel_name(self._ptr, _b(signature))
         return _decode(name)
 
     def success_rate(self, signature) -> float:
         """Mechanical success rate [0,1] for a signature (0.0 if unseen)."""
         self._check()
-        return float(lib.ss_get_success_rate(self._ptr, _b(signature)))
+        return float(lib.sp_get_success_rate(self._ptr, _b(signature)))
 
     def feedback(self, signature, ok: bool, kernel: str | None = None) -> None:
         """Record a plan-level success/failure. Semantic layer: benchmarks
@@ -534,8 +534,8 @@ class SwarmState:
         and the aggregate success_rate() folds all contexts together."""
         self._check()
         k = kernel if kernel is not None else "plan@" + self.resource_tag()
-        if lib.ss_record_result(self._ptr, _b(signature), _b(k), int(bool(ok))) != 0:
-            raise OSError("ss_record_result failed")
+        if lib.sp_record_result(self._ptr, _b(signature), _b(k), int(bool(ok))) != 0:
+            raise OSError("sp_record_result failed")
 
     def registry_timing(self, signature: str) -> dict:
         """Temporal registry view for one signature, aggregated across
@@ -547,9 +547,9 @@ class SwarmState:
         unseen. Lets the orchestrator factor time budget into
         strategy/confidence."""
         self._check()
-        out = SS_RegistryStats()
-        if lib.ss_registry_timing(self._ptr, _b(signature), C.byref(out)) != 0:
-            raise OSError("ss_registry_timing failed")
+        out = SP_RegistryStats()
+        if lib.sp_registry_timing(self._ptr, _b(signature), C.byref(out)) != 0:
+            raise OSError("sp_registry_timing failed")
         return {
             "samples": out.samples,
             "fb_samples": out.fb_samples,
@@ -566,9 +566,9 @@ class SwarmState:
 
 
 __all__ = [
-    "SwarmState", "PlanResult", "lib",
-    "SS_OP_READ", "SS_OP_WRITE", "SS_OP_GREP", "SS_OP_DIFF", "SS_OP_STATUS",
-    "SS_OP_EXECUTE", "SS_OP_AST_PARSE", "SS_OP_AST_QUERY",
-    "SS_CONTEXT_DELTA", "SS_CONTEXT_TARGETED", "SS_CONTEXT_FULL",
-    "SS_CONTEXT_SYMBOLIC",
+    "StatePod", "PlanResult", "lib",
+    "SP_OP_READ", "SP_OP_WRITE", "SP_OP_GREP", "SP_OP_DIFF", "SP_OP_STATUS",
+    "SP_OP_EXECUTE", "SP_OP_AST_PARSE", "SP_OP_AST_QUERY",
+    "SP_CONTEXT_DELTA", "SP_CONTEXT_TARGETED", "SP_CONTEXT_FULL",
+    "SP_CONTEXT_SYMBOLIC",
 ]

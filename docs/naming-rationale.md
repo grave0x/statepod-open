@@ -1,11 +1,11 @@
 # Naming Rationale
 
-**Public command:** `sw`  
-**Public project:** SwarmState  
+**Public command:** `sp`  
+**Public project:** StatePod  
 
 We considered `ss` for internal use due to its brevity. It was rejected for public adoption because of historical and contextual sensitivities, and a conflict with the Linux socket statistics tool.
 
-`sw` was chosen because:
+`sp` was chosen because:
 
 - It is short and fast to type.
 - It suggests both **swarm** and **software**.

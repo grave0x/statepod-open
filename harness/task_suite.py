@@ -11,7 +11,7 @@ would have seen), and success.
 Timing & resources: each task records started/finished wall-clock time,
 duration_ms, and a kernel resource snapshot (mem/load) at start and end.
 Every run appends one JSONL line per task to --results (default
-~/.local/state/swarmstate/task_suite.jsonl) so mock vs. real-LLM plans
+~/.local/state/statepod/task_suite.jsonl) so mock vs. real-LLM plans
 can be compared over time (success AND speed).
 """
 import argparse
@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "py"))
 
 from orchestrator import Orchestrator  # noqa: E402
 from planner import OPENAI_BACKEND_NAMES  # noqa: E402
-from swarmstate import KERNEL_VERSION  # noqa: E402
+from statepod import KERNEL_VERSION  # noqa: E402
 
 import corpus  # noqa: E402  (families, FIXTURE, ORACLES)
 import gpu  # noqa: E402  (GPU detection for local-model runs)
@@ -184,10 +184,10 @@ def main() -> int:
                          "(demonstrates naive-prompt scaling vs containment)")
     ap.add_argument("--results", default=None,
                     help="JSONL results log (default: "
-                         "~/.local/state/swarmstate/task_suite.jsonl)")
+                         "~/.local/state/statepod/task_suite.jsonl)")
     args = ap.parse_args()
     results_path = Path(args.results or
-                        Path.home() / ".local/state/swarmstate" / "task_suite.jsonl")
+                        Path.home() / ".local/state/statepod" / "task_suite.jsonl")
     results_path.parent.mkdir(parents=True, exist_ok=True)
     print(f"[task_suite] kernel: {KERNEL_VERSION} (backend={args.backend}, "
           f"escalate={not args.no_escalate})", flush=True)
@@ -212,7 +212,7 @@ def main() -> int:
                     print(f"unknown task/family: {tok}", file=sys.stderr)
         tasks = sel
 
-    with tempfile.TemporaryDirectory(prefix="swarmstate-suite-") as tmp:
+    with tempfile.TemporaryDirectory(prefix="statepod-suite-") as tmp:
         root = Path(tmp)
         build_repo(root, scale_kb=args.scale_kb)
         print(f"repo: {root}  backend: {args.backend}  scale_kb={args.scale_kb}\n")
@@ -221,7 +221,7 @@ def main() -> int:
         env = ({"model": args.model,
                 "gpu": gpu.gpu_label(),
                 "processor": gpu.ollama_processor(),
-                "ngl": int(os.environ.get("SS_OLLAMA_NGL", "0") or 0)}
+                "ngl": int(os.environ.get("SP_OLLAMA_NGL", "0") or 0)}
                if args.backend in ("ollama", "normal", "deepseek") else {})
         with Orchestrator(str(root), backend=args.backend,
                           model=args.model,

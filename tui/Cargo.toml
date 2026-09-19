@@ -1,12 +1,12 @@
 [package]
-name = "swarmtui"
+name = "statetui"
 version = "0.1.0-dev"
 edition = "2021"
-description = "Swarmstate orchestrator/management TUI"
+description = "StatePod orchestrator/management TUI"
 license = "MIT"
 
 [lib]
-name = "swarmtui"
+name = "statetui"
 path = "src/lib.rs"
 
 [dependencies]

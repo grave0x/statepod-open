@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI for /swarmstate on|off|status|stats|full|cap — shares ~/.swarmstate/omp.json."""
+"""CLI for /statepod on|off|status|stats|full|cap — shares ~/.statepod/omp.json."""
 from __future__ import annotations
 
 import os
@@ -19,27 +19,27 @@ from contain_lib import (  # noqa: E402
 
 HOME = Path.home()
 REPO = Path(os.environ.get(
-    "SWARMSTATE_REPO",
-    str(HOME / "Projects/internal.source/02-tools/swarmstate"),
+    "STATEPOD_REPO",
+    str(HOME / "Projects/internal.source/02-tools/statepod"),
 ))
 
 
 def kernel_status() -> str:
     py = REPO / "py"
-    lib = REPO / "libswarmstate.so"
+    lib = REPO / "libstatepod.so"
     code = (
         "import sys,os;"
         f"sys.path.insert(0,{str(py)!r});"
-        f"os.environ.setdefault('SWARMSTATE_LIB',{str(lib)!r});"
-        "from swarmstate import SwarmState;"
-        "s=SwarmState(os.path.expanduser('~/.swarmstate'));"
+        f"os.environ.setdefault('STATEPOD_LIB',{str(lib)!r});"
+        "from statepod import StatePod;"
+        "s=StatePod(os.path.expanduser('~/.statepod'));"
         "si=s.sysinfo();t=s.resource_tag();"
         "print(f\"{t} | load {si['load1']:.1f}/{si['load5']:.1f}/{si['load15']:.1f} "
         "| mem {si['mem_avail_kb']//1024}/{si['mem_total_kb']//1024}M "
         "| up {si['uptime_sec']}s\")"
     )
     try:
-        (HOME / ".swarmstate").mkdir(parents=True, exist_ok=True)
+        (HOME / ".statepod").mkdir(parents=True, exist_ok=True)
         return subprocess.check_output(
             ["python3", "-c", code], text=True, timeout=3,
             stderr=subprocess.DEVNULL).strip()
@@ -54,7 +54,7 @@ def main(argv: list[str]) -> int:
         cfg["enabled"] = True
         write_cfg(cfg)
         print(
-            f"SwarmState: ON — cap {cfg['capChars']:,} chars · "
+            f"StatePod: ON — cap {cfg['capChars']:,} chars · "
             f"readLimit {cfg['readLimit']} · grepMax {cfg['grepMax']}"
         )
         print("Grok path: PreToolUse hardens dumps; PostToolUse archives oversized "
@@ -62,7 +62,7 @@ def main(argv: list[str]) -> int:
     elif sub == "off":
         cfg["enabled"] = False
         write_cfg(cfg)
-        print("SwarmState: OFF")
+        print("StatePod: OFF")
     elif sub == "cap":
         if len(argv) < 3:
             print(f"capChars={cfg['capChars']}")
@@ -70,7 +70,7 @@ def main(argv: list[str]) -> int:
         try:
             n = int(argv[2])
         except ValueError:
-            print("usage: swarmstate_cli.py cap <chars>")
+            print("usage: statepod_cli.py cap <chars>")
             return 2
         if n < 1000:
             print("cap must be >= 1000")
@@ -99,7 +99,7 @@ def main(argv: list[str]) -> int:
         )
     elif sub == "full":
         if len(argv) < 3:
-            print("usage: swarmstate_cli.py full <call-id>")
+            print("usage: statepod_cli.py full <call-id>")
             return 2
         arg = argv[2]
         if not OUT_DIR.exists():
@@ -122,7 +122,7 @@ def main(argv: list[str]) -> int:
         st = "ON" if cfg["enabled"] else "OFF"
         ks = kernel_status() if cfg["enabled"] else ""
         print(
-            f"SwarmState: {st} | cap {cfg['capChars']:,} chars | "
+            f"StatePod: {st} | cap {cfg['capChars']:,} chars | "
             f"readLimit {cfg['readLimit']} | status "
             f"{'on' if cfg['injectStatus'] else 'off'} | "
             f"outbox {OUT_DIR} | state {STATE}"

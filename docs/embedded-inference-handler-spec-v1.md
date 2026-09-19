@@ -1,14 +1,14 @@
-# SwarmState Embedded Inference Handler Spec v1.0
+# StatePod Embedded Inference Handler Spec v1.0
 
 **Status:** Draft for implementation  
-**Purpose:** Replace the external Ollama service dependency with a natively embedded inference engine, giving SwarmState a single‑binary, local‑first brain with full control over GPU offload, caching, grammar enforcement, and batching.
+**Purpose:** Replace the external Ollama service dependency with a natively embedded inference engine, giving StatePod a single‑binary, local‑first brain with full control over GPU offload, caching, grammar enforcement, and batching.
 
 ---
 
 ## 1. Goals
 
 - Remove the need to run Ollama as a separate service.
-- Embed a high‑performance inference engine directly into the SwarmState node.
+- Embed a high‑performance inference engine directly into the StatePod node.
 - Provide automatic GPU offload tuning based on available hardware and sysinfo.
 - Persist prompt prefix state to reduce per‑request token evaluation.
 - Enforce plan JSON grammar at the sampler level to eliminate most invalid plans.
@@ -22,13 +22,13 @@
 - Do not write a transformer inference engine from scratch.
 - Do not replace llama.cpp as the underlying runtime.
 - Do not add cloud‑only features or require network access for inference.
-- Do not change the public `sw` CLI or existing test suites except where explicitly noted.
+- Do not change the public `sp` CLI or existing test suites except where explicitly noted.
 
 ---
 
 ## 3. Underlying Runtime
 
-Use **llama.cpp** as the inference backend, compiled as a static library and linked into the SwarmState node.
+Use **llama.cpp** as the inference backend, compiled as a static library and linked into the StatePod node.
 
 - Version: latest stable release at implementation time.
 - Quantization: GGUF format, Q4_K_M or Q4_K_S as default.
@@ -45,10 +45,10 @@ The inference handler lives in a new C module: `infer/llama_infer.c` / `infer/ll
 ### 4.1 Initialization
 
 ```c
-typedef struct ss_infer_ctx ss_infer_ctx;
+typedef struct sp_infer_ctx sp_infer_ctx;
 
-ss_infer_ctx* ss_infer_init(const char* model_path, int n_ctx, int n_gpu_layers);
-void ss_infer_free(ss_infer_ctx* ctx);
+sp_infer_ctx* sp_infer_init(const char* model_path, int n_ctx, int n_gpu_layers);
+void sp_infer_free(sp_infer_ctx* ctx);
 ```
 
 - `model_path` – path to a GGUF model file.
@@ -58,8 +58,8 @@ void ss_infer_free(ss_infer_ctx* ctx);
 ### 4.2 Generation
 
 ```c
-char* ss_infer_generate(
-    ss_infer_ctx* ctx,
+char* sp_infer_generate(
+    sp_infer_ctx* ctx,
     const char* system_prompt,
     const char* user_prompt,
     const char* grammar,      // GBNF grammar string or NULL
@@ -77,18 +77,18 @@ char* ss_infer_generate(
 ### 4.3 Caching
 
 ```c
-int ss_infer_cache_prefix(ss_infer_ctx* ctx, const char* prefix);
-void ss_infer_clear_cache(ss_infer_ctx* ctx);
+int sp_infer_cache_prefix(sp_infer_ctx* ctx, const char* prefix);
+void sp_infer_clear_cache(sp_infer_ctx* ctx);
 ```
 
-- `ss_infer_cache_prefix` stores the KV cache for a given prefix (e.g., the system prompt) so subsequent calls can reuse it.
+- `sp_infer_cache_prefix` stores the KV cache for a given prefix (e.g., the system prompt) so subsequent calls can reuse it.
 - The cache is keyed by the string content hash. If the prefix changes, the cache is invalidated.
-- `ss_infer_clear_cache` drops all cached prefixes.
+- `sp_infer_clear_cache` drops all cached prefixes.
 
 ### 4.4 GPU Offload Tuning
 
 ```c
-int ss_infer_auto_tune(ss_infer_ctx* ctx, const ss_sysinfo_t* si);
+int sp_infer_auto_tune(sp_infer_ctx* ctx, const sp_sysinfo_t* si);
 ```
 
 - Inspects available VRAM and current memory pressure.
@@ -99,7 +99,7 @@ int ss_infer_auto_tune(ss_infer_ctx* ctx, const ss_sysinfo_t* si);
 ### 4.5 Batch Inference (v2, optional)
 
 ```c
-char** ss_infer_batch(ss_infer_ctx* ctx, const char** prompts, int n, const char* grammar, int max_tokens_per, float temperature);
+char** sp_infer_batch(sp_infer_ctx* ctx, const char** prompts, int n, const char* grammar, int max_tokens_per, float temperature);
 ```
 
 - For mesh inference provider mode.
@@ -107,7 +107,7 @@ char** ss_infer_batch(ss_infer_ctx* ctx, const char** prompts, int n, const char
 
 ---
 
-## 5. Integration into `swarmstate-node.c`
+## 5. Integration into `statepod-node.c`
 
 The Windows node and any future Linux node use this embedded inference engine as the default provider.
 
@@ -115,13 +115,13 @@ The Windows node and any future Linux node use this embedded inference engine as
 
 - If `--model` is given, load that model.
 - Otherwise, use the smallest model that is present in the model directory.
-- Model directory: `~/.local/share/swarmstate/models` (or `%APPDATA%\SwarmState\models` on Windows).
+- Model directory: `~/.local/share/statepod/models` (or `%APPDATA%\StatePod\models` on Windows).
 
 ### 5.2 Inference provider flow
 
-1. Node starts, initialises `ss_infer_ctx` with the default model.
+1. Node starts, initialises `sp_infer_ctx` with the default model.
 2. When an inference request arrives:
-   - Call `ss_infer_generate` with the fixed system prompt, user prompt, and plan grammar.
+   - Call `sp_infer_generate` with the fixed system prompt, user prompt, and plan grammar.
    - Return the generated JSON as the response.
 3. If no model is available or inference fails, fall back to:
    - Ollama if detected and explicitly enabled.
@@ -139,7 +139,7 @@ The Windows node and any future Linux node use this embedded inference engine as
 The system prompt used for plan generation is static for a given model and schema. To minimise latency:
 
 1. On first inference call, split the prompt into `system_prompt` and `user_prompt`.
-2. Cache the KV state for `system_prompt` using `ss_infer_cache_prefix`.
+2. Cache the KV state for `system_prompt` using `sp_infer_cache_prefix`.
 3. On subsequent calls, only evaluate the new `user_prompt` tokens.
 
 This reduces prompt evaluation from ~500 tokens to ~15 tokens per task on local models.
@@ -165,7 +165,7 @@ If grammar support is unavailable for a given backend, fall back to the existing
 ### 8.1 Inputs
 
 - Model size in millions of parameters.
-- Available VRAM from `ss_sysinfo`.
+- Available VRAM from `sp_sysinfo`.
 - Current memory pressure from the registry or OS.
 
 ### 8.2 Algorithm
@@ -174,7 +174,7 @@ If grammar support is unavailable for a given backend, fall back to the existing
 2. Estimate per‑layer VRAM usage as `model_size * 0.15 / n_layers`.
 3. While estimated VRAM usage < available VRAM * 0.8, increase `n_gpu_layers`.
 4. Cap at total number of layers.
-5. Apply the resulting `n_gpu_layers` via `ss_infer_auto_tune`.
+5. Apply the resulting `n_gpu_layers` via `sp_infer_auto_tune`.
 
 This is a conservative default. The registry can later learn better settings per task signature and hardware.
 
@@ -182,7 +182,7 @@ This is a conservative default. The registry can later learn better settings per
 
 ## 9. Model Routing
 
-The inference handler is model‑aware. The existing `pick_model_rates` logic in the orchestrator can call `ss_infer_generate` with the chosen model by loading/unloading as needed.
+The inference handler is model‑aware. The existing `pick_model_rates` logic in the orchestrator can call `sp_infer_generate` with the chosen model by loading/unloading as needed.
 
 To keep initial scope small:
 
@@ -198,7 +198,7 @@ To keep initial scope small:
   - Linux x86_64
   - Linux ARM64
   - Windows x86_64 (mingw, static)
-- Link the static library into `swarmstate-node.c`.
+- Link the static library into `statepod-node.c`.
 - Do not modify the core kernel safety invariants.
 
 The Windows zip should include the node binary with llama.cpp already linked. No separate inference server.
@@ -209,10 +209,10 @@ The Windows zip should include the node binary with llama.cpp already linked. No
 
 ### 11.1 Unit tests
 
-- `ss_infer_init` loads a tiny test model.
-- `ss_infer_generate` returns non‑empty string with grammar.
+- `sp_infer_init` loads a tiny test model.
+- `sp_infer_generate` returns non‑empty string with grammar.
 - Prefix cache reduces token evaluation time on second call.
-- `ss_infer_auto_tune` returns sensible layer counts for different VRAM sizes.
+- `sp_infer_auto_tune` returns sensible layer counts for different VRAM sizes.
 
 ### 11.2 Integration tests
 
@@ -245,7 +245,7 @@ The Windows zip should include the node binary with llama.cpp already linked. No
 
 ### Milestone 3: GPU offload auto‑tuning
 
-- Implement `ss_infer_auto_tune`.
+- Implement `sp_infer_auto_tune`.
 - Test on a machine with a small GPU (e.g., 2GB).
 - Show that offload improves tokens/sec without OOM.
 
@@ -261,7 +261,7 @@ The Windows zip should include the node binary with llama.cpp already linked. No
 
 | Risk | Mitigation |
 |------|------------|
-| llama.cpp API changes | Pin to a specific commit; wrap behind `ss_infer` API. |
+| llama.cpp API changes | Pin to a specific commit; wrap behind `sp_infer` API. |
 | Model loading memory spikes | Use memory‑mapped weights; unload when idle. |
 | Grammar enforcement limits model creativity | Only apply for plan JSON, not open‑ended chat. |
 | GPU offload causes instability on some hardware | Default to CPU; offload only if auto‑tune proves stable. |

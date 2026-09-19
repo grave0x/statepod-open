@@ -1,12 +1,12 @@
-SwarmState Kernel Binary License
+StatePod Kernel Binary License
 ==================================
 
 Copyright (c) 2026 grave0x. All rights reserved.
 
 The files in this repository named:
 
-    libswarmstate.so
-    libswarmstate.a
+    libstatepod.so
+    libstatepod.a
 
 ("the Kernel") are proprietary software. The kernel source (kernel.c)
 is not distributed in this repository.
@@ -14,7 +14,7 @@ is not distributed in this repository.
 Permitted use
 -------------
 You may:
-  - use the Kernel to build, run, and test the open-source SwarmState
+  - use the Kernel to build, run, and test the open-source StatePod
     components distributed alongside it in this repository;
   - redistribute the Kernel only as part of an unmodified copy of this
     repository.

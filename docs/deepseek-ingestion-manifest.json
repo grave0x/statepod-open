@@ -2,8 +2,8 @@
   "ingested_at": "2026-09-04T04:55:39.458497",
   "source": "/home/grave/Documents/deepseek-sessions",
   "total_chats": 104,
-  "swarmstate_path": "/home/grave/Projects/internal.source/02-tools/swarmstate",
-  "docs_index": "/home/grave/.swarmstate/docs/deepseek-sessions/index.jsonl",
+  "statepod_path": "/home/grave/Projects/internal.source/02-tools/statepod",
+  "docs_index": "/home/grave/.statepod/docs/deepseek-sessions/index.jsonl",
   "chats": [
     {
       "filename": "0x域名注册指南-6f1581a9.md",
@@ -182,20 +182,20 @@
       "path": "/home/grave/Documents/deepseek-sessions/Deb-to-Arch-converter-e84b1308.md"
     },
     {
-      "filename": "Deep-Analysis-SwarmState-b1fa37dc.md",
-      "title": "Deep-Analysis-SwarmState-b1fa37dc",
+      "filename": "Deep-Analysis-StatePod-b1fa37dc.md",
+      "title": "Deep-Analysis-StatePod-b1fa37dc",
       "chat_id": "b1fa37dc-ff60-403b-a0ab-09ada4a6f8c0",
       "date": "2026-09-04",
       "size": 179586,
-      "path": "/home/grave/Documents/deepseek-sessions/Deep-Analysis-SwarmState-b1fa37dc.md"
+      "path": "/home/grave/Documents/deepseek-sessions/Deep-Analysis-StatePod-b1fa37dc.md"
     },
     {
-      "filename": "Deep_Analysis_SwarmState.md",
-      "title": "Deep_Analysis_SwarmState",
+      "filename": "Deep_Analysis_StatePod.md",
+      "title": "Deep_Analysis_StatePod",
       "chat_id": null,
       "date": null,
       "size": 147941,
-      "path": "/home/grave/Documents/deepseek-sessions/Deep_Analysis_SwarmState.md"
+      "path": "/home/grave/Documents/deepseek-sessions/Deep_Analysis_StatePod.md"
     },
     {
       "filename": "Electron-Maintainers-List-168850ff.md",
@@ -678,20 +678,20 @@
       "path": "/home/grave/Documents/deepseek-sessions/Sub-1ms-C-function-memory-footprint-29e21175.md"
     },
     {
-      "filename": "SwarmState-Pilot-Plan-0d868ba2.md",
-      "title": "SwarmState-Pilot-Plan-0d868ba2",
+      "filename": "StatePod-Pilot-Plan-0d868ba2.md",
+      "title": "StatePod-Pilot-Plan-0d868ba2",
       "chat_id": "0d868ba2-fd9f-44df-a49f-0e875dcfd4b0",
       "date": "2026-09-04",
       "size": 19780,
-      "path": "/home/grave/Documents/deepseek-sessions/SwarmState-Pilot-Plan-0d868ba2.md"
+      "path": "/home/grave/Documents/deepseek-sessions/StatePod-Pilot-Plan-0d868ba2.md"
     },
     {
-      "filename": "SwarmState_Pilot_Plan.md",
-      "title": "SwarmState_Pilot_Plan",
+      "filename": "StatePod_Pilot_Plan.md",
+      "title": "StatePod_Pilot_Plan",
       "chat_id": null,
       "date": null,
       "size": 16979,
-      "path": "/home/grave/Documents/deepseek-sessions/SwarmState_Pilot_Plan.md"
+      "path": "/home/grave/Documents/deepseek-sessions/StatePod_Pilot_Plan.md"
     },
     {
       "filename": "SysCall-Implementation-f23ef59e.md",

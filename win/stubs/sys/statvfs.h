@@ -1,6 +1,6 @@
 /* sys/statvfs.h — Windows shim: disk info via GetDiskFreeSpaceExA. */
-#ifndef SS_STATVFS_H
-#define SS_STATVFS_H
+#ifndef SP_STATVFS_H
+#define SP_STATVFS_H
 #include <sys/types.h>
 #include <windows.h>
 struct statvfs {

@@ -2,8 +2,8 @@
  * Every AST op cleanly fails at ts_parser_new() == NULL; the traversal
  * stubs below exist only so kernel.c compiles.  Never linked on Linux
  * (the real libtree-sitter is used there). */
-#ifndef SS_TS_API_H
-#define SS_TS_API_H
+#ifndef SP_TS_API_H
+#define SP_TS_API_H
 #include <stdint.h>
 #include <stddef.h>
 

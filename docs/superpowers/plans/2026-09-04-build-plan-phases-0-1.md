@@ -6,7 +6,7 @@
 
 **Architecture:** Reuse `harness/corpus.py` + `task_suite.run_one`. Add `scripts/maturity_bench.py` that A/B’s heuristic vs rate-based strategy selection over the 42-task mock corpus, writes a JSON report, and exits non-zero on regression. Bump `STRAT_MIN_SAMPLES` from 2 → 3 to match `pick_model_rates` / build-plan-v1.
 
-**Tech Stack:** Python 3 stdlib, existing C kernel via `swarmstate`, mock backend (no network).
+**Tech Stack:** Python 3 stdlib, existing C kernel via `statepod`, mock backend (no network).
 
 **Spec:** `docs/build-plan-v1.md` phases 0–1; glossary in `CONTEXT.md` (maturity gate).
 
@@ -47,7 +47,7 @@
 1. Heuristic pass: run all `corpus.ALL_TASKS` with strategy forced to op-shape heuristic (no registry influence).
 2. Seed pass: record STRAT feedback from heuristic run into a temp jsonl; additionally inject synthetic proven overrides (≥3 samples) on at least one READ signature where heuristic≠proven.
 3. Rate pass: replay seeds + run corpus with normal `decide_strategy(registry=…)`.
-4. Report per-signature strategy picks + semantic rates; write `docs/maturity-bench-latest.json` (or under `~/.local/state/swarmstate/`).
+4. Report per-signature strategy picks + semantic rates; write `docs/maturity-bench-latest.json` (or under `~/.local/state/statepod/`).
 5. Pass if: rate-based overall semantic rate ≥ heuristic; and every injected override is honored on the rate pass.
 
 - [ ] Implement script + unit/integration test on mock.

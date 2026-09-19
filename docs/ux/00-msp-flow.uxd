@@ -1,6 +1,6 @@
-# SwarmState MSP demo flow (build-plan phase 5)
+# StatePod MSP demo flow (build-plan phase 5)
 # join → diagnose → remediate. uxd render / uxd html
-screen "SwarmState — MSP 10-min flow" w 88 h 28 bg 17
+screen "StatePod — MSP 10-min flow" w 88 h 28 bg 17
   col weight 1 pad 1 gap 1
     text "MSP demo path (scripted)" fg 14 bold 1
     text "Node web UI · offline · role-aware" fg 8

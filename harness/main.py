@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SwarmState orchestrator CLI.
+"""StatePod orchestrator CLI.
 
 Interactive:
     python3 harness/main.py /path/to/repo [--backend mock|ollama|freetoken|llamacpp] [--model …]
@@ -23,7 +23,7 @@ _BACKEND_CHOICES = ["mock", "ollama", "deepseek", *OPENAI_BACKEND_NAMES]
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="SwarmState orchestrator")
+    ap = argparse.ArgumentParser(description="StatePod orchestrator")
     ap.add_argument("root", help="repo directory the kernel operates on")
     ap.add_argument("--backend", default="mock",
                     choices=_BACKEND_CHOICES)
@@ -43,7 +43,7 @@ def main() -> int:
         if args.query:
             print(orch.ask(args.query))
             return 0
-        print(f"SwarmState orchestrator on {args.root} "
+        print(f"StatePod orchestrator on {args.root} "
               f"(backend={args.backend}). Type a query, or 'exit'.")
         while True:
             try:

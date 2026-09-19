@@ -1,4 +1,4 @@
-"""sw docs ingestion tests (harness/docs.py)."""
+"""sp docs ingestion tests (harness/docs.py)."""
 import json
 import os
 import sys
@@ -17,7 +17,7 @@ RST = "Quickstart\n==========\n\nFast setup.\n\nMesh\n----\n\n" \
 
 
 def make_repo():
-    d = tempfile.mkdtemp(prefix="sw-docs-")
+    d = tempfile.mkdtemp(prefix="sp-docs-")
     os.makedirs(os.path.join(d, "docs"))
     with open(os.path.join(d, "README.md"), "w") as f:
         f.write(MD)

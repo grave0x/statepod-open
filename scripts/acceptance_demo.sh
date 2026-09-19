@@ -11,9 +11,9 @@
 # Run it in front of anyone and read the verdict table at the end.
 set -u
 cd "$(dirname "$0")/.."
-export SWARMSTATE_LIB=$PWD/libswarmstate.so
+export STATEPOD_LIB=$PWD/libstatepod.so
 
-RESULTS=/tmp/ss_acceptance
+RESULTS=/tmp/sp_acceptance
 mkdir -p "$RESULTS"
 pkill -f "harness/meshd.py" 2>/dev/null; sleep 1
 

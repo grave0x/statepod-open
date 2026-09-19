@@ -1,8 +1,8 @@
 /* infer/plan_gbnf.h — generated from infer/plan.gbnf (do not edit by hand).
  * The plan schema grammar, llama.cpp-safe (single-line rules, no underscores).
  */
-static const char SS_PLAN_GBNF[] =
-    "# SwarmState plan grammar — flattened for llama.cpp's GBNF parser.\n"
+static const char SP_PLAN_GBNF[] =
+    "# StatePod plan grammar — flattened for llama.cpp's GBNF parser.\n"
     "# Same schema as harness/plan_grammar.py PLAN_GBNF.  llama.cpp GBNF:\n"
     "# single-line rules and NO underscores in rule names.\n"
     "root      ::= ws \"{\" ws ops \",\" ws strategy ws \"}\"\n"

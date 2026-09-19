@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""meshd -- SwarmState mesh daemon (Phase 1: plaintext-LAN transport shim).
+"""meshd -- StatePod mesh daemon (Phase 1: plaintext-LAN transport shim).
 
 Runs ONE C-mesh peer (the shared stateless CRDT base at libmesh) and provides
 the *transport* the C mesh deliberately leaves out: a TCP listener + outbound
@@ -416,7 +416,7 @@ class MeshDaemon:
         import sys as _sys
         from pathlib import Path as _P
         # standalone meshd needs the repo's harness/ and py/ on the path
-        # (planner -> swarmstate C binding) before importing planner.
+        # (planner -> statepod C binding) before importing planner.
         _root = _P(__file__).resolve().parent.parent
         for _d in (_root / "harness", _root / "py"):
             if str(_d) not in _sys.path:

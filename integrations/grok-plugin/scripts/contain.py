@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CLI: contain a file or stdin into ~/.swarmstate/grok/outbox (manual prime-parity).
+"""CLI: contain a file or stdin into ~/.statepod/grok/outbox (manual prime-parity).
 
 Usage:
   contain.py <path>              # archive file, print digest to stdout

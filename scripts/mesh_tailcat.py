@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""mesh_tailcat.py -- run a SwarmState mesh node over a Tailcat tunnel.
+"""mesh_tailcat.py -- run a StatePod mesh node over a Tailcat tunnel.
 
 Tailcat (github.com/tailscale/tailcat) gives point-to-point WireGuard
 tunnels with no control plane.  Its raw `tailcat` stdio mode is ONE-way

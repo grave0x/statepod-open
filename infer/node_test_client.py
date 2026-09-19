@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SwarmState node round-trip test: send a plan req, wait for the resp line.
+"""StatePod node round-trip test: send a plan req, wait for the resp line.
 
 Usage: node_test_client.py [query] [timeout_s]
 Connects to 127.0.0.1:7799, sends {"type":"req","id":"t1","query":...},

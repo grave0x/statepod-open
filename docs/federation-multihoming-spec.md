@@ -58,7 +58,7 @@ Audit trail (full context); UI clarity (visible/swappable federation context).
 - UI shell: federation context indicator + switcher as a core widget.
 
 ## 10. Conclusion
-Multi-homing turns SwarmState into a federation-of-federations platform: many private networks,
+Multi-homing turns StatePod into a federation-of-federations platform: many private networks,
 separate knowledge, explicit coordinated governance. The cage stays closed, the pools stay clean,
 the bridges stay explicit — that's how trust scales.
 
@@ -86,7 +86,7 @@ kernel registry — the flip demo and `registry_bridge` always used slashes).
 
 ### F.1 C-node client-side join — SHIPPED
 
-The Windows/standalone C node (`win/swarmstate-node.c`) joins pools as a
+The Windows/standalone C node (`win/statepod-node.c`) joins pools as a
 **client** of a Python pool hub:
 
 - `--join INVITE` — presents the signed invite on every outbound

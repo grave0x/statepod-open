@@ -29,7 +29,7 @@ echo ""
 echo "=== 2. HUB starts (pool secret = the trust root) ==="
 python3 harness/meshd.py --name hub --port $HUB_PORT \
   --pool-secret "$SEC" --pool-name cfs-brigade-3 --allow hub \
-  --hash-interval 2 > /tmp/ss_pool_hub.log 2>&1 &
+  --hash-interval 2 > /tmp/sp_pool_hub.log 2>&1 &
 HUB_PID=$!
 sleep 1
 
@@ -37,7 +37,7 @@ echo ""
 echo "=== 3. NEW NODE scans the invite and joins (one step) ==="
 python3 harness/meshd.py --name field-1 --port $JOIN_PORT \
   --peer 127.0.0.1:$HUB_PORT --join "$INVITE" \
-  --hash-interval 2 > /tmp/ss_pool_joiner.log 2>&1 &
+  --hash-interval 2 > /tmp/sp_pool_joiner.log 2>&1 &
 JOIN_PID=$!
 sleep 2
 
@@ -58,7 +58,7 @@ INVITE2=$(python3 harness/pool.py issue --secret "$SEC" --pool cfs-brigade-3 \
 python3 harness/meshd.py --name field-2 --port 5822 \
   --peer 127.0.0.1:$HUB_PORT --join "$INVITE2" \
   --publish $'reg/STRAT/WRITE:DELTA\t1' --hash-interval 2 \
-  > /tmp/ss_pool_f2.log 2>&1 &
+  > /tmp/sp_pool_f2.log 2>&1 &
 F2_PID=$!
 sleep 2.5
 
@@ -72,11 +72,11 @@ hub = MeshDaemon("probe", 0, [], None)
 import socket, threading, time
 # quick convergence probe via the hub's own log hashes
 EOF
-grep "HASH" /tmp/ss_pool_hub.log | tail -1 | sed 's/^/   hub:     /'
-grep "HASH" /tmp/ss_pool_f2.log | tail -1 | sed 's/^/   field-2: /'
+grep "HASH" /tmp/sp_pool_hub.log | tail -1 | sed 's/^/   hub:     /'
+grep "HASH" /tmp/sp_pool_f2.log | tail -1 | sed 's/^/   field-2: /'
 python3 - <<'EOF'
 import re
-h = open("/tmp/ss_pool_hub.log").read()
+h = open("/tmp/sp_pool_hub.log").read()
 m = re.findall(r"HASH (\w+)  tail=(\d+)", h)
 print("   hub has", m[-1][1] if m else "?", "ops (all members' contributions)")
 EOF

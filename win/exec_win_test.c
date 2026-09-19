@@ -21,25 +21,25 @@ static void check(int ok, const char* name, const char* detail)
     if (!ok) failures++;
 }
 
-static SS_Result* run_exec(RepoState* st, const char* cmd)
+static SP_Result* run_exec(RepoState* st, const char* cmd)
 {
-    SS_Operation op;
-    SS_Plan plan;
+    SP_Operation op;
+    SP_Plan plan;
     memset(&op, 0, sizeof(op));
-    op.type = SS_OP_EXECUTE;
+    op.type = SP_OP_EXECUTE;
     op.command = cmd;
     memset(&plan, 0, sizeof(plan));
     plan.ops = &op;
     plan.op_count = 1;
-    return ss_execute(st, &plan);
+    return sp_execute(st, &plan);
 }
 
 int main(int argc, char** argv)
 {
     const char* root = (argc > 1) ? argv[1] : ".";
     char detail[512];
-    SS_Result* r;
-    RepoState* st = ss_state_new(root);
+    SP_Result* r;
+    RepoState* st = sp_state_new(root);
     if (!st) { printf("FAIL state_new (%s)\n", root); return 1; }
 
     /* 1: allowed cmdlet, no args */
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
               r->logs[0]);
     check(strstr(r->logs[0], "Get-Process") != NULL, "Get-Process in cmdline",
           r->logs[0]);
-    ss_result_free(r);
+    sp_result_free(r);
 
     /* 2: allowed cmdlet with validated args */
     r = run_exec(st, "Get-ChildItem -Path README.md");
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
     if (r->log_count > 0 && r->logs[0])
         check(strstr(r->logs[0], "Get-ChildItem -Path README.md") != NULL,
               "args joined in cmdline", r->logs[0]);
-    ss_result_free(r);
+    sp_result_free(r);
 
     /* 3: command NOT on the allowlist -> denied pre-spawn */
     r = run_exec(st, "Remove-Item README.md");
@@ -68,25 +68,25 @@ int main(int argc, char** argv)
           r->error_message ? r->error_message : "(no msg)");
     check(r->error_message && strstr(r->error_message, "not whitelisted") != NULL,
           "denial reason mentions whitelist", r->error_message ? r->error_message : "");
-    ss_result_free(r);
+    sp_result_free(r);
 
     /* 4: write-capable parameter -> denied pre-spawn */
     r = run_exec(st, "Get-ChildItem -Path . -OutFile pwn.txt");
     check(r->exit_code != 0, "-OutFile denied (write param)",
           r->error_message ? r->error_message : "(no msg)");
-    ss_result_free(r);
+    sp_result_free(r);
 
     /* 5: safe cmdlet with a dash-arg the deny list allows */
     r = run_exec(st, "Get-Content -Path README.md -Tail 2");
     check(r->exit_code == 0, "Get-Content -Tail allowed",
           r->log_count > 0 && r->logs[0] ? r->logs[0] : "(no log)");
-    ss_result_free(r);
+    sp_result_free(r);
 
     /* 6: shell metacharacter in arg -> denied by token_is_safe */
     r = run_exec(st, "Get-Process | Stop-Process");
     check(r->exit_code != 0, "pipe metachar denied",
           r->error_message ? r->error_message : "(no msg)");
-    ss_result_free(r);
+    sp_result_free(r);
 
     /* 7: service management is a WRITE op -> denied by default + escalation */
     r = run_exec(st, "Restart-Service Spooler");
@@ -94,32 +94,32 @@ int main(int argc, char** argv)
           r->error_message ? r->error_message : "(no msg)");
     check(r->needs_escalation, "Restart-Service flags escalation",
           r->escalation_reason ? r->escalation_reason : "(no reason)");
-    ss_result_free(r);
+    sp_result_free(r);
 
     /* 8: opt-in at the embedding layer -> allowed */
-    ss_state_set_allow_service_mgmt(st, 1);
+    sp_state_set_allow_service_mgmt(st, 1);
     r = run_exec(st, "Restart-Service Spooler");
     check(r->exit_code == 0, "Restart-Service allowed after opt-in",
           r->log_count > 0 && r->logs[0] ? r->logs[0] : "(no log)");
     if (r->log_count > 0 && r->logs[0])
         check(strstr(r->logs[0], "Restart-Service Spooler") != NULL,
               "service cmd in cmdline", r->logs[0]);
-    ss_result_free(r);
+    sp_result_free(r);
 
     /* 9: write param still denied even when mgmt is enabled */
     r = run_exec(st, "Stop-Service Spooler -OutFile pwn.txt");
     check(r->exit_code != 0, "-OutFile denied with mgmt enabled",
           r->error_message ? r->error_message : "(no msg)");
-    ss_result_free(r);
+    sp_result_free(r);
 
     /* 10: read-only cmdlet unaffected by the gate */
     r = run_exec(st, "Get-Service Spooler");
     check(r->exit_code == 0, "Get-Service still allowed",
           r->log_count > 0 && r->logs[0] ? r->logs[0] : "(no log)");
-    ss_result_free(r);
+    sp_result_free(r);
 
-    ss_state_set_allow_service_mgmt(st, 0);   /* back to default */
-    ss_state_free(st);
+    sp_state_set_allow_service_mgmt(st, 0);   /* back to default */
+    sp_state_free(st);
     printf(failures ? "\n%d FAILURES\n" : "\nALL PASS\n", failures);
     return failures ? 1 : 0;
 }

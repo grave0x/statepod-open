@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""mesh_lora.py -- run SwarmState mesh nodes over a simulated LoRa radio.
+"""mesh_lora.py -- run StatePod mesh nodes over a simulated LoRa radio.
 
 The radio is a swap shim (same seam as Tailcat): nodes talk through
 LoRaStream objects that mimic a socket, so meshd._handle_conn runs

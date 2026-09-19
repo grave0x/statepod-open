@@ -1,6 +1,6 @@
 /* infer/smoke_infer.c — Milestone 1 acceptance smoke test.
  *
- * Loads a GGUF model through ss_infer_*, then:
+ * Loads a GGUF model through sp_infer_*, then:
  *   1. generates one plan request constrained by a GBNF grammar (a file
  *      passed as argv[2], or an inline minimal grammar if "-"),
  *   2. generates a free-form reply to measure tokens/sec,
@@ -39,10 +39,10 @@ int main(int argc, char** argv) {
     int n_ctx = argc > 3 ? atoi(argv[3]) : 512;
     int max_tokens = argc > 4 ? atoi(argv[4]) : 64;
 
-    printf("ss_infer available: %d\n", ss_infer_is_available());
-    ss_infer_ctx* ctx = ss_infer_init(model, n_ctx, 0);
-    if (!ctx) { fprintf(stderr, "FAIL: ss_infer_init\n"); return 1; }
-    printf("model: %s\n", ss_infer_model_desc(ctx));
+    printf("sp_infer available: %d\n", sp_infer_is_available());
+    sp_infer_ctx* ctx = sp_infer_init(model, n_ctx, 0);
+    if (!ctx) { fprintf(stderr, "FAIL: sp_infer_init\n"); return 1; }
+    printf("model: %s\n", sp_infer_model_desc(ctx));
     printf("n_ctx=%d (CPU only)\n", n_ctx);
 
     /* grammar: file, or inline minimal, or none */
@@ -66,13 +66,13 @@ int main(int argc, char** argv) {
     }
 
     const char* SYS = argc > 5 ? argv[5]
-        : "You are SwarmState's plan generator. Emit only valid JSON.";
+        : "You are StatePod's plan generator. Emit only valid JSON.";
     const char* USR = argc > 6 ? argv[6]
         : "Generate a plan to read README.md using strategy DELTA.";
 
     /* M2: cache the system prompt in the KV cache (both runs below reuse
      * it; the free-form run's latency shows the prefix-reuse win). */
-    if (ss_infer_cache_prefix(ctx, SYS) != 0)
+    if (sp_infer_cache_prefix(ctx, SYS) != 0)
         printf("prefix cache: FAILED (continuing on the full-prompt path)\n");
     else
         printf("prefix cache: OK (first generate() will reuse it)\n");
@@ -80,7 +80,7 @@ int main(int argc, char** argv) {
     /* 1. grammar-constrained plan */
     int tok1 = 0;
     long t0 = now_ms();
-    char* out1 = ss_infer_generate(ctx, SYS, USR, grammar, max_tokens, 0.0f, &tok1);
+    char* out1 = sp_infer_generate(ctx, SYS, USR, grammar, max_tokens, 0.0f, &tok1);
     long t1 = now_ms();
     printf("\n── grammar-constrained generation ──\n");
     printf("tokens=%d elapsed=%ldms %.1f tok/s\n", tok1, t1 - t0,
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     /* 2. free-form (no grammar) for throughput */
     int tok2 = 0;
     long t2 = now_ms();
-    char* out2 = ss_infer_generate(ctx, SYS, USR, NULL, max_tokens, 0.0f, &tok2);
+    char* out2 = sp_infer_generate(ctx, SYS, USR, NULL, max_tokens, 0.0f, &tok2);
     long t3 = now_ms();
     printf("\n── free-form generation (no grammar) ──\n");
     printf("tokens=%d elapsed=%ldms %.1f tok/s\n", tok2, t3 - t2,
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
     free(out2);
 
     free(grammar);
-    ss_infer_free(ctx);
+    sp_infer_free(ctx);
     printf("\nOK\n");
     return 0;
 }

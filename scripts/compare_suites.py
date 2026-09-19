@@ -1,7 +1,7 @@
 """Compare task-suite runs (mock vs. real-LLM) from the temporal JSONL log.
 
 Usage: python3 scripts/compare_suites.py [PATH]
-Default PATH: ~/.local/state/swarmstate/task_suite.jsonl
+Default PATH: ~/.local/state/statepod/task_suite.jsonl
 
 Prints per-backend aggregates (context bytes, duration, strategy mix) and a
 per-task side-by-side, so success AND speed can be compared over time.
@@ -12,7 +12,7 @@ import sys
 from pathlib import Path
 
 path = Path(sys.argv[1] if len(sys.argv) > 1 else
-            Path.home() / ".local/state/swarmstate" / "task_suite.jsonl")
+            Path.home() / ".local/state/statepod" / "task_suite.jsonl")
 recs = [json.loads(l) for l in path.open()] if path.exists() else []
 if not recs:
     print(f"no records at {path}")
@@ -24,11 +24,11 @@ for r in recs:
 
 def _cost(rs, in_per_m=0.27, out_per_m=1.10):
     """Approx API cost from logged tokens. Rates are env-overridable
-    (SS_COST_IN_PER_M / SS_COST_OUT_PER_M), defaulting to DeepSeek-like
+    (SP_COST_IN_PER_M / SP_COST_OUT_PER_M), defaulting to DeepSeek-like
     values; mark results as approximate when rates are guesses."""
     import os
-    in_per_m = float(os.environ.get("SS_COST_IN_PER_M", in_per_m))
-    out_per_m = float(os.environ.get("SS_COST_OUT_PER_M", out_per_m))
+    in_per_m = float(os.environ.get("SP_COST_IN_PER_M", in_per_m))
+    out_per_m = float(os.environ.get("SP_COST_OUT_PER_M", out_per_m))
     pt = sum(r.get("prompt_tokens") or 0 for r in rs)
     ct = sum(r.get("completion_tokens") or 0 for r in rs)
     return pt, ct, (pt / 1e6 * in_per_m + ct / 1e6 * out_per_m)

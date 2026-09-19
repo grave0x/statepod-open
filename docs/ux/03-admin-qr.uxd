@@ -1,8 +1,8 @@
 # Role: admin — QR invite + status + roster
-screen "SwarmState · Admin · Join" w 78 h 30 bg 17
+screen "StatePod · Admin · Join" w 78 h 30 bg 17
   col weight 1 pad 1 gap 1
     row gap 1
-      text "SwarmState" fg 14 bold 1
+      text "StatePod" fg 14 bold 1
       spacer weight 1
       text "role: admin" fg 13 bold 1
       button "Status" fg 15 bg 23

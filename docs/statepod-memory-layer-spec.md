@@ -1,11 +1,11 @@
-# Swarmstate Memory Layer Specification
+# StatePod Memory Layer Specification
 
 ## Overview
-This document defines the memory layer for the Swarmstate project and its extensions. The memory layer provides persistent state, learned behaviors, and historical data across all Swarmstate components.
+This document defines the memory layer for the StatePod project and its extensions. The memory layer provides persistent state, learned behaviors, and historical data across all StatePod components.
 
 ## Memory Structure
 
-### 1. Global Swarmstate Memory
+### 1. Global StatePod Memory
 - Location: `.grok/memory/` directory
 - Purpose: Project-wide learned facts and behaviors
 - Persistence: Across all sessions and components

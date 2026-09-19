@@ -1,6 +1,6 @@
-/* swarmstate-node.c — self-contained SwarmState mesh node with a local
+/* statepod-node.c — self-contained StatePod mesh node with a local
  * web dashboard.  Reuses the shared C mesh base (libmesh) for the
- * peer; links the precompiled swarmstate-kernel.dll for kernel
+ * peer; links the precompiled statepod-kernel.dll for kernel
  * identity + sysinfo; detects a local Ollama and serves inference
  * requests through it when present.  Zero runtime dependencies.
  *
@@ -45,22 +45,22 @@ typedef int sock_t;
  * mesh_win.o) provides the non-static jsmn_parse/jsmn_init. */
 #define JSMN_PARENT_LINKS
 #include "jsmn.h"       /* tiny JSON tokenizer (from the mesh base) */
-#include "kernel.h"     /* swarmstate-kernel.dll (ss_version, sysinfo) */
+#include "kernel.h"     /* statepod-kernel.dll (sp_version, sysinfo) */
 
-#ifdef SS_EMBED_INFER
-#  include "llama_infer.h"   /* embedded llama.cpp inference (ss_infer_*) */
+#ifdef SP_EMBED_INFER
+#  include "llama_infer.h"   /* embedded llama.cpp inference (sp_infer_*) */
 #endif
 
 #ifdef _WIN32
 #  include <windows.h>
-typedef CRITICAL_SECTION ss_mutex;
+typedef CRITICAL_SECTION sp_mutex;
 #  define MUTEX_INIT(m) InitializeCriticalSection(m)
 #  define MUTEX_LOCK(m) EnterCriticalSection(m)
 #  define MUTEX_UNLOCK(m) LeaveCriticalSection(m)
 typedef unsigned(__stdcall *thr_proc)(void*);
 #else
 #  include <pthread.h>
-typedef pthread_mutex_t ss_mutex;
+typedef pthread_mutex_t sp_mutex;
 #  define MUTEX_INIT(m) pthread_mutex_init(m, NULL)
 #  define MUTEX_LOCK(m) pthread_mutex_lock(m)
 #  define MUTEX_UNLOCK(m) pthread_mutex_unlock(m)
@@ -95,7 +95,7 @@ typedef struct {
     time_t started;
 
     conn_t* conns;                 /* live connections (all peers) */
-    ss_mutex lock;
+    sp_mutex lock;
 
     char* hist[512];               /* op history ring (catch-up) */
     size_t hist_n, hist_head;
@@ -107,10 +107,10 @@ typedef struct {
     char  ollama_models[1024];
     int   ollama_nmodels;
     time_t ollama_ts;
-#ifdef SS_EMBED_INFER
-    ss_infer_ctx* embed;           /* embedded llama.cpp ctx (NULL until loaded) */
+#ifdef SP_EMBED_INFER
+    sp_infer_ctx* embed;           /* embedded llama.cpp ctx (NULL until loaded) */
     char embed_model[512];         /* explicit GGUF path (--embed) */
-    ss_mutex embed_lock;           /* guards embed + the request queue */
+    sp_mutex embed_lock;           /* guards embed + the request queue */
     char req_query[4096];          /* pending inference request (last wins) */
     char req_id[64];
     int  req_pending;
@@ -129,7 +129,7 @@ typedef struct {
 static node_t N;
 
 /* ── tiny thread + sleep shim (winsock/pthread) ───────────────────────── */
-static void ss_sleep_ms(int ms) {
+static void sp_sleep_ms(int ms) {
 #ifdef _WIN32
     Sleep((DWORD)ms);
 #else
@@ -164,7 +164,7 @@ static void thr_spawn(thr_fn fn, void* arg) {
     if (pthread_create(&th, NULL, thr_tramp, t) == 0) pthread_detach(th);
 }
 #endif
-static void* ss_memmem(const void* hay, size_t hl, const void* needle, size_t nl) {
+static void* sp_memmem(const void* hay, size_t hl, const void* needle, size_t nl) {
     if (nl == 0) return (void*)hay;
     if (nl > hl) return NULL;
     const unsigned char* h = (const unsigned char*)hay;
@@ -175,7 +175,7 @@ static void* ss_memmem(const void* hay, size_t hl, const void* needle, size_t nl
 }
 
 /* forward decls (defined below) */
-static const char* SS_PLAN_SYS;   /* planner system prompt (see ollama_plan) */
+static const char* SP_PLAN_SYS;   /* planner system prompt (see ollama_plan) */
 static void api_state(char* out, size_t cap);
 static char* ollama_plan(const char* query);
 static void handle_control(conn_t* c, const char* js, jsmntok_t* t, int ntoks);
@@ -511,7 +511,7 @@ static void handle_control(conn_t* c, const char* js, jsmntok_t* t, int ntoks) {
         if (id) js_str(js, id, rid, sizeof(rid));
         if (q) js_str(js, q, query, sizeof(query));
         if (rid[0] && query[0]) {
-#ifdef SS_EMBED_INFER
+#ifdef SP_EMBED_INFER
             /* Embedded path: QUEUE the request.  The llama.cpp context is
              * created by the embed_loop thread and must be driven from that
              * same thread — calling it from a conn thread wedges decode. */
@@ -620,8 +620,8 @@ static char* extract_json_object(const char* text) {
     return NULL;
 }
 /* planner system prompt: shared by the Ollama and embedded providers */
-static const char* SS_PLAN_SYS =
-    "You are SwarmState's planner. The kernel executes batch ops locally; "
+static const char* SP_PLAN_SYS =
+    "You are StatePod's planner. The kernel executes batch ops locally; "
     "reply with ONLY a JSON object, no prose: "
     "{\"ops\":[{\"type\":\"GREP\",\"pattern\":\"...\",\"target\":\"\"}],\"strategy\":\"DELTA\"}. "
     "Op types: READ(path,line_start,line_end), WRITE(path,content), GREP(pattern,target), "
@@ -681,7 +681,7 @@ static char* ollama_extract_plan(const char* text) {
 static char* ollama_plan(const char* query) {
     char qesc[8192], sesc[8192], body[20480], resp[131072];
     json_escape(query, qesc, sizeof(qesc));
-    json_escape(SS_PLAN_SYS, sesc, sizeof(sesc));   /* contains literal quotes */
+    json_escape(SP_PLAN_SYS, sesc, sizeof(sesc));   /* contains literal quotes */
     snprintf(body, sizeof(body),
         "{\"model\":\"%s\",\"messages\":[{\"role\":\"system\",\"content\":\"%s\"},"
         "{\"role\":\"user\",\"content\":\"%s\"}],\"stream\":false,\"format\":\"json\"}",
@@ -725,23 +725,23 @@ static void ollama_loop(void* arg) {
             else alert_add(2, "ollama lost");
         }
         MUTEX_UNLOCK(&N.lock);
-        ss_sleep_ms(10000);
+        sp_sleep_ms(10000);
     }
 }
 
-#ifdef SS_EMBED_INFER
+#ifdef SP_EMBED_INFER
 /* ── embedded inference (llama.cpp) ────────────────────────────────────── */
-/* find a GGUF: --embed path, then $SS_MODEL_PATH, then the smallest
- * *.gguf under ~/.local/share/swarmstate/models (spec v1 §5.1). */
+/* find a GGUF: --embed path, then $SP_MODEL_PATH, then the smallest
+ * *.gguf under ~/.local/share/statepod/models (spec v1 §5.1). */
 static int embed_find_model(char* out, size_t cap) {
     if (N.embed_model[0]) { snprintf(out, cap, "%s", N.embed_model); return 1; }
-    const char* envp = getenv("SS_MODEL_PATH");
+    const char* envp = getenv("SP_MODEL_PATH");
     if (envp && envp[0]) { snprintf(out, cap, "%s", envp); return 1; }
 #ifndef _WIN32
     const char* home = getenv("HOME");
     if (home) {
         char dir[1024];
-        snprintf(dir, sizeof(dir), "%s/.local/share/swarmstate/models", home);
+        snprintf(dir, sizeof(dir), "%s/.local/share/statepod/models", home);
         DIR* d = opendir(dir);
         if (d) {
             struct dirent* e;
@@ -776,16 +776,16 @@ static void embed_loop(void* arg) {
             char path[512];
             if (embed_find_model(path, sizeof(path))) {
                 alert_add(0, "embed: loading %s", path);
-                ss_infer_ctx* ctx = ss_infer_init(path, 1024, 0);
+                sp_infer_ctx* ctx = sp_infer_init(path, 1024, 0);
                 if (ctx) {
                     MUTEX_LOCK(&N.embed_lock);
                     if (N.embed == NULL) N.embed = ctx;
-                    else { ss_infer_free(ctx); ctx = NULL; }
+                    else { sp_infer_free(ctx); ctx = NULL; }
                     MUTEX_UNLOCK(&N.embed_lock);
                 }
                 if (ctx) {
-                    alert_add(1, "embed: %s", ss_infer_model_desc(ctx));
-                    if (ss_infer_cache_prefix(ctx, SS_PLAN_SYS) == 0)
+                    alert_add(1, "embed: %s", sp_infer_model_desc(ctx));
+                    if (sp_infer_cache_prefix(ctx, SP_PLAN_SYS) == 0)
                         alert_add(0, "embed: plan-system prefix cached");
                 } else alert_add(2, "embed: model load failed: %s", path);
             }
@@ -802,8 +802,8 @@ static void embed_loop(void* arg) {
         MUTEX_UNLOCK(&N.embed_lock);
         if (take) {
             fprintf(stderr, "embed: gen start req=%s\n", rid);
-            char* reply = ss_infer_generate(N.embed, SS_PLAN_SYS, q,
-                                            ss_infer_plan_gbnf(), 160, 0.0f, NULL);
+            char* reply = sp_infer_generate(N.embed, SP_PLAN_SYS, q,
+                                            sp_infer_plan_gbnf(), 160, 0.0f, NULL);
             fprintf(stderr, "embed: gen done: %s\n", reply ? "OK" : "NULL");
             if (reply) {
                 char plan_flat[2048];
@@ -821,7 +821,7 @@ static void embed_loop(void* arg) {
                 fprintf(stderr, "embed: error resp sent\n");
             }
         }
-        ss_sleep_ms(50);
+        sp_sleep_ms(50);
     }
 }
 #endif
@@ -968,7 +968,7 @@ static void accept_loop(void* arg) {
     for (;;) {
         struct sockaddr_in a; socklen_t al = sizeof(a);
         sock_t s = accept(ls, (struct sockaddr*)&a, &al);
-        if (s == BAD_SOCK) { ss_sleep_ms(100); continue; }
+        if (s == BAD_SOCK) { sp_sleep_ms(100); continue; }
         conn_add(s, 0);
     }
 }
@@ -996,7 +996,7 @@ static void outbound_loop(void* arg) {
                 alert_add(1, "connected to peer %s:%d", N.out[i].host, N.out[i].port);
             } else CLSOCK(s);
         }
-        ss_sleep_ms(3000);
+        sp_sleep_ms(3000);
     }
 }
 static void announce_loop(void* arg) {
@@ -1011,7 +1011,7 @@ static void announce_loop(void* arg) {
             size_t n = strlen(line);
             raw_broadcast(line, n, BAD_SOCK);
         }
-        ss_sleep_ms(5000);
+        sp_sleep_ms(5000);
     }
 }
 static void hash_loop(void* arg) {
@@ -1022,7 +1022,7 @@ static void hash_loop(void* arg) {
         mesh_peer_stats(N.peer, &tail, &comp, &rss);
         printf("HASH %s  tail=%zu rss_kb=%zu\n", hx, tail, rss);
         fflush(stdout);
-        ss_sleep_ms((int)(N.hash_interval * 1000.0));
+        sp_sleep_ms((int)(N.hash_interval * 1000.0));
     }
 }
 
@@ -1038,7 +1038,7 @@ static void hash_loop(void* arg) {
 #endif
 static const char* UI_HTML = 
 "<!DOCTYPE html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>"
-"<title>SwarmState node</title><style>"
+"<title>StatePod node</title><style>"
 "body{font-family:system-ui,sans-serif;background:#0d1117;color:#e6edf3;margin:0;padding:16px}"
 "h1{font-size:18px;margin:0 0 4px}h2{font-size:13px;margin:0 0 8px;color:#8b949e;text-transform:uppercase;letter-spacing:.05em}"
 ".top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}"
@@ -1053,7 +1053,7 @@ static const char* UI_HTML =
 ".pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;background:#21262d;margin:1px}"
 "@media(max-width:700px){.grid{grid-template-columns:1fr}}"
 "</style></head><body>"
-"<div class='top'><h1>SwarmState <span id='nname'>…</span></h1>"
+"<div class='top'><h1>StatePod <span id='nname'>…</span></h1>"
 "<span class='ctx'>Viewing: <b id='fctx'>standalone mesh</b></span>"
 "<select class='role' id='fctxsel' onchange='setFctx(this.value)' title='federation context'></select>"
 "<select class='role' id='role' onchange='switchRole(this.value)'></select>"
@@ -1128,7 +1128,7 @@ static void web_conn_loop(void* arg) {
     int n;
     while (used < sizeof(req) - 1 && (n = recv(s, req + used, 256, 0)) > 0) {
         used += (size_t)n;
-        if (ss_memmem(req, used, "\r\n\r\n", 4)) break;
+        if (sp_memmem(req, used, "\r\n\r\n", 4)) break;
     }
     req[used] = '\0';
     char path[512] = "/";
@@ -1165,7 +1165,7 @@ static void web_accept_loop(void* arg) {
     for (;;) {
         struct sockaddr_in a; socklen_t al = sizeof(a);
         sock_t s = accept(ls, (struct sockaddr*)&a, &al);
-        if (s == BAD_SOCK) { ss_sleep_ms(100); continue; }
+        if (s == BAD_SOCK) { sp_sleep_ms(100); continue; }
         thr_spawn(web_conn_loop, (void*)(intptr_t)s);
     }
 }
@@ -1202,9 +1202,9 @@ static void api_state(char* out, size_t cap) {
             p = e + 1;
         }
     }
-#ifdef SS_EMBED_INFER
+#ifdef SP_EMBED_INFER
     AP("]},\"embed\":{\"ok\":%d,\"model\":\"%s\"},",
-       N.embed ? 1 : 0, N.embed ? ss_infer_model_desc(N.embed) : "");
+       N.embed ? 1 : 0, N.embed ? sp_infer_model_desc(N.embed) : "");
 #else
     AP("]},\"embed\":{\"ok\":false},");
 #endif
@@ -1322,7 +1322,7 @@ static void load_config(const char* argv0) {
 
 /* ── main ─────────────────────────────────────────────────────────────── */
 static void usage(const char* prog) {
-    printf("SwarmState node (self-contained; C mesh base + kernel dll + web UI)\\n\\n"
+    printf("StatePod node (self-contained; C mesh base + kernel dll + web UI)\\n\\n"
            "usage: %s --name ID [options]\\n"
            "  --port N          mesh listen port (default 7700)\\n"
            "  --peer HOST:PORT  outbound peer (repeatable)\\n"
@@ -1375,7 +1375,7 @@ int main(int argc, char** argv) {
         else if (strcmp(a, "--root") == 0) snprintf(N.root, sizeof(N.root), "%s", NEXT());
         else if (strcmp(a, "--model") == 0) snprintf(N.model, sizeof(N.model), "%s", NEXT());
         else if (strcmp(a, "--embed") == 0) {
-#ifdef SS_EMBED_INFER
+#ifdef SP_EMBED_INFER
             snprintf(N.embed_model, sizeof(N.embed_model), "%s", NEXT());
 #else
             NEXT();
@@ -1419,27 +1419,27 @@ int main(int argc, char** argv) {
         #undef NEXT
     }
     /* kernel DLL */
-    const char* kv = ss_version();
+    const char* kv = sp_version();
     if (kv) snprintf(N.kernel_ver, sizeof(N.kernel_ver), "%s", kv);
     else snprintf(N.kernel_ver, sizeof(N.kernel_ver), "kernel unavailable");
     alert_add(0, "kernel: %s", N.kernel_ver);
     if (N.root[0]) {
-        RepoState* st = ss_state_new(N.root);
+        RepoState* st = sp_state_new(N.root);
         if (st) {
-            SS_SystemInfo si;
+            SP_SystemInfo si;
             memset(&si, 0, sizeof(si));
-            if (ss_sysinfo(st, &si) == 0) {
+            if (sp_sysinfo(st, &si) == 0) {
                 N.disk_total = si.disk_total_bytes;
                 N.disk_free = si.disk_free_bytes;
             }
-            ss_state_free(st);
+            sp_state_free(st);
         }
     }
     /* mesh peer (shared C base) */
     N.peer = mesh_peer_new(N.name, 12);
     mesh_peer_set_send(N.peer, on_mesh_send, NULL);
     MUTEX_INIT(&N.lock);
-#ifdef SS_EMBED_INFER
+#ifdef SP_EMBED_INFER
     MUTEX_INIT(&N.embed_lock);
 #endif
     load_config(argv[0]);
@@ -1470,26 +1470,26 @@ int main(int argc, char** argv) {
             alert_add(0, "web UI on http://127.0.0.1:%d", N.web_port);
         } else CLSOCK(ws);
     }
-    if (!getenv("SS_NO_AUX_LOOPS")) {
+    if (!getenv("SP_NO_AUX_LOOPS")) {
         thr_spawn(ollama_loop, NULL);
         thr_spawn(announce_loop, NULL);
         thr_spawn(hash_loop, NULL);
         if (N.out_n > 0) thr_spawn(outbound_loop, NULL);
     } else {
-        printf("aux loops disabled (SS_NO_AUX_LOOPS)\n");
+        printf("aux loops disabled (SP_NO_AUX_LOOPS)\n");
     }
-#ifdef SS_EMBED_INFER
+#ifdef SP_EMBED_INFER
     thr_spawn(embed_loop, NULL);
 #endif
 
     for (int i = 0; i < N.pubs_n; i++)
         mesh_peer_mutate(N.peer, MESH_OP_APP, N.pubs[i].t, N.pubs[i].v);
     if (N.demo) demo_publish();
-    printf("SwarmState node '%s' up: mesh :%d  web :%d  kernel=%s\n",
+    printf("StatePod node '%s' up: mesh :%d  web :%d  kernel=%s\n",
            N.name, N.port, N.web_port, N.kernel_ver);
     if (ls != BAD_SOCK)
         printf("  join: --peer 127.0.0.1:%d --allow %s\n", N.port, N.name);
     fflush(stdout);
-    for (;;) ss_sleep_ms(1000);
+    for (;;) sp_sleep_ms(1000);
     return 0;
 }

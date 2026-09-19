@@ -11,11 +11,11 @@
 # governed op past the gate without auth + reason. No exceptions.
 set -u
 cd "$(dirname "$0")/.."
-export SWARMSTATE_LIB=$PWD/libswarmstate.so
+export STATEPOD_LIB=$PWD/libstatepod.so
 
 SEC="demo-secret-$(date +%s)"
-RES=/tmp/ss_gov_demo.jsonl
-LOG=/tmp/ss_gov_demo.governance.log
+RES=/tmp/sp_gov_demo.jsonl
+LOG=/tmp/sp_gov_demo.governance.log
 rm -f "$RES" "$LOG"
 
 # a valid, short-lived supervisor token (HMAC-signed, role-scoped)
@@ -63,7 +63,7 @@ echo ""
 echo "=== AUDIT LEDGER ($LOG) ==="
 python3 - <<'EOF'
 import json
-for l in open("/tmp/ss_gov_demo.governance.log"):
+for l in open("/tmp/sp_gov_demo.governance.log"):
     e = json.loads(l)
     print(f"  {e['verdict']:13} {e['op']:8} {e['summary']:20} "
           f"auth={e['auth_present']} reason={e['reason_present']}"

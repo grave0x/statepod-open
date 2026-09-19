@@ -1,4 +1,4 @@
-# SwarmState Pilot Plan
+# StatePod Pilot Plan
 
 _chat.deepseek.com · session 0d868ba2-fd9f-44df-a49f-0e875dcfd4b0 · exported 2026-09-04 03:16_
 
@@ -8,7 +8,7 @@ Full Session Review & Thinking Review
 
 1. Executive Summary
 
-This session transformed SwarmState from a compelling idea into a multi-domain, federated edge intelligence platform with a tested kernel, mesh, registry, governance, and UI kit. The project evolved through:
+This session transformed StatePod from a compelling idea into a multi-domain, federated edge intelligence platform with a tested kernel, mesh, registry, governance, and UI kit. The project evolved through:
 
 · Kernel and context containment implementation (62-byte prompts vs naive 100KB+)
 · Semantic feedback loop (oracles, registry, blind-write guard)
@@ -73,7 +73,7 @@ This section reflects on the decision patterns, mistakes, and insights from the 
 
 4.2 Mistakes and Corrections
 
-· Initial ss naming: Historical/contextual blind spot. Corrected to sw. Lesson: public naming requires broader awareness.
+· Initial ss naming: Historical/contextual blind spot. Corrected to sp. Lesson: public naming requires broader awareness.
 · Overly broad research prompt: The first four-area research prompt was too ambitious. Adversarial review correctly narrowed it to actionable GO/NO-GO decisions. Lesson: research must end in decisions, not documents.
 · Underestimating UI importance: The QR widget JS bug went unnoticed until a browser test. Lesson: UI is not an afterthought; it must be tested as rigorously as the kernel.
 · Inference dependency on Ollama: Accepted for speed but now the biggest remaining gap. Lesson: external dependencies undermine the "single binary" story.
@@ -93,25 +93,25 @@ Before moving to a real pilot, a final, focused research pass should fill the re
 
 Prompt:
 
-Research llama.cpp integration for embedding into a C daemon. Find examples of static linking, prefix caching, GBNF grammar enforcement, and auto-tuning GPU layers. Report concrete code snippets or repository references. Based on this, should SwarmState build the embedded engine now, or continue using Ollama for the next pilot? Yes/No with justification.
+Research llama.cpp integration for embedding into a C daemon. Find examples of static linking, prefix caching, GBNF grammar enforcement, and auto-tuning GPU layers. Report concrete code snippets or repository references. Based on this, should StatePod build the embedded engine now, or continue using Ollama for the next pilot? Yes/No with justification.
 
 5.2 LoRa Hardware Validation
 
 Prompt:
 
-Research the current best ESP32 LoRa modules for outdoor, low-power mesh. Compare range, power consumption, and ease of integration. Report specific products (e.g., Heltec, TTGO) and their pros/cons for a community relay node. Based on this, which module should SwarmState purchase for a three-node field test? Yes/No with justification.
+Research the current best ESP32 LoRa modules for outdoor, low-power mesh. Compare range, power consumption, and ease of integration. Report specific products (e.g., Heltec, TTGO) and their pros/cons for a community relay node. Based on this, which module should StatePod purchase for a three-node field test? Yes/No with justification.
 
 5.3 MSP Pilot Value Proposition
 
 Prompt:
 
-Research successful MSP adoption of open-source RMM tools (NetLock RMM, MeshCentral). What features do MSPs actually need (patching, remote desktop, alerting)? How does SwarmState's offline AI mesh differ? Based on this, should SwarmState approach the Port Augusta MSP with a pilot now, or wait until the embedded engine is ready? Yes/No with justification.
+Research successful MSP adoption of open-source RMM tools (NetLock RMM, MeshCentral). What features do MSPs actually need (patching, remote desktop, alerting)? How does StatePod's offline AI mesh differ? Based on this, should StatePod approach the Port Augusta MSP with a pilot now, or wait until the embedded engine is ready? Yes/No with justification.
 
 5.4 Governance for High-Risk Actions in Civilian Use
 
 Prompt:
 
-Research human factors for emergency service personnel using AI assistants. Find guidelines for presenting AI recommendations and requiring human approval in time-critical situations. Based on this, what is the minimum governance UI SwarmState must have before a CFS pilot? Provide a concrete list of UI elements. Yes/No on whether current governance is sufficient.
+Research human factors for emergency service personnel using AI assistants. Find guidelines for presenting AI recommendations and requiring human approval in time-critical situations. Based on this, what is the minimum governance UI StatePod must have before a CFS pilot? Provide a concrete list of UI elements. Yes/No on whether current governance is sufficient.
 
 6. Final Recommendation
 
@@ -139,7 +139,7 @@ Let's examine the four prompts:
 
 2. LoRa Hardware: ESP32 modules. We can compare Heltec, TTGO, and others. Provide pros/cons and recommend one.
 
-3. MSP Pilot Value Proposition: Research MSP needs and SwarmState's fit. Recommend whether to approach now or wait.
+3. MSP Pilot Value Proposition: Research MSP needs and StatePod's fit. Recommend whether to approach now or wait.
 
 4. Governance UI for High-Risk Actions: Research human factors, propose minimum UI elements.
 
@@ -210,7 +210,7 @@ ctx = llama_new_context_with_model(model, ctx_params);
 
 - **MeshCentral**: Highly successful, focuses on remote desktop, scripting, and patch management. MSPs value centralised dashboard, multi-tenancy, and audit logs.
 - **NetLock RMM**: Open-source, but less mature; covers asset inventory, alerting, and basic remote control.
-- **Missing features in SwarmState**: No remote desktop, no patching, no AD integration. However, these are not SwarmState's core value—it offers **prompt-based ops**, offline resilience, and AI-assisted troubleshooting.
+- **Missing features in StatePod**: No remote desktop, no patching, no AD integration. However, these are not StatePod's core value—it offers **prompt-based ops**, offline resilience, and AI-assisted troubleshooting.
 
 **MSPs' actual pain points:**
 - Rapid response to outages (even with no internet).
@@ -218,7 +218,7 @@ ctx = llama_new_context_with_model(model, ctx_params);
 - Cost efficiency (RMM licensing scales per endpoint).
 - Automation of repetitive tasks (patching, configuration).
 
-**SwarmState differentiators:**
+**StatePod differentiators:**
 - Offline AI: can diagnose and suggest fixes even when connectivity is down.
 - Prompt-to-action: reduce mean-time-to-resolution via natural language.
 - Local data: comply with privacy regulations (e.g., GDPR, Australian Privacy Act).
@@ -237,7 +237,7 @@ ctx = llama_new_context_with_model(model, ctx_params);
   - Time-critical situations: use **visual urgency cues** (colour, shape), but avoid false alarms.
   - Provide **explanation** (why this recommendation) in plain language.
 
-**Minimum UI elements for SwarmState before a CFS pilot:**
+**Minimum UI elements for StatePod before a CFS pilot:**
 1. **Recommendation card**: Shows the action, confidence (%), reasoning, and source (e.g., sensor ID).
 2. **Approve / Deny** buttons (large, tactile, with confirmation step for irreversible actions).
 3. **Context panel**: Displays current state (mesh topology, recent events) so the user can cross-check.
@@ -261,7 +261,7 @@ Based on the research answers:
 - **Governance**: Enhance UI before any safety-critical pilot.
 
 Therefore, the **recommended first pilot** is a **rural/farm trial** with **three nodes**:
-- One laptop (gateway, running SwarmState daemon).
+- One laptop (gateway, running StatePod daemon).
 - One mobile phone (using the web UI or a future native app).
 - One ESP32 LoRa relay (acting as a sensor bridge, e.g., water level or livestock monitor).
 

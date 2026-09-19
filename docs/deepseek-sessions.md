@@ -1,8 +1,8 @@
 # DeepSeek chat history research sessions
 
-Background research for SwarmState lives in chat.deepseek.com sessions.
+Background research for StatePod lives in chat.deepseek.com sessions.
 Full transcripts (2026-09-04): `~/Documents/deepseek-sessions/` —
-`SwarmState_Pilot_Plan.md`, `Deep_Analysis_SwarmState.md`,
+`StatePod_Pilot_Plan.md`, `Deep_Analysis_StatePod.md`,
 `Tiny_Specialist_Swarm_Analysis.md`, `Unofficial_DeepSeek_API_attempts.md`,
 `Session_Review_Pending.md`.
 

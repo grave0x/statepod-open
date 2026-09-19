@@ -7,21 +7,21 @@
 # applies.  Both nodes must converge to the same state hash.
 set -u
 cd "$(dirname "$0")/.."
-export SWARMSTATE_LIB=$PWD/libswarmstate.so
+export STATEPOD_LIB=$PWD/libstatepod.so
 
 echo "=== two mesh nodes over a lossy LoRa radio (20% frame loss) ==="
 timeout 25 python3 scripts/mesh_lora.py --name node-a --role a \
   --publish $'reg/STRAT/WRITE:DELTA\t1' \
   --publish $'reg/STRAT/WRITE:FULL\t1' \
   --publish $'reg/MODEL:q:abc:7b\t1' \
-  --loss 0.2 --airtime 0.02 --seed 5 2>&1 | tee /tmp/ss_lora_smoke.log \
+  --loss 0.2 --airtime 0.02 --seed 5 2>&1 | tee /tmp/sp_lora_smoke.log \
   | grep -E "HASH|B-HASH|stats" | tail -8
 
 echo ""
 echo "=== convergence check ==="
 python3 - <<'EOF'
 import re
-lines = open("/tmp/ss_lora_smoke.log").read()
+lines = open("/tmp/sp_lora_smoke.log").read()
 a_hashes = re.findall(r"HASH (\w+)  tail=(\d+)", lines)
 b_hashes = re.findall(r"B-HASH (\w+)", lines)
 a_tail3 = {h for h, t in a_hashes if int(t) == 3}

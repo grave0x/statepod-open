@@ -22,26 +22,26 @@ from dag import validate_dag, schedule as dag_schedule, summarize as dag_summari
 OLLAMA_MAX_TOKENS = 512
 OLLAMA_TIMEOUT = 150
 
-# Plan op constants (from swarmstate.py)
-SS_OP_READ = 0
-SS_OP_WRITE = 1
-SS_OP_GREP = 2
-SS_OP_DIFF = 3
-SS_OP_STATUS = 4
-SS_OP_EXECUTE = 5
-SS_OP_AST_PARSE = 6
-SS_OP_AST_QUERY = 7
-SS_OP_SYMBOL_SUMMARY = 8
-SS_CONTEXT_DELTA = 0
-SS_CONTEXT_TARGETED = 1
-SS_CONTEXT_FULL = 2
-SS_CONTEXT_SYMBOLIC = 3
+# Plan op constants (from statepod.py)
+SP_OP_READ = 0
+SP_OP_WRITE = 1
+SP_OP_GREP = 2
+SP_OP_DIFF = 3
+SP_OP_STATUS = 4
+SP_OP_EXECUTE = 5
+SP_OP_AST_PARSE = 6
+SP_OP_AST_QUERY = 7
+SP_OP_SYMBOL_SUMMARY = 8
+SP_CONTEXT_DELTA = 0
+SP_CONTEXT_TARGETED = 1
+SP_CONTEXT_FULL = 2
+SP_CONTEXT_SYMBOLIC = 3
 
 VALID_TYPES = {
-    "READ": SS_OP_READ, "WRITE": SS_OP_WRITE, "GREP": SS_OP_GREP,
-    "DIFF": SS_OP_DIFF, "STATUS": SS_OP_STATUS, "EXECUTE": SS_OP_EXECUTE,
-    "AST_PARSE": SS_OP_AST_PARSE, "AST_QUERY": SS_OP_AST_QUERY,
-    "SYMBOL_SUMMARY": SS_OP_SYMBOL_SUMMARY,
+    "READ": SP_OP_READ, "WRITE": SP_OP_WRITE, "GREP": SP_OP_GREP,
+    "DIFF": SP_OP_DIFF, "STATUS": SP_OP_STATUS, "EXECUTE": SP_OP_EXECUTE,
+    "AST_PARSE": SP_OP_AST_PARSE, "AST_QUERY": SP_OP_AST_QUERY,
+    "SYMBOL_SUMMARY": SP_OP_SYMBOL_SUMMARY,
 }
 
 
@@ -444,7 +444,7 @@ def _json_at(path: Path, keys: list[str]):
 def deepseek_config() -> tuple[str, str | None]:
     """baseUrl + apiKey for DeepSeek, reusing prime-agent's own config
     (models.json provider entry + auth.json key) with env fallbacks."""
-    base = os.environ.get("SWARMSTATE_DEEPSEEK_BASE")
+    base = os.environ.get("STATEPOD_DEEPSEEK_BASE")
     key = os.environ.get("DEEPSEEK_API_KEY")
     if not base:
         base = _json_at(_config_path() / "models.json",
@@ -499,21 +499,21 @@ def _openai_plan(base: str, api_key: str | None, model: str,
 
 
 # OpenAI-compatible provider presets. Each entry is a thin named default
-# for base URL / key env / model. Override with SWARMSTATE_<NAME>_BASE,
-# SWARMSTATE_<NAME>_MODEL, and the listed key env vars.
+# for base URL / key env / model. Override with STATEPOD_<NAME>_BASE,
+# STATEPOD_<NAME>_MODEL, and the listed key env vars.
 # Aliases (e.g. llama -> llamacpp) live in OPENAI_BACKEND_ALIASES.
 _OPENAI_PRESETS: dict[str, dict] = {
     # Generic / cloud
     "openai": {
         "base": "https://api.openai.com/v1",
-        "key_envs": ("OPENAI_API_KEY", "SWARMSTATE_OPENAI_KEY"),
+        "key_envs": ("OPENAI_API_KEY", "STATEPOD_OPENAI_KEY"),
         "default_model": None,  # require --model
         "require_key": True,
-        "hint": "set OPENAI_API_KEY and --model (or SWARMSTATE_OPENAI_BASE)",
+        "hint": "set OPENAI_API_KEY and --model (or STATEPOD_OPENAI_BASE)",
     },
     "openrouter": {
         "base": "https://openrouter.ai/api/v1",
-        "key_envs": ("OPENROUTER_API_KEY", "SWARMSTATE_OPENROUTER_KEY"),
+        "key_envs": ("OPENROUTER_API_KEY", "STATEPOD_OPENROUTER_KEY"),
         "default_model": None,
         "require_key": True,
         "hint": "set OPENROUTER_API_KEY and --model (e.g. qwen/qwen3-coder)",
@@ -521,49 +521,49 @@ _OPENAI_PRESETS: dict[str, dict] = {
     # Local servers (OpenAI-shaped)
     "freetoken": {
         "base": "http://127.0.0.1:1919/v1",
-        "key_envs": ("FREETOKEN_API_KEY", "SWARMSTATE_FREETOKEN_KEY"),
+        "key_envs": ("FREETOKEN_API_KEY", "STATEPOD_FREETOKEN_KEY"),
         "default_model": None,
         "require_key": False,
         "hint": "start `ft serve --model <id>` (default :1919)",
     },
     "llamacpp": {
         "base": "http://127.0.0.1:8080/v1",
-        "key_envs": ("SWARMSTATE_LLAMACPP_KEY", "LLAMACPP_API_KEY"),
+        "key_envs": ("STATEPOD_LLAMACPP_KEY", "LLAMACPP_API_KEY"),
         "default_model": "local",
         "require_key": False,
         "hint": "start `llama-server -m <gguf> --port 8080`",
     },
     "vllm": {
         "base": "http://127.0.0.1:8000/v1",
-        "key_envs": ("VLLM_API_KEY", "SWARMSTATE_VLLM_KEY"),
+        "key_envs": ("VLLM_API_KEY", "STATEPOD_VLLM_KEY"),
         "default_model": "local",
         "require_key": False,
         "hint": "start vLLM with an OpenAI server on :8000",
     },
     "sglang": {
         "base": "http://127.0.0.1:30000/v1",
-        "key_envs": ("SGLANG_API_KEY", "SWARMSTATE_SGLANG_KEY"),
+        "key_envs": ("SGLANG_API_KEY", "STATEPOD_SGLANG_KEY"),
         "default_model": "local",
         "require_key": False,
         "hint": "start SGLang OpenAI server on :30000",
     },
     "lmstudio": {
         "base": "http://127.0.0.1:1234/v1",
-        "key_envs": ("LMSTUDIO_API_KEY", "SWARMSTATE_LMSTUDIO_KEY"),
+        "key_envs": ("LMSTUDIO_API_KEY", "STATEPOD_LMSTUDIO_KEY"),
         "default_model": "local",
         "require_key": False,
         "hint": "enable LM Studio local server (:1234)",
     },
     "koboldcpp": {
         "base": "http://127.0.0.1:5001/v1",
-        "key_envs": ("KOBOLDCPP_API_KEY", "SWARMSTATE_KOBOLDCPP_KEY"),
+        "key_envs": ("KOBOLDCPP_API_KEY", "STATEPOD_KOBOLDCPP_KEY"),
         "default_model": "local",
         "require_key": False,
         "hint": "start KoboldCpp with OpenAI API on :5001",
     },
     "tabbyapi": {
         "base": "http://127.0.0.1:5000/v1",
-        "key_envs": ("TABBYAPI_API_KEY", "SWARMSTATE_TABBYAPI_KEY"),
+        "key_envs": ("TABBYAPI_API_KEY", "STATEPOD_TABBYAPI_KEY"),
         "default_model": "local",
         "require_key": False,
         "hint": "start TabbyAPI on :5000",
@@ -591,7 +591,7 @@ def openai_backend_config(name: str) -> tuple[str, str | None, dict]:
     """Return (base_url, api_key_or_None, preset_dict) for a named backend."""
     canon = resolve_openai_backend(name)
     preset = _OPENAI_PRESETS[canon]
-    env_prefix = f"SWARMSTATE_{canon.upper()}_"
+    env_prefix = f"STATEPOD_{canon.upper()}_"
     base = os.environ.get(env_prefix + "BASE") or preset["base"]
     key = ""
     for env in preset.get("key_envs") or ():
@@ -604,7 +604,7 @@ def plan_openai_backend(name: str, query: str, summary: str | None,
     """Plan via any OpenAI-compatible preset (local server or cloud gateway)."""
     canon = resolve_openai_backend(name)
     base, key, preset = openai_backend_config(canon)
-    env_prefix = f"SWARMSTATE_{canon.upper()}_"
+    env_prefix = f"STATEPOD_{canon.upper()}_"
     model = (model
              or os.environ.get(env_prefix + "MODEL")
              or preset.get("default_model")
@@ -649,7 +649,7 @@ def plan_deepseek(query: str, summary: str | None,
                   full: bool = False) -> dict:
     """Planner via DeepSeek (cloud) — used while the local model pulls.
 
-    full=False (default): SwarmState containment — the model sees only the
+    full=False (default): StatePod containment — the model sees only the
     repo STATE SUMMARY, never files (the kernel holds the context).
     full=True: NAIVE BASELINE — the model sees the entire repository
     contents (a normal full-context call), for apples-to-apples token/cost
@@ -659,7 +659,7 @@ def plan_deepseek(query: str, summary: str | None,
     api_key = api_key or cfg_key
     if not api_key:
         raise RuntimeError("no DeepSeek API key (set DEEPSEEK_API_KEY or "
-                           "SWARMSTATE_DEEPSEEK_BASE)")
+                           "STATEPOD_DEEPSEEK_BASE)")
     model = model or "deepseek-v4-flash"
     if full:
         context_preamble = (
@@ -673,7 +673,7 @@ def plan_deepseek(query: str, summary: str | None,
             "sees summaries, never files.")
         context_label = "Repo state summary:"
     system = (
-        "You are SwarmState's planner. " + context_preamble + "\n"
+        "You are StatePod's planner. " + context_preamble + "\n"
         "Available op types: READ (path, line_start, line_end), "
         "WRITE (path, content — content is the EXACT literal text to write; "
         "never a shell command, sed expression like s/x/y/g, or placeholder "
@@ -717,7 +717,7 @@ def plan_deepseek(query: str, summary: str | None,
 
 def _planner_system(summary: str | None) -> str:
     return (
-        "You are SwarmState's planner. The C kernel executes BATCH operations "
+        "You are StatePod's planner. The C kernel executes BATCH operations "
         "locally; the model only sees summaries, never files.\n"
         "Available op types: READ (path, line_start, line_end), WRITE (path, content), "
         "GREP (pattern, target), DIFF (path), STATUS, "
@@ -761,21 +761,21 @@ def plan_ollama(query: str, summary: str | None,
                 num_ctx: int = 0) -> dict:
     """Local plan via Ollama's OpenAI-compat endpoint.
 
-    num_gpu_layers > 0 (or env SS_OLLAMA_NGL) adds options.num_gpu so
+    num_gpu_layers > 0 (or env SP_OLLAMA_NGL) adds options.num_gpu so
     llama.cpp offloads that many layers to the GPU (e.g. a 2 GB card:
     qwen2.5-coder:1.5b fits fully at default; a 7B is 0 layers by
     default because the KV cache + compute buffers already eat most of
     2 GB — force 5-7 layers to trade VRAM for a modest speedup).
 
-    num_ctx > 0 (or env SS_OLLAMA_NUM_CTX) caps the context window.
+    num_ctx > 0 (or env SP_OLLAMA_NUM_CTX) caps the context window.
     Plans are short JSON over a small summary: 1024 is generous and
     cuts the KV cache from 224 MiB (4096) to 56 MiB, freeing VRAM for
     more offloaded layers. Never go below ~768 with the full planner
     system prompt.
     """
-    base = base or os.environ.get("SWARMSTATE_OLLAMA", "http://localhost:11434/v1")
-    ngl = num_gpu_layers or int(os.environ.get("SS_OLLAMA_NGL", "0") or 0)
-    nctx = num_ctx or int(os.environ.get("SS_OLLAMA_NUM_CTX", "0") or 0)
+    base = base or os.environ.get("STATEPOD_OLLAMA", "http://localhost:11434/v1")
+    ngl = num_gpu_layers or int(os.environ.get("SP_OLLAMA_NGL", "0") or 0)
+    nctx = num_ctx or int(os.environ.get("SP_OLLAMA_NUM_CTX", "0") or 0)
     system = _planner_system(summary)
     def _post():
         body = {
@@ -910,7 +910,7 @@ def _validate_plan(plan: dict) -> dict:
 
 def plan_mesh(query: str, summary: str | None, mesh, timeout: float = 20.0,
              prefer: list[str] | None = None) -> dict:
-    timeout = float(os.environ.get("SS_MESH_TIMEOUT", timeout))
+    timeout = float(os.environ.get("SP_MESH_TIMEOUT", timeout))
     """Inference-broker path: ask the mesh who can plan this task.  The
     local router's model pick is passed as a PREFERENCE so the broker
     can score providers by capability (model match, load, freshness)."""
@@ -971,7 +971,7 @@ def make_plan(query: str, summary: str | None, backend: str = "mock",
             raise RuntimeError(f"hw planner failed ({exc})") from exc
     elif backend in ("deepseek", "normal"):
         # "normal" = naive full-context baseline (same model, whole repo);
-        # "deepseek" = SwarmState containment (state summary only)
+        # "deepseek" = StatePod containment (state summary only)
         try:
             plan = normalize_plan(plan_deepseek(query, summary, model=model,
                                                 full=(backend == "normal")))

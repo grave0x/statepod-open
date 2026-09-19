@@ -18,8 +18,8 @@
 Every task is stored as:
 
 ```
-~/.swarmstate/tasks/<id>.md   ← human-editable, git-trackable
-~/.swarmstate/tasks/index.json ← machine view (task_manager format)
+~/.statepod/tasks/<id>.md   ← human-editable, git-trackable
+~/.statepod/tasks/index.json ← machine view (task_manager format)
 ```
 
 ### Frontmatter
@@ -32,11 +32,11 @@ layer:      Task
 status:     todo
 priority:   P0 | P1 | P2 | P3
 category:   vision | epic | story | task | infra | research
-tags:       [swarmstate, ffi, docs]
+tags:       [statepod, ffi, docs]
 depends:    [T-0001, T-0003]
 created:    2026-09-04T00:00:00Z
 updated:    2026-09-04T00:00:00Z
-source:     https://github.com/grave0x/swarmstate/issues/42   # optional
+source:     https://github.com/grave0x/statepod/issues/42   # optional
 ---
 ```
 
@@ -79,7 +79,7 @@ One sentence. Imperative verb. ≤80 chars.
 
 ```
 ┌─ Vision ──────────────────────────────────────────────────┐
-│ "Ship swarmtui v0.1.0 — swarmstate orchestrator TUI"    │
+│ "Ship statetui v0.1.0 — statepod orchestrator TUI"    │
 └───────────────────────────────────────────────────────────┘
          │
          ▼
@@ -127,11 +127,11 @@ One sentence. Imperative verb. ≤80 chars.
 ## CLI Reference
 
 ```bash
-sw todo add "Title" --layer vision|epic|story|task [--parent T-0001]
-sw todo ls    [--layer L] [--status S] [--priority P]
-sw todo graph [--fmt ascii|md] [--depth N]
-sw todo next  [--limit 3]
-sw todo check                      # run invariant checks
-sw todo sync push|pull
-sw todo scaffold "I want to <verb> <thing>"
+sp todo add "Title" --layer vision|epic|story|task [--parent T-0001]
+sp todo ls    [--layer L] [--status S] [--priority P]
+sp todo graph [--fmt ascii|md] [--depth N]
+sp todo next  [--limit 3]
+sp todo check                      # run invariant checks
+sp todo sync push|pull
+sp todo scaffold "I want to <verb> <thing>"
 ```

@@ -1,8 +1,8 @@
 # Role: supervisor — overview + governance (approve/deny target state)
-screen "SwarmState · Supervisor" w 90 h 30 bg 17
+screen "StatePod · Supervisor" w 90 h 30 bg 17
   col weight 1 pad 1 gap 1
     row gap 1
-      text "SwarmState" fg 14 bold 1
+      text "StatePod" fg 14 bold 1
       text "pool: farm-east" fg 8
       spacer weight 1
       text "supervisor" fg 11 bold 1

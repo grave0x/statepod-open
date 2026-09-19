@@ -1,8 +1,8 @@
-# SwarmState — Agent Instructions
+# StatePod — Agent Instructions
 
 ## Project Overview
 
-SwarmState is a context-containing, state-first C kernel for AI agents. The kernel holds
+StatePod is a context-containing, state-first C kernel for AI agents. The kernel holds
 and exposes project context; the LLM sees only summaries, diffs, and plans.
 
 ## 4-Layer Task Schema
@@ -18,23 +18,23 @@ Vision → Epic → Story → Task
 - **Story**: 1 commit-cycle (1-8 hours). 1 Epic parent.
 - **Task**: Atomic (≤4h). 1 Story parent.
 
-## Using sw-todo
+## Using sp-todo
 
 Use the task manager for all work tracking. Do not create ad-hoc todos.
 
 ```bash
 # Natural language → 4-layer scaffold
-sw-todo auto "I want to implement the mesh broker"
+sp-todo auto "I want to implement the mesh broker"
 
 # Standard workflow
-sw-todo add "Fix auth bug" --layer task --priority P1
-sw-todo start T-0058
-sw-todo complete T-0058
+sp-todo add "Fix auth bug" --layer task --priority P1
+sp-todo start T-0058
+sp-todo complete T-0058
 
 # View work
-sw-todo ls --status todo --layer epic
-sw-todo graph --root T-0058
-sw-todo next  # next actionable tasks
+sp-todo ls --status todo --layer epic
+sp-todo graph --root T-0058
+sp-todo next  # next actionable tasks
 ```
 
 ## Schema Invariants
@@ -46,23 +46,23 @@ Always enforce on task creation:
 
 ## MCP Tools
 
-Available via the MCP server at `~/.local/bin/swarmstate-todo-mcp.py`:
+Available via the MCP server at `~/.local/bin/statepod-todo-mcp.py`:
 
-- `swarmstate_todo_create(goal, priority)` — auto-generate 4-layer chain
-- `swarmstate_todo_list(status, layer, priority, limit)` — list tasks
-- `swarmstate_todo_show(task_id)` — show task details
+- `statepod_todo_create(goal, priority)` — auto-generate 4-layer chain
+- `statepod_todo_list(status, layer, priority, limit)` — list tasks
+- `statepod_todo_show(task_id)` — show task details
 
 ## Kernel
 
-The C kernel (`libswarmstate.so`) provides:
+The C kernel (`libstatepod.so`) provides:
 - Context containment via resource tags (`m#:d#:b#`)
 - Registry memory (strategy/model/outcome rates per query signature)
 - Mesh inference broker for multi-agent coordination
 
 Access via Python:
 ```python
-from swarmstate import SwarmState
-s = SwarmState("/path/to/repo")
+from statepod import StatePod
+s = StatePod("/path/to/repo")
 s.grep("main")  # semantic grep with context
 s.plan(query)   # structured plan from query
 ```
@@ -78,5 +78,5 @@ Governance is enforced at the planning gate. DENY actions require co-sign.
 | `harness/` | Agent harness: planner, orchestrator, governance |
 | `infer/` | Embedded inference handler |
 | `py/` | Python bindings + tests |
-| `scripts/sw-todo` | Task manager CLI |
+| `scripts/sp-todo` | Task manager CLI |
 | `docs/todo.md` | Full task manager docs |

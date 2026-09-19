@@ -1,8 +1,8 @@
 {
-  "$schema": "swarmtui/wireframe.v1",
-  "name": "swarmtui",
+  "$schema": "statetui/wireframe.v1",
+  "name": "statetui",
   "version": "0.1.0-dev",
-  "description": "Swarmstate orchestrator and management TUI",
+  "description": "StatePod orchestrator and management TUI",
   "design": {
     "font": "monospace",
     "engine": "ratatui",
@@ -1035,7 +1035,7 @@
             "fields": [
               {
                 "k": "Path",
-                "v": "/home/grave/Projects/internal.source/02-tools/swarmstate",
+                "v": "/home/grave/Projects/internal.source/02-tools/statepod",
                 "kind": "path_input"
               },
               {

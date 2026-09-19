@@ -11,7 +11,7 @@
 #      malformed ops (the old lenient behavior).
 set -u
 cd "$(dirname "$0")/.."
-export SWARMSTATE_LIB=$PWD/libswarmstate.so
+export STATEPOD_LIB=$PWD/libstatepod.so
 
 echo "=== plan grammar: generation constraint + strict gate ==="
 python3 - <<'EOF'

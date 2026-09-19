@@ -34,7 +34,7 @@ def test_dag_layered_fork_4x3():
 def test_nag_skill_import_and_review_block():
     sys.path.insert(0, str(REPO / ".agents" / "skills" / "nag"))
     import nag_skill
-    assert nag_skill.REPO.name == "swarmstate"
+    assert nag_skill.REPO.name == "statepod"
     assert nag_skill.TIMEOUT_DEFAULT == 30
     assert nag_skill.MODEL_DEFAULT == "qwen2.5-coder:1.5b"
     assert nag_skill.BRANCH_PREFIX_DEFAULT == "nag"

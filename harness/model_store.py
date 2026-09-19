@@ -1,25 +1,25 @@
-"""Shared model store for SwarmState — auto-discovery and auto-launch.
+"""Shared model store for StatePod — auto-discovery and auto-launch.
 
-A shared model folder lives at swarmstate/models/ (symlinked to ~/.ollama/models
-by default; `sw model-store link` to change it).
+A shared model folder lives at statepod/models/ (symlinked to ~/.ollama/models
+by default; `sp model-store link` to change it).
 
-When `sw` needs a local model it:
+When `sp` needs a local model it:
   1. Checks if the requested model is in the store.
   2. If ollama serve is not running, starts it automatically.
   3. If the model is not pulled, pulls it automatically.
   4. Returns the ready base URL for the planner.
 
-Usage (from swarmcli / orchestrator):
+Usage (from statepod / orchestrator):
     from model_store import ensure_ollama_running, ensure_model, status, default_model
 
-    ensure_ollama_running(shared_store="~/Projects/internal.source/02-tools/swarmstate/models")
+    ensure_ollama_running(shared_store="~/Projects/internal.source/02-tools/statepod/models")
     ensure_model("qwen2.5-coder:1.5b", shared_store="...")
 
 CLI:
-    sw model-store status    -- list available models
-    sw model-store link     -- create/update the models/ symlink
-    sw model-store pull M   -- pull a model
-    sw model-store doctor   -- check ollama + model availability
+    sp model-store status    -- list available models
+    sp model-store link     -- create/update the models/ symlink
+    sp model-store pull M   -- pull a model
+    sp model-store doctor   -- check ollama + model availability
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ import sys
 import time
 from pathlib import Path
 
-# Default shared model store: swarmstate/models/ (symlink to ~/.ollama/models)
+# Default shared model store: statepod/models/ (symlink to ~/.ollama/models)
 REPO = Path(__file__).resolve().parent.parent
 DEFAULT_STORE = REPO / "models"
 OLLAMA_PORT = 11434
@@ -105,10 +105,10 @@ def ensure_ollama_running(shared_store: Path | str | None = None) -> str:
     }
 
     # Start in background, redirect stdout/stderr to a log
-    log_path = REPO / ".swarmstate" / "ollama-serve.log"
+    log_path = REPO / ".statepod" / "ollama-serve.log"
     log_path.parent.mkdir(exist_ok=True)
     log_file = open(log_path, "ab")
-    pid_file = REPO / ".swarmstate" / "ollama-serve.pid"
+    pid_file = REPO / ".statepod" / "ollama-serve.pid"
 
     proc = subprocess.Popen(
         ["ollama", "serve"],
@@ -167,7 +167,7 @@ def ensure_model(name: str, shared_store: Path | str | None = None) -> None:
         "OLLAMA_HOST":   f"127.0.0.1:{OLLAMA_PORT}",
     }
     # Pull with visible output (tee to log)
-    log_path = REPO / ".swarmstate" / "ollama-pull.log"
+    log_path = REPO / ".statepod" / "ollama-pull.log"
     with open(log_path, "ab") as lf:
         proc = subprocess.Popen(
             ["ollama", "pull", name],
@@ -215,7 +215,7 @@ def status(shared_store: Path | str | None = None) -> dict:
 
 
 # -------------------------------------------------------------------------- #
-# CLI (sw model-store …)
+# CLI (sp model-store …)
 # -------------------------------------------------------------------------- #
 
 def cmd_status(args) -> int:
@@ -232,7 +232,7 @@ def cmd_status(args) -> int:
         for m in s['models']:
             print(f"    - {m}")
     else:
-        print("  available models: (none — pull one with `sw model-store pull`)")
+        print("  available models: (none — pull one with `sp model-store pull`)")
     if s['default_model']:
         print(f"  default model: {s['default_model']}")
     return 0
@@ -241,7 +241,7 @@ def cmd_status(args) -> int:
 def cmd_pull(args) -> int:
     name = args.model
     if not name:
-        print("Error: specify a model name, e.g. `sw model-store pull qwen2.5-coder:1.5b`")
+        print("Error: specify a model name, e.g. `sp model-store pull qwen2.5-coder:1.5b`")
         return 1
     try:
         ensure_model(name)
@@ -260,9 +260,9 @@ def cmd_doctor(args) -> int:
     print(f"[{mark}] model-store  ollama={s['ollama_serve_running']}  "
           f"models={len(s['models'])}  default={s['default_model'] or 'none'}")
     if not s["ollama_serve_running"]:
-        print("  → start with `sw model-store start` or let `sw` auto-start on first use")
+        print("  → start with `sp model-store start` or let `sp` auto-start on first use")
     if not s["models"]:
-        print("  → pull a model: `sw model-store pull qwen2.5-coder:1.5b`")
+        print("  → pull a model: `sp model-store pull qwen2.5-coder:1.5b`")
     return 0 if ok else 1
 
 
@@ -279,8 +279,8 @@ def cmd_start(args) -> int:
 
 if __name__ == "__main__":
     import argparse
-    ap = argparse.ArgumentParser(description="SwarmState model store CLI")
-    ap.add_argument("--store", default=None, help="model store path (default: swarmstate/models)")
+    ap = argparse.ArgumentParser(description="StatePod model store CLI")
+    ap.add_argument("--store", default=None, help="model store path (default: statepod/models)")
     sp = ap.add_subparsers(dest="cmd")
 
     p_status = sp.add_parser("status", help="show store status")

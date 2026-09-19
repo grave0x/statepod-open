@@ -1,4 +1,4 @@
-# SwarmState Pre-Pitch Red Team — Findings Report
+# StatePod Pre-Pitch Red Team — Findings Report
 
 **Date:** 2026-08-30
 **Scope:** whole shipped system (C kernel + registry, Python harness/orchestrator,
@@ -6,7 +6,7 @@ mesh daemon + transports, federation pools/bridges/multi-homing, governance + au
 plan grammar, Windows node + UI Kit, file exchange, LoRa, docs/quickstarts)
 **Method:** attack battery (`scripts/redteam_battery.py` + targeted probes) against the
 live system; every finding classified **PASS / WEAK / FAIL** with evidence.
-**Environment:** isolated sandbox `/tmp/ss_redteam/` (throwaway repo + outside dir),
+**Environment:** isolated sandbox `/tmp/sp_redteam/` (throwaway repo + outside dir),
 loopback mesh, no client data.
 
 ---
@@ -116,17 +116,17 @@ live pool hub, context + members correct).
 
 ---
 
-## Addendum (2026-08-30) — sw identity layer (UX spec §6), dormant
+## Addendum (2026-08-30) — sp identity layer (UX spec §6), dormant
 
-The daily-use CLI now has a signed identity store (`sw identity
+The daily-use CLI now has a signed identity store (`sp identity
 issue/import/show/clear`, HMAC-SHA256 + TTL, chmod 600 file, secret
 never stored).  Roles (user/support/architect) are DEFINED in
-`harness/identity.py` but deliberately NOT enforced: SwarmState is a
+`harness/identity.py` but deliberately NOT enforced: StatePod is a
 coding harness today, and role gating (plus the MSP/enterprise tier)
 would be overengineering now.  Enforcement can be switched on later, or
 added as a wrapper, using the CAPS table as the single source of truth;
 the CLI surface does not change.  Expired identities are reported by
-`sw identity show` (would degrade to user); no identity = unrestricted
+`sp identity show` (would degrade to user); no identity = unrestricted
 (demo back-compat default, documented).  Verified live against the mock
 backend: identities round-trip for all three roles and commands run
 ungated (`test_sw_cli_roles_dormant_no_gating`,

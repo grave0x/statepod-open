@@ -20,9 +20,9 @@
 #      with actionable errors (ValueError), proven against the gate.
 set -u
 cd "$(dirname "$0")/.."
-export SWARMSTATE_LIB=$PWD/libswarmstate.so
+export STATEPOD_LIB=$PWD/libstatepod.so
 HUB_PORT=7190
-RES=/tmp/ss_3node
+RES=/tmp/sp_3node
 mkdir -p "$RES"
 pkill -f "harness/meshd.py" 2>/dev/null; sleep 1
 pkill -f "run_named.py" 2>/dev/null; sleep 1

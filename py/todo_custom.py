@@ -5,10 +5,10 @@ Fields: labels, milestone, assignees, mentions, reactions, draft, estimate,
 actual, due, closed_at, project, effort_score, impact_score, risk, weight,
 checklist, links, watchers, priority_boost, swarm_tags.
 
-Custom fields: drop a JSON catalog at ~/.swarmstate/todo-fields.json to add
+Custom fields: drop a JSON catalog at ~/.statepod/todo-fields.json to add
 project-specific fields (e.g. { "name": "team": "ftype": "text", "layers":
-["epic"] }). The field is then accepted by `sw todo add --team ...` and
-shown by `sw todo show`. Validation runs through the same FieldSpec as
+["epic"] }). The field is then accepted by `sp todo add --team ...` and
+shown by `sp todo show`. Validation runs through the same FieldSpec as
 built-in fields.
 """
 from __future__ import annotations
@@ -134,7 +134,7 @@ EXT_FIELDS: dict[str, FieldSpec] = {
     "closed_at":    FieldSpec("closed_at", "date", ["vision","epic","story","task"],
                               doc="Timestamp when task was completed"),
     "project":      FieldSpec("project", "text", ["epic","story"],
-                              doc="Project name (e.g. 'swarmtui', 'kernel-v2')"),
+                              doc="Project name (e.g. 'statetui', 'kernel-v2')"),
     "effort_score": FieldSpec("effort_score", "number", ["story","task"],
                               min_val=1, max_val=13, validate_fn=_effort_validate,
                               doc="Planning poker Fibonacci score: 1, 2, 3, 5, 8, 13"),
@@ -163,8 +163,8 @@ EXT_FIELDS: dict[str, FieldSpec] = {
 
 # ── Catalog resolution ────────────────────────────────────────────────────
 def _catalog_paths():
-    src = Path(__file__).resolve().parent.parent / "scripts" / "sw-todo-fields.json"
-    user = Path.home() / ".swarmstate" / "todo-fields.json"
+    src = Path(__file__).resolve().parent.parent / "scripts" / "sp-todo-fields.json"
+    user = Path.home() / ".statepod" / "todo-fields.json"
     paths = [src]
     if user.exists():
         paths.insert(0, user)

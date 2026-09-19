@@ -19,14 +19,14 @@ from planner import (  # noqa: E402
     plan_freetoken, plan_llamacpp, plan_openai_backend,
     OPENAI_BACKEND_NAMES, OLLAMA_MAX_TOKENS,
 )
-from swarmstate import SwarmState  # noqa: E402
+from statepod import StatePod  # noqa: E402
 from task_suite import _replay_feedback, _parse_turn, build_repo, _semantic_ok  # noqa: E402
 from corpus import ORACLES, ALL_TASKS  # noqa: E402
 
 
 class LoopTests(unittest.TestCase):
     def setUp(self):
-        self._tmp = tempfile.TemporaryDirectory(prefix="swarmstate-loop-")
+        self._tmp = tempfile.TemporaryDirectory(prefix="statepod-loop-")
         self.root = self._tmp.name
         subprocess.run(["git", "init", "-q", self.root], check=True)
 
@@ -36,10 +36,10 @@ class LoopTests(unittest.TestCase):
     def test_ten_queries_no_crash(self):
         with Orchestrator(self.root, backend="mock") as orch:
             replies = []
-            replies.append(orch.ask('write "hello.txt" "hello swarmstate\n"'))
+            replies.append(orch.ask('write "hello.txt" "hello statepod\n"'))
             replies.append(orch.ask('write "src/main.c" "int main(void) { return 0; }\n"'))
             replies.append(orch.ask("read hello.txt"))
-            replies.append(orch.ask("grep 'swarmstate'"))
+            replies.append(orch.ask("grep 'statepod'"))
             replies.append(orch.ask("status"))
             replies.append(orch.ask("count lines of hello.txt"))
             replies.append(orch.ask("diff src/main.c"))
@@ -50,7 +50,7 @@ class LoopTests(unittest.TestCase):
                 self.assertTrue(r)
             self.assertEqual(orch.turns, 10)
             # state persisted through the kernel cache
-            self.assertEqual(orch.state.read_file("hello.txt"), "hello swarmstate\n")
+            self.assertEqual(orch.state.read_file("hello.txt"), "hello statepod\n")
             self.assertEqual(orch.state.read_file("src/main.c"),
                              "int main(void) { return 0; }\n")
             # a write plan touched the right files
@@ -212,7 +212,7 @@ class LoopTests(unittest.TestCase):
         Now each performs the edit as a full-file WRITE against the
         build_repo() fixture and the semantic oracle passes."""
         import tempfile
-        with tempfile.TemporaryDirectory(prefix="swarmstate-mock-sem-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="statepod-mock-sem-") as tmp:
             from pathlib import Path
             root = Path(tmp)
             build_repo(root)
@@ -221,7 +221,7 @@ class LoopTests(unittest.TestCase):
             code = (root / "src" / "math.c").read_text()
             self.assertIn("int count = 3", code)
             self.assertNotIn("int x = 3", code)
-        with tempfile.TemporaryDirectory(prefix="swarmstate-mock-sem-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="statepod-mock-sem-") as tmp:
             from pathlib import Path
             root = Path(tmp)
             build_repo(root)
@@ -230,7 +230,7 @@ class LoopTests(unittest.TestCase):
                          'to src/math.c', escalate=False)
             code = (root / "src" / "math.c").read_text()
             self.assertIn("double avg(double a, double b)", code)
-        with tempfile.TemporaryDirectory(prefix="swarmstate-mock-sem-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="statepod-mock-sem-") as tmp:
             from pathlib import Path
             root = Path(tmp)
             build_repo(root)
@@ -240,7 +240,7 @@ class LoopTests(unittest.TestCase):
             self.assertNotIn("unused_helper", code)
 
     def test_plan_ollama_num_gpu_passthrough(self):
-        """num_gpu_layers / SS_OLLAMA_NUM_CTX must flow through to the
+        """num_gpu_layers / SP_OLLAMA_NUM_CTX must flow through to the
         NATIVE /api/chat endpoint as options (the /v1 compat endpoint
         ignores options — verified live). No options -> /v1 unchanged."""
         calls = []
@@ -258,7 +258,7 @@ class LoopTests(unittest.TestCase):
                              f"options go to native endpoint, got {path}")
             self.assertEqual(body["options"], {"num_gpu": 7},
                              "explicit ngl overrides")
-            with mock.patch.dict("os.environ", {"SS_OLLAMA_NGL": "10"}):
+            with mock.patch.dict("os.environ", {"SP_OLLAMA_NGL": "10"}):
                 plan_ollama("status", "s", base=base)
             self.assertEqual(calls[1][1]["options"], {"num_gpu": 10},
                              "env fallback")
@@ -266,8 +266,8 @@ class LoopTests(unittest.TestCase):
             self.assertEqual(calls[2][1]["options"], {"num_ctx": 1024},
                              "num_ctx passthrough")
             with mock.patch.dict("os.environ",
-                                 {"SS_OLLAMA_NUM_CTX": "1024",
-                                  "SS_OLLAMA_NGL": "8"}):
+                                 {"SP_OLLAMA_NUM_CTX": "1024",
+                                  "SP_OLLAMA_NGL": "8"}):
                 plan_ollama("status", "s", base=base)
             self.assertEqual(calls[3][1]["options"],
                              {"num_gpu": 8, "num_ctx": 1024},
@@ -319,8 +319,8 @@ class LoopTests(unittest.TestCase):
         base, stop = self._fake_ollama(handler)
         try:
             with mock.patch.dict(os.environ, {
-                "SWARMSTATE_FREETOKEN_BASE": base,
-                "SWARMSTATE_LLAMACPP_BASE": base,
+                "STATEPOD_FREETOKEN_BASE": base,
+                "STATEPOD_LLAMACPP_BASE": base,
             }):
                 p1 = plan_freetoken("status", "clean", model="ft-model")
                 p2 = plan_llamacpp("status", "clean", model="gguf")
@@ -377,12 +377,12 @@ class LoopTests(unittest.TestCase):
         base, stop = self._fake_ollama(handler)
         try:
             with mock.patch.dict(os.environ, {
-                "SWARMSTATE_VLLM_BASE": base,
-                "SWARMSTATE_OPENAI_BASE": base,
+                "STATEPOD_VLLM_BASE": base,
+                "STATEPOD_OPENAI_BASE": base,
                 "OPENAI_API_KEY": "sk-test",
-                "SWARMSTATE_OPENROUTER_BASE": base,
+                "STATEPOD_OPENROUTER_BASE": base,
                 "OPENROUTER_API_KEY": "or-test",
-                "SWARMSTATE_LMSTUDIO_BASE": base,
+                "STATEPOD_LMSTUDIO_BASE": base,
             }, clear=False):
                 for name in ("vllm", "openai", "openrouter", "lmstudio"):
                     plan = make_plan("status", "clean", backend=name,
@@ -390,7 +390,7 @@ class LoopTests(unittest.TestCase):
                     self.assertEqual(plan["ops"][0]["type"], "STATUS", name)
                 # openai without key fails cleanly
                 with mock.patch.dict(os.environ, {"OPENAI_API_KEY": "",
-                                                  "SWARMSTATE_OPENAI_KEY": ""}):
+                                                  "STATEPOD_OPENAI_KEY": ""}):
                     with self.assertRaises(RuntimeError) as cm:
                         plan_openai_backend("openai", "q", "s", model="m")
                     self.assertIn("API key", str(cm.exception))
@@ -543,7 +543,7 @@ class LoopTests(unittest.TestCase):
         base, stop = self._fake_ollama(handler)
         try:
             with mock.patch.dict("os.environ",
-                                 {"SWARMSTATE_OLLAMA": base}):
+                                 {"STATEPOD_OLLAMA": base}):
                 with tempfile.TemporaryDirectory(
                         prefix="ss-xmodel-") as tmp:
                     root = Path(tmp)
@@ -604,7 +604,7 @@ class LoopTests(unittest.TestCase):
         base, stop = self._fake_ollama(handler)
         try:
             with mock.patch.dict("os.environ",
-                                 {"SWARMSTATE_OLLAMA": base}):
+                                 {"STATEPOD_OLLAMA": base}):
                 with tempfile.TemporaryDirectory(
                         prefix="ss-writectx-") as tmp:
                     root = Path(tmp)
@@ -640,7 +640,7 @@ class LoopTests(unittest.TestCase):
         base, stop = self._fake_ollama(handler)
         try:
             with mock.patch.dict("os.environ",
-                                 {"SWARMSTATE_OLLAMA": base}):
+                                 {"STATEPOD_OLLAMA": base}):
                 with tempfile.TemporaryDirectory(
                         prefix="ss-askfb-") as tmp:
                     root = Path(tmp)
@@ -813,7 +813,7 @@ class LoopTests(unittest.TestCase):
         # applied edit -> oracle True (full word-boundary rename, the way
         # both plan_mock and a correct model apply it)
         import re as _re
-        with tempfile.TemporaryDirectory(prefix="swarmstate-corpus-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="statepod-corpus-") as tmp:
             root = Path(tmp)
             build_repo(root)
             code = (root / "src" / "util.c").read_text()
@@ -822,7 +822,7 @@ class LoopTests(unittest.TestCase):
             self.assertTrue(
                 ORACLES["rename tmp->buffer@src/util.c"](root, "")[0])
         # no edit -> oracle False (honest semantic check)
-        with tempfile.TemporaryDirectory(prefix="swarmstate-corpus-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="statepod-corpus-") as tmp:
             root = Path(tmp)
             build_repo(root)
             self.assertFalse(
@@ -837,7 +837,7 @@ class LoopTests(unittest.TestCase):
         """_semantic_ok routes corpus tasks to their per-task oracle."""
         import tempfile
         from pathlib import Path
-        with tempfile.TemporaryDirectory(prefix="swarmstate-corpus-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="statepod-corpus-") as tmp:
             root = Path(tmp)
             build_repo(root)
             self.assertTrue(
@@ -926,8 +926,8 @@ class LoopTests(unittest.TestCase):
         def handler(body):
             return 200, {"choices": [{"message": {"content": "I am not JSON"}}]}
         base, stop = self._fake_ollama(handler)
-        old_env = os.environ.get("SWARMSTATE_OLLAMA")
-        os.environ["SWARMSTATE_OLLAMA"] = base
+        old_env = os.environ.get("STATEPOD_OLLAMA")
+        os.environ["STATEPOD_OLLAMA"] = base
         try:
             with self.assertRaises(RuntimeError) as ctx:
                 make_plan("status", "clean", backend="ollama")
@@ -935,9 +935,9 @@ class LoopTests(unittest.TestCase):
         finally:
             stop()
             if old_env is None:
-                os.environ.pop("SWARMSTATE_OLLAMA", None)
+                os.environ.pop("STATEPOD_OLLAMA", None)
             else:
-                os.environ["SWARMSTATE_OLLAMA"] = old_env
+                os.environ["STATEPOD_OLLAMA"] = old_env
 
     def test_ollama_retry_rung_end_to_end_via_fake_endpoint(self):
         """Full orchestrator path with a fake endpoint: first plan fails
@@ -958,8 +958,8 @@ class LoopTests(unittest.TestCase):
                 '"strategy":"DELTA"}'}}]}
 
         base, stop = self._fake_ollama(handler)
-        old_env = os.environ.get("SWARMSTATE_OLLAMA")
-        os.environ["SWARMSTATE_OLLAMA"] = base
+        old_env = os.environ.get("STATEPOD_OLLAMA")
+        os.environ["STATEPOD_OLLAMA"] = base
         try:
             with Orchestrator(self.root, backend="ollama", verbose=True) as orch:
                 out = orch.ask("status")
@@ -967,9 +967,9 @@ class LoopTests(unittest.TestCase):
         finally:
             stop()
             if old_env is None:
-                os.environ.pop("SWARMSTATE_OLLAMA", None)
+                os.environ.pop("STATEPOD_OLLAMA", None)
             else:
-                os.environ["SWARMSTATE_OLLAMA"] = old_env
+                os.environ["STATEPOD_OLLAMA"] = old_env
         self.assertEqual(len(calls), 2, "retry must issue a second request")
         self.assertEqual(retried, 1)
         self.assertNotIn("!!", out)
@@ -1016,8 +1016,8 @@ class LoopTests(unittest.TestCase):
         (Path(self.root) / "src" / "math.c").write_text(
             "int add(int a, int b) { return a + b; }\n")
         base, stop = self._fake_ollama(handler)
-        old_env = os.environ.get("SWARMSTATE_OLLAMA")
-        os.environ["SWARMSTATE_OLLAMA"] = base
+        old_env = os.environ.get("STATEPOD_OLLAMA")
+        os.environ["STATEPOD_OLLAMA"] = base
         try:
             with Orchestrator(self.root, backend="ollama", verbose=True) as orch:
                 out = orch.ask("find unused variables in src/math.c",
@@ -1025,25 +1025,25 @@ class LoopTests(unittest.TestCase):
         finally:
             stop()
             if old_env is None:
-                os.environ.pop("SWARMSTATE_OLLAMA", None)
+                os.environ.pop("STATEPOD_OLLAMA", None)
             else:
-                os.environ["SWARMSTATE_OLLAMA"] = old_env
+                os.environ["STATEPOD_OLLAMA"] = old_env
         self.assertEqual(len(calls), 2, "retry issues a second request")
         self.assertNotIn("!!", out)
         self.assertIn("SYMBOLIC", out, "retried plan runs under SYMBOLIC")
 
     def test_full_dump_contains_file_contents(self):
         """The naive baseline dump must include actual file contents,
-        exclude .git/.swarmstate, and stay bounded."""
+        exclude .git/.statepod, and stay bounded."""
         (Path(self.root) / "src").mkdir()
         (Path(self.root) / "src" / "math.c").write_text(
             "int x = 3;\nint add(int a, int b) { return a + b; }\n")
-        (Path(self.root) / ".swarmstate").mkdir(exist_ok=True)
+        (Path(self.root) / ".statepod").mkdir(exist_ok=True)
         with Orchestrator(self.root, backend="mock") as orch:
             dump = orch._full_dump()
         self.assertIn("--- src/math.c ---", dump)
         self.assertIn("int add(int a, int b)", dump)
-        self.assertNotIn(".swarmstate", dump.split("=== END")[0])
+        self.assertNotIn(".statepod", dump.split("=== END")[0])
         self.assertLess(len(dump), 262144)
 
     def test_normal_backend_uses_full_dump_and_no_escalation(self):
@@ -1222,7 +1222,7 @@ class LoopTests(unittest.TestCase):
     # ---- spec 9.3: registry-driven strategy selection -----------------
     def test_registry_strategy_cold_start_returns_heuristic(self):
         """No STRAT feedback yet -> the op-shape heuristic decides."""
-        with SwarmState(self.root) as state:
+        with StatePod(self.root) as state:
             self.assertEqual(
                 decide_strategy([{"type": "READ", "path": "x.c"}],
                                 registry=state),
@@ -1236,7 +1236,7 @@ class LoopTests(unittest.TestCase):
         """The money case: a READ plan's heuristic default is TARGETED,
         but the registry proves DELTA wins (3 ok / 3 fail) -> the router
         overrides the heuristic and returns DELTA."""
-        with SwarmState(self.root) as state:
+        with StatePod(self.root) as state:
             ops = [{"type": "READ", "path": "x.c"}]
             for _ in range(3):
                 state.feedback("STRAT:READ:DELTA", True)
@@ -1248,7 +1248,7 @@ class LoopTests(unittest.TestCase):
     def test_registry_strategy_picks_proven_targeted(self):
         """DELTA proven bad thrice, TARGETED proven good thrice on a READ
         plan -> TARGETED with the read path as the target."""
-        with SwarmState(self.root) as state:
+        with StatePod(self.root) as state:
             ops = [{"type": "READ", "path": "x.c"}]
             for _ in range(3):
                 state.feedback("STRAT:READ:DELTA", False)
@@ -1261,7 +1261,7 @@ class LoopTests(unittest.TestCase):
         """TARGETED proven best for a WRITE-only plan: no readable paths
         to target, so it degrades to DELTA (same kernel behavior, honest
         log) instead of claiming a TARGETED that targets nothing."""
-        with SwarmState(self.root) as state:
+        with StatePod(self.root) as state:
             ops = [{"type": "WRITE", "path": "a", "content": "b"}]
             for _ in range(3):
                 state.feedback("STRAT:WRITE:DELTA", False)
@@ -1288,7 +1288,7 @@ class LoopTests(unittest.TestCase):
              "strategy": "TARGETED", "ok": True, "ok_semantic": False},
         ]
         results.write_text("".join(json.dumps(r) + "\n" for r in recs))
-        with SwarmState(self.root) as state:
+        with StatePod(self.root) as state:
             n = _replay_feedback(state, results, "ollama")
             self.assertEqual(n, 3)
             self.assertEqual(state.success_rate("STRAT:READ+WRITE:DELTA"), 1.0)
@@ -1318,7 +1318,7 @@ class LoopTests(unittest.TestCase):
         """The registry can learn SYMBOLIC for a plain READ signature:
         DELTA and TARGETED proven bad, SYMBOLIC proven good -> SYMBOLIC
         overrides the op-shape heuristic default (TARGETED)."""
-        with SwarmState(self.root) as state:
+        with StatePod(self.root) as state:
             for _ in range(3):
                 state.feedback("STRAT:READ:DELTA", False)
                 state.feedback("STRAT:READ:TARGETED", False)
@@ -1362,7 +1362,7 @@ class LoopTests(unittest.TestCase):
     def test_registry_strategy_requires_min_samples(self):
         """Fewer than STRAT_MIN_SAMPLES (3) is noise: 1 or 2 OK on DELTA
         must not flip the heuristic default (TARGETED for a READ plan)."""
-        with SwarmState(self.root) as state:
+        with StatePod(self.root) as state:
             state.feedback("STRAT:READ:DELTA", True)
             self.assertEqual(
                 decide_strategy([{"type": "READ", "path": "x.c"}],
@@ -1377,7 +1377,7 @@ class LoopTests(unittest.TestCase):
 
     def test_registry_strategy_requested_full_still_honored(self):
         """An explicit FULL request always wins over registry evidence."""
-        with SwarmState(self.root) as state:
+        with StatePod(self.root) as state:
             for _ in range(3):
                 state.feedback("STRAT:READ:DELTA", True)
             self.assertEqual(
@@ -1388,7 +1388,7 @@ class LoopTests(unittest.TestCase):
     def test_registry_strategy_least_bad_when_all_fail(self):
         """All proven strategies bad (rate 0.0) -> least-bad wins so the
         loop keeps learning; on a full tie the cheaper strategy wins."""
-        with SwarmState(self.root) as state:
+        with StatePod(self.root) as state:
             for _ in range(3):
                 state.feedback("STRAT:READ:TARGETED", False)
                 state.feedback("STRAT:READ:DELTA", False)
@@ -1557,7 +1557,7 @@ class LoopTests(unittest.TestCase):
         bad 4x and FULL proven good 3x on a WRITE plan -> the strategy
         gate refuses DELTA and selects FULL.  This is exactly what the
         mesh bridge delivers to a peer node."""
-        with SwarmState(self.root) as state:
+        with StatePod(self.root) as state:
             ops = [{"type": "WRITE", "path": "a", "content": "b"}]
             for _ in range(4):
                 state.feedback("STRAT:WRITE:DELTA", False)
@@ -1897,14 +1897,14 @@ class LoopTests(unittest.TestCase):
         self.assertIsNone(verify_invite("garbage", "s3cr3t"))
 
     def test_sw_cli_gov_issue_verify_audit(self):
-        """sw gov: mint + verify tokens and read the audit ledger."""
+        """sp gov: mint + verify tokens and read the audit ledger."""
         import os, subprocess, sys as _sys, json
         repo = Path(__file__).resolve().parent.parent
         env = dict(os.environ, SW_BACKEND="mock",
-                   SWARMSTATE_LIB=str(repo / "libswarmstate.so"))
+                   STATEPOD_LIB=str(repo / "libstatepod.so"))
         def run(*args, **kw):
             return subprocess.run(
-                [_sys.executable, str(repo / "bin" / "sw"), *args],
+                [_sys.executable, str(repo / "bin" / "sp"), *args],
                 capture_output=True, text=True, timeout=90, env=env,
                 cwd=str(repo), **kw)
         r = run("gov", "issue", "--secret", "s1")
@@ -1916,15 +1916,15 @@ class LoopTests(unittest.TestCase):
         self.assertIn("INVALID", r3.stdout)
 
     def test_sw_cli_ask_governance_matrix(self):
-        """sw ask governance: interactive approve -> ok + HUMAN_APPROVE
+        """sp ask governance: interactive approve -> ok + HUMAN_APPROVE
         audit; enforce without token -> DENY status + DENY audit."""
         import os, subprocess, sys as _sys, json, tempfile
         repo = Path(__file__).resolve().parent.parent
         env = dict(os.environ, SW_BACKEND="mock",
-                   SWARMSTATE_LIB=str(repo / "libswarmstate.so"))
+                   STATEPOD_LIB=str(repo / "libstatepod.so"))
         # interactive approve (two stdin lines: plan confirm + approve)
         r = subprocess.run(
-            [_sys.executable, str(repo / "bin" / "sw"), "ask",
+            [_sys.executable, str(repo / "bin" / "sp"), "ask",
              "count lines in src/math.c", "--governance", "interactive",
              "--governed-op", "EXECUTE", "--supervisor-secret", "s1"],
             input="y\ny\n", capture_output=True, text=True,
@@ -1932,7 +1932,7 @@ class LoopTests(unittest.TestCase):
         self.assertIn("status: ok", r.stdout, r.stderr + r.stdout)
         # enforce without token -> DENY
         r2 = subprocess.run(
-            [_sys.executable, str(repo / "bin" / "sw"), "ask",
+            [_sys.executable, str(repo / "bin" / "sp"), "ask",
              "count lines in src/math.c", "--governance", "enforce",
              "--governed-op", "EXECUTE", "--supervisor-secret", "s1"],
             input="y\n", capture_output=True, text=True,
@@ -1940,7 +1940,7 @@ class LoopTests(unittest.TestCase):
         self.assertIn("status: DENY", r2.stdout, r2.stdout)
         # audit ledger records both
         r3 = subprocess.run(
-            [_sys.executable, str(repo / "bin" / "sw"), "gov", "audit",
+            [_sys.executable, str(repo / "bin" / "sp"), "gov", "audit",
              "--tail", "20"],
             capture_output=True, text=True, timeout=60, env=env,
             cwd=str(repo))
@@ -1948,14 +1948,14 @@ class LoopTests(unittest.TestCase):
         self.assertIn("DENY", r3.stdout)
 
     def test_sw_cli_ask_single_planning_pass(self):
-        """sw ask shows the plan exactly ONCE (plan_callback seam kills
+        """sp ask shows the plan exactly ONCE (plan_callback seam kills
         the double planning pass) and an 'n' abort executes nothing."""
         import os, subprocess, sys as _sys
         repo = Path(__file__).resolve().parent.parent
         env = dict(os.environ, SW_BACKEND="mock",
-                   SWARMSTATE_LIB=str(repo / "libswarmstate.so"))
+                   STATEPOD_LIB=str(repo / "libstatepod.so"))
         r = subprocess.run(
-            [_sys.executable, str(repo / "bin" / "sw"), "ask",
+            [_sys.executable, str(repo / "bin" / "sp"), "ask",
              "count lines in src/math.c"],
             input="n\n", capture_output=True, text=True,
             timeout=90, env=env, cwd=str(repo))
@@ -1992,15 +1992,15 @@ class LoopTests(unittest.TestCase):
             self.assertEqual(before, after, "abort must not touch files")
 
     def test_sw_cli_plan_mock_backend(self):
-        """sw CLI: `sw plan` with the deterministic mock backend prints a
+        """sp CLI: `sp plan` with the deterministic mock backend prints a
         valid plan and ends with an ok status line (regression for the
-        bin/sw harness wrapper)."""
+        bin/sp harness wrapper)."""
         import os, subprocess, sys as _sys
         repo = Path(__file__).resolve().parent.parent
         env = dict(os.environ, SW_BACKEND="mock",
-                   SWARMSTATE_LIB=str(repo / "libswarmstate.so"))
+                   STATEPOD_LIB=str(repo / "libstatepod.so"))
         r = subprocess.run(
-            [_sys.executable, str(repo / "bin" / "sw"), "plan",
+            [_sys.executable, str(repo / "bin" / "sp"), "plan",
              "count lines in src/math.c"],
             capture_output=True, text=True, timeout=90, env=env,
             cwd=str(repo))
@@ -2043,18 +2043,18 @@ class LoopTests(unittest.TestCase):
             self.assertIsNone(load_identity(path))
 
     def test_sw_cli_identity_issue_import_show(self):
-        """sw identity CLI: issue prints a signed line, import stores it,
+        """sp identity CLI: issue prints a signed line, import stores it,
         show reports the role; wrong-secret import fails; clear removes."""
         import os, subprocess, sys as _sys
         import pathlib as _pl
         repo = Path(__file__).resolve().parent.parent
         with tempfile.TemporaryDirectory() as td:
             env = dict(os.environ, SW_BACKEND="mock",
-                       SWARMSTATE_LIB=str(repo / "libswarmstate.so"),
+                       STATEPOD_LIB=str(repo / "libstatepod.so"),
                        SW_IDENTITY=str(_pl.Path(td) / "identity.json"))
             def run(*args, **kw):
                 return subprocess.run(
-                    [_sys.executable, str(repo / "bin" / "sw"), *args],
+                    [_sys.executable, str(repo / "bin" / "sp"), *args],
                     capture_output=True, text=True, timeout=90, env=env,
                     cwd=str(repo), **kw)
             r = run("identity", "show")
@@ -2079,18 +2079,18 @@ class LoopTests(unittest.TestCase):
     def test_sw_cli_roles_dormant_no_gating(self):
         """Roles are DEFINED but DORMANT in the base: importing any
         identity (user/support/architect) must NOT restrict commands
-        while sw is used as a coding harness.  Ask/plan/gov/rollback
+        while sp is used as a coding harness.  Ask/plan/gov/rollback
         all run regardless of the stored role."""
         import os, subprocess, sys as _sys
         import pathlib as _pl
         repo = Path(__file__).resolve().parent.parent
         with tempfile.TemporaryDirectory() as td:
             env = dict(os.environ, SW_BACKEND="mock",
-                       SWARMSTATE_LIB=str(repo / "libswarmstate.so"),
+                       STATEPOD_LIB=str(repo / "libstatepod.so"),
                        SW_IDENTITY=str(_pl.Path(td) / "identity.json"))
             def run(*args, **kw):
                 return subprocess.run(
-                    [_sys.executable, str(repo / "bin" / "sw"), *args],
+                    [_sys.executable, str(repo / "bin" / "sp"), *args],
                     capture_output=True, text=True, timeout=90, env=env,
                     cwd=str(repo), **kw)
             def set_role(role):
@@ -2124,17 +2124,17 @@ class LoopTests(unittest.TestCase):
 
     def test_sw_cli_expired_identity_informational_only(self):
         """With gating dormant, an expired identity is reported by
-        `sw identity show` but does not restrict any command."""
+        `sp identity show` but does not restrict any command."""
         import os, subprocess, sys as _sys, time as _time
         import pathlib as _pl
         repo = Path(__file__).resolve().parent.parent
         with tempfile.TemporaryDirectory() as td:
             env = dict(os.environ, SW_BACKEND="mock",
-                       SWARMSTATE_LIB=str(repo / "libswarmstate.so"),
+                       STATEPOD_LIB=str(repo / "libstatepod.so"),
                        SW_IDENTITY=str(_pl.Path(td) / "identity.json"))
             def run(*args, **kw):
                 return subprocess.run(
-                    [_sys.executable, str(repo / "bin" / "sw"), *args],
+                    [_sys.executable, str(repo / "bin" / "sp"), *args],
                     capture_output=True, text=True, timeout=90, env=env,
                     cwd=str(repo), **kw)
             r = run("identity", "issue", "--role", "architect",
@@ -2960,7 +2960,7 @@ class ResearchHandlerTests(unittest.TestCase):
         self.assertEqual(d.quality, "full")
 
     @staticmethod
-    def _minimal_pdf(text: bytes = b"(Hello swarmstate) Tj") -> bytes:
+    def _minimal_pdf(text: bytes = b"(Hello statepod) Tj") -> bytes:
         stream = (b"BT /F1 12 Tf 72 720 Td " + text
                   + b" 0 -20 Td (second line) Tj ET\n")
         objs = [b"<< /Type /Catalog /Pages 2 0 R >>",
@@ -2987,13 +2987,13 @@ class ResearchHandlerTests(unittest.TestCase):
     def test_pdf_python_fallback_extracts_text_ops(self):
         import research as rh
         d = rh.decode_pdf(self._minimal_pdf(), force="python")
-        self.assertIn("Hello swarmstate", d.text)
+        self.assertIn("Hello statepod", d.text)
         self.assertIn("second line", d.text)
         self.assertNotIn("(", d.text)
         self.assertEqual(d.quality, "degraded")
-        d2 = rh.decode_pdf(self._minimal_pdf(b"[(Hel) (lo sw) 40 (armstate)] TJ"),
+        d2 = rh.decode_pdf(self._minimal_pdf(b"[(Hel) (lo sp) 40 (armstate)] TJ"),
                            force="python")
-        self.assertIn("Hello swarmstate", d2.text)
+        self.assertIn("Hello statepod", d2.text)
 
     def test_pdf_encrypted_marked_none(self):
         import research as rh
@@ -3167,7 +3167,7 @@ class ResearchHandlerTests(unittest.TestCase):
 
     def test_gather_local_files_and_failed_target(self):
         import research as rh
-        with tempfile.TemporaryDirectory(prefix="sw-research-") as td:
+        with tempfile.TemporaryDirectory(prefix="sp-research-") as td:
             td = Path(td)
             (td / "a.md").write_text("# Alpha\nlocal info here")
             (td / "b.json").write_text('{"k": "v"}')
@@ -3183,7 +3183,7 @@ class ResearchHandlerTests(unittest.TestCase):
 
     def test_write_kit_labels_and_manifest(self):
         import research as rh
-        with tempfile.TemporaryDirectory(prefix="sw-kit-") as td:
+        with tempfile.TemporaryDirectory(prefix="sp-kit-") as td:
             td = Path(td)
             (td / "n.md").write_text("# Note\nreal content")
             corpus = rh.gather([str(td / "n.md")])
@@ -3230,7 +3230,7 @@ class FrontierHarnessTests(unittest.TestCase):
     def _fixture() -> Path:
         """A minimal frontier-harness-shaped tree: 2 terminal-bench +
         1 deep-swe task (one with a quoted special-char name)."""
-        td = Path(tempfile.mkdtemp(prefix="sw-fhe-fix-"))
+        td = Path(tempfile.mkdtemp(prefix="sp-fhe-fix-"))
         for key, prefix, instr in [
             ("openssl-selfsigned-cert", "terminal-bench",
              "Create /app/ssl/server.key (2048-bit RSA, mode 600) and "
@@ -3265,7 +3265,7 @@ class FrontierHarnessTests(unittest.TestCase):
     def test_sync_from_local_tree_and_pack_counts(self):
         import frontierharness as fh
         fix = self._fixture()
-        cache = Path(tempfile.mkdtemp(prefix="sw-fhe-cache-"))
+        cache = Path(tempfile.mkdtemp(prefix="sp-fhe-cache-"))
         repo, note = fh.sync(fix, cache=cache)
         self.assertEqual(repo, cache / "frontier-harness")
         self.assertIn("4 tasks", note)
@@ -3328,7 +3328,7 @@ class FrontierHarnessTests(unittest.TestCase):
         import frontierharness as fh
         fix = self._fixture()
         tasks = {t["key"]: t for t in fh.load_tasks(fix)}
-        work = Path(tempfile.mkdtemp(prefix="sw-fhe-work-"))
+        work = Path(tempfile.mkdtemp(prefix="sp-fhe-work-"))
         t = tasks["weird name task"]
         row = fh.run_one(t, backend="mock", model=None, timeout=60,
                          work=work)
@@ -3346,9 +3346,9 @@ class FrontierHarnessTests(unittest.TestCase):
         fix = self._fixture()
         tasks = [t for t in fh.load_tasks(fix)
                  if t["key"] == "weird name task"]
-        out = Path(tempfile.mkdtemp(prefix="sw-fhe-out-"))
+        out = Path(tempfile.mkdtemp(prefix="sp-fhe-out-"))
         results, rows = fh.run(tasks, backend="mock", timeout=60,
-                               work=Path(tempfile.mkdtemp(prefix="sw-fhe-w2-")),
+                               work=Path(tempfile.mkdtemp(prefix="sp-fhe-w2-")),
                                results=out, progress=False)
         self.assertEqual(len(rows), 1)
         self.assertTrue((out / "report.md").exists())

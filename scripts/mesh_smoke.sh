@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# mesh_smoke.sh -- SwarmState mesh Phase 1 convergence test (GAPS #9).
+# mesh_smoke.sh -- StatePod mesh Phase 1 convergence test (GAPS #9).
 #
 # Two nodes exchange >=2 registry STRAT samples each way over plaintext-LAN
 # TCP and must converge on ONE shared state hash:
@@ -9,8 +9,8 @@
 set -u
 cd "$(dirname "$0")/.."
 
-A_LOG=/tmp/ss_meshA.log
-B_LOG=/tmp/ss_meshB.log
+A_LOG=/tmp/sp_meshA.log
+B_LOG=/tmp/sp_meshB.log
 rm -f "$A_LOG" "$B_LOG"
 
 python3 harness/meshd.py --name alice --port 5001 \

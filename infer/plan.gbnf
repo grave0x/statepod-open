@@ -1,4 +1,4 @@
-# SwarmState plan grammar — flattened for llama.cpp's GBNF parser.
+# StatePod plan grammar — flattened for llama.cpp's GBNF parser.
 # Same schema as harness/plan_grammar.py PLAN_GBNF.  llama.cpp GBNF:
 # single-line rules and NO underscores in rule names.
 root      ::= ws "{" ws ops "," ws strategy ws "}"

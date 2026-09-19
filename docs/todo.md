@@ -1,8 +1,8 @@
-# sw todo — 4-Layer Task Manager
+# sp todo — 4-Layer Task Manager
 
 > "Every task is a node. Every node has a parent. Every parent has a parent."
 
-sw-todo manages work using a 4-layer schema enforced by invariants.
+sp-todo manages work using a 4-layer schema enforced by invariants.
 
 ## Layers
 
@@ -16,165 +16,165 @@ sw-todo manages work using a 4-layer schema enforced by invariants.
 ## Quick Start
 
 ```bash
-sw-todo ls --status todo               # list open tasks
-sw-todo add "Fix the login bug" --layer story --priority P1
-sw-todo show T-0058                   # show task details
-sw-todo start T-0058                 # mark in-progress
-sw-todo complete T-0058              # mark done
-sw-todo graph                         # show task dependency graph
-sw-todo graph --root T-0058          # graph from specific task
-sw-todo next                          # next 3 actionable tasks
+sp-todo ls --status todo               # list open tasks
+sp-todo add "Fix the login bug" --layer story --priority P1
+sp-todo show T-0058                   # show task details
+sp-todo start T-0058                 # mark in-progress
+sp-todo complete T-0058              # mark done
+sp-todo graph                         # show task dependency graph
+sp-todo graph --root T-0058          # graph from specific task
+sp-todo next                          # next 3 actionable tasks
 ```
 
 ## Subcommands
 
-### `sw-todo add <title>`
+### `sp-todo add <title>`
 
 Create a task.
 
 ```
-sw-todo add "Fix auth bug" --layer task --priority P0 --parent T-0001
-sw-todo add "Ship API v2" --layer epic --priority P1
+sp-todo add "Fix auth bug" --layer task --priority P0 --parent T-0001
+sp-todo add "Ship API v2" --layer epic --priority P1
 ```
 
 Flags: `--layer`, `--priority`, `--parent`, `--estimate`, `--due`, `--risk`, `--effort`, `--impact`, `--milestone`, `--assignee`, `--label`
 
-### `sw-todo auto "<goal>"`
+### `sp-todo auto "<goal>"`
 
 Auto-generate a 4-layer chain (Vision → Epic → Story → Task) from a natural language goal.
 
 ```
-sw-todo auto "I want to build a red team benchmark"
+sp-todo auto "I want to build a red team benchmark"
 # Creates: T-XXXX Vision → T-YYYY Epic → T-ZZZZ Story → T-WWWW Task
 ```
 
-### `sw-todo git [--repo PATH] [--count N]`
+### `sp-todo git [--repo PATH] [--count N]`
 
 Create task chains from recent git commits.
 
 ```
-sw-todo git --repo . --count 10
+sp-todo git --repo . --count 10
 ```
 
 Skips chore/ci/merge/bump commits by default.
 
-### `sw-todo ls [--status STATUS] [--layer LAYER] [--priority P]`
+### `sp-todo ls [--status STATUS] [--layer LAYER] [--priority P]`
 
 List tasks with optional filters.
 
 ```
-sw-todo ls --status todo --layer epic
-sw-todo ls --priority P0
-sw-todo ls --label security
+sp-todo ls --status todo --layer epic
+sp-todo ls --priority P0
+sp-todo ls --label security
 ```
 
-### `sw-todo show <id>`
+### `sp-todo show <id>`
 
 Show task details including description, dependencies, and log.
 
 ```
-sw-todo show T-0058
+sp-todo show T-0058
 ```
 
-### `sw-todo start <id>`
+### `sp-todo start <id>`
 
 Mark a task as in-progress.
 
 ```
-sw-todo start T-0058
+sp-todo start T-0058
 ```
 
-### `sw-todo complete <id>`
+### `sp-todo complete <id>`
 
 Mark a task as done.
 
 ```
-sw-todo complete T-0058
+sp-todo complete T-0058
 ```
 
-### `sw-todo depend <id> <dep-id>...`
+### `sp-todo depend <id> <dep-id>...`
 
 Add dependencies to a task.
 
 ```
-sw-todo depend T-0058 T-0057 T-0056
+sp-todo depend T-0058 T-0057 T-0056
 ```
 
-### `sw-todo graph [--fmt ascii|md] [--root ID]`
+### `sp-todo graph [--fmt ascii|md] [--root ID]`
 
 Render the task dependency graph.
 
 ```
-sw-todo graph                      # full graph
-sw-todo graph --root T-0058      # from specific task
-sw-todo graph --fmt md           # Mermaid markdown
+sp-todo graph                      # full graph
+sp-todo graph --root T-0058      # from specific task
+sp-todo graph --fmt md           # Mermaid markdown
 ```
 
-### `sw-todo next [--limit N]`
+### `sp-todo next [--limit N]`
 
 Show next actionable tasks (no pending blockers).
 
 ```
-sw-todo next --limit 5
+sp-todo next --limit 5
 ```
 
-### `sw-todo check [--task ID]`
+### `sp-todo check [--task ID]`
 
 Verify schema invariants for one or all tasks.
 
 ```
-sw-todo check                    # check all
-sw-todo check --task T-0058     # check one
+sp-todo check                    # check all
+sp-todo check --task T-0058     # check one
 ```
 
-### `sw-todo scaffold "<phrase>"`
+### `sp-todo scaffold "<phrase>"`
 
 Parse a natural-language intent into a layer suggestion.
 
 ```
-sw-todo scaffold "I want to implement OAuth"
+sp-todo scaffold "I want to implement OAuth"
 # verb=implement object="OAuth" -> layer=epic
-# Run: sw-todo add "OAuth" --layer epic
+# Run: sp-todo add "OAuth" --layer epic
 ```
 
-### `sw-todo sync push|pull|status|init <url>`
+### `sp-todo sync push|pull|status|init <url>`
 
 Git-sync tasks to a remote repo for team collaboration.
 
 ```
-sw-todo sync status              # show sync status
-sw-todo sync init git@github.com:user/swarmstate-tasks.git
-sw-todo sync push               # push to remote
-sw-todo sync pull               # pull from remote
+sp-todo sync status              # show sync status
+sp-todo sync init git@github.com:user/statepod-tasks.git
+sp-todo sync push               # push to remote
+sp-todo sync pull               # pull from remote
 ```
 
-### `sw-todo serve [--port PORT] [--all-interfaces]`
+### `sp-todo serve [--port PORT] [--all-interfaces]`
 
 Serve a JSON HTTP API for external tools.
 
 ```
-sw-todo serve --port 7741
+sp-todo serve --port 7741
 curl 'http://localhost:7741/?status=todo&layer=epic'
 curl http://localhost:7741/T-0058
 curl http://localhost:7741/graph
 ```
 
-### `sw-todo dogfood`
+### `sp-todo dogfood`
 
 Self-check: creates a test chain, verifies schema, completes, and cleans up.
 
 ```
-sw-todo dogfood
+sp-todo dogfood
 ```
 
-### `sw-todo field ls|show|add`
+### `sp-todo field ls|show|add`
 
 Manage extension fields (labels, milestone, assignees, due, etc.).
 
 ```
-sw-todo field ls                 # list all fields
-sw-todo field show labels        # show field spec
-sw-todo field add effort_score='{"ftype":"int","range":[1,10],"layers":["story","task"]}'
+sp-todo field ls                 # list all fields
+sp-todo field show labels        # show field spec
+sp-todo field add effort_score='{"ftype":"int","range":[1,10],"layers":["story","task"]}'
 ```
 
 ## Schema Invariants
@@ -191,16 +191,16 @@ sw-todo field add effort_score='{"ftype":"int","range":[1,10],"layers":["story",
 
 ## MCP Server
 
-An MCP server providing `swarmstate_todo_create`, `swarmstate_todo_list`, and `swarmstate_todo_show` is installed at:
+An MCP server providing `statepod_todo_create`, `statepod_todo_list`, and `statepod_todo_show` is installed at:
 
 ```
-/home/grave/.local/bin/swarmstate-todo-mcp.py
+/home/grave/.local/bin/statepod-todo-mcp.py
 ```
 
 Add to `~/.mcp.json` to use from any MCP client.
 
 ## Files
 
-- Task store: `~/.swarmstate/tasks/<id>.md` (markdown + frontmatter)
-- Extension fields: `~/.swarmstate/task-extensions.json`
-- Config: `~/.swarmstate/config.json`
+- Task store: `~/.statepod/tasks/<id>.md` (markdown + frontmatter)
+- Extension fields: `~/.statepod/task-extensions.json`
+- Config: `~/.statepod/config.json`

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# mesh_tailcat_smoke.sh -- SwarmState mesh over a Tailcat tunnel (Phase 2).
+# mesh_tailcat_smoke.sh -- StatePod mesh over a Tailcat tunnel (Phase 2).
 #
 # Two nodes exchange registry STRAT ops through a WireGuard-encrypted
 # Tailcat tunnel (DERP rendezvous) and converge on one shared state hash.
@@ -10,8 +10,8 @@ export PATH="$HOME/.local/bin:$PATH"
 
 command -v tailcat >/dev/null || { echo "SKIP: tailcat not installed"; exit 0; }
 
-A_LOG=/tmp/ss_tcA.log
-B_LOG=/tmp/ss_tcB.log
+A_LOG=/tmp/sp_tcA.log
+B_LOG=/tmp/sp_tcB.log
 rm -f "$A_LOG" "$B_LOG"
 pkill -x tailcat 2>/dev/null
 sleep 1

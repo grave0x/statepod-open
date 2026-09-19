@@ -14,9 +14,9 @@ if str(_HARNESS) not in sys.path:
 
 from governance import Governance, issue_token, verify_token, check_multiparty
 
-DEFAULT_PORT = int(os.environ.get("SS_GOV_UI_PORT", "8080"))
+DEFAULT_PORT = int(os.environ.get("SP_GOV_UI_PORT", "8080"))
 # C4: no hardcoded default — refuse start without explicit secret
-DEFAULT_SECRET = os.environ.get("SS_GOV_SECRET") or None
+DEFAULT_SECRET = os.environ.get("SP_GOV_SECRET") or None
 DEFAULT_TTL = 300
 DEFAULT_REQUIRED = frozenset({"supervisor", "field_lead"})
 
@@ -59,7 +59,7 @@ border-radius:6px;cursor:pointer;font-size:14px;margin:4px}
 #approve{background:#00af00;color:#fff}#deny{background:#5f0000;color:#fff}
 pre{background:#000;padding:12px;border-radius:6px;font-size:12px;
 color:#0f0;max-height:200px;overflow:auto}</style></head><body>
-<div class="card"><h1>SwarmState Governance Approval</h1>
+<div class="card"><h1>StatePod Governance Approval</h1>
 <p id="msg">Loading…</p>
 <button id="issue">Issue token (supervisor)</button>
 <button id="approve">Approve + stamp</button>
@@ -160,11 +160,11 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=DEFAULT_PORT)
     ap.add_argument("--secret", default=DEFAULT_SECRET,
-                    help="HMAC secret (or SS_GOV_SECRET); required")
+                    help="HMAC secret (or SP_GOV_SECRET); required")
     ap.add_argument("--host", default="127.0.0.1")
     args = ap.parse_args()
     if not args.secret:
-        sys.exit("gov_ui: refuse start without --secret or SS_GOV_SECRET")
+        sys.exit("gov_ui: refuse start without --secret or SP_GOV_SECRET")
     print(f"[gov_ui] Serving on http://{args.host}:{args.port}")
     print(f"[gov_ui] Secret set: {bool(args.secret)}")
     print(f"[gov_ui] Two-person rule roles: {DEFAULT_REQUIRED}")

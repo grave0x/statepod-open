@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Strix collaboration backend for the `sw` daily harness.
+"""Strix collaboration backend for the `sp` daily harness.
 
-`sw collaborate` wraps the local (self-hosted) Strix pentest CLI so a
-swarmstate session can run a security scan against a repo and pull the
-findings back into the swarmstate context for remediation. The "strix
+`sp collaborate` wraps the local (self-hosted) Strix pentest CLI so a
+statepod session can run a security scan against a repo and pull the
+findings back into the statepod context for remediation. The "strix
 console" is Strix's local web viewer (`strix view <run>`) -- open it with
 `--console`.
 
@@ -234,7 +234,7 @@ def findings_hint(run_dir: Path, n: int) -> str:
         return (f"Strix run {run_dir.name} recorded no findings; "
                 f"nothing queued for remediation.")
     return (f"{n} Strix finding(s) in {run_dir.name} — "
-            f"run `sw ask \"remediate the Strix findings in {run_dir}\"`")
+            f"run `sp ask \"remediate the Strix findings in {run_dir}\"`")
 
 
 # ----------------------------------------------------------------- launch

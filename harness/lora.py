@@ -60,7 +60,7 @@ def _unpack(frame: bytes) -> dict:
 
 def _psk_from_env_or_arg(psk: bytes | str | None) -> bytes | None:
     if psk is None:
-        env = os.environ.get("SS_LORA_PSK", "")
+        env = os.environ.get("SP_LORA_PSK", "")
         if not env:
             return None
         psk = env
@@ -122,12 +122,12 @@ class LoRaLink:
         self.rng = random.Random(seed)
         self.log = log or (lambda *a: None)
         self.psk = _psk_from_env_or_arg(psk)
-        # H3: field mode fail-closed — SS_LORA_REQUIRE_PSK=1 or require_psk=True
+        # H3: field mode fail-closed — SP_LORA_REQUIRE_PSK=1 or require_psk=True
         if require_psk is None:
-            require_psk = os.environ.get("SS_LORA_REQUIRE_PSK", "") in (
+            require_psk = os.environ.get("SP_LORA_REQUIRE_PSK", "") in (
                 "1", "true", "yes")
         if require_psk and self.psk is None:
-            raise ValueError("LoRa require_psk set but no SS_LORA_PSK/psk")
+            raise ValueError("LoRa require_psk set but no SP_LORA_PSK/psk")
         # priority queues: list of (prio, seq, frame_dict)
         self._tx: dict[str, list] = {"A": [], "B": []}
         self._tx_seq = 0

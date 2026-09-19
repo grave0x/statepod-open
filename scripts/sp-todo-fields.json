@@ -2,8 +2,8 @@
   "_meta": {
     "version": "ext-v1",
     "schema_compat": "4-layer-v1+ext-v1",
-    "owner": "swarmstate",
-    "doc": "Extension fields (GitHub Issues parity + custom). User can override at ~/.swarmstate/todo-fields.json"
+    "owner": "statepod",
+    "doc": "Extension fields (GitHub Issues parity + custom). User can override at ~/.statepod/todo-fields.json"
   },
   "labels": {
     "ftype": "labels",

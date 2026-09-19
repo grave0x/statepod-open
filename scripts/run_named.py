@@ -30,7 +30,7 @@ try:
 except OSError:
     MeshDaemon = registry_bridge = None
 
-DEFAULT_RESULTS = Path.home() / ".local/state/swarmstate/task_suite.jsonl"
+DEFAULT_RESULTS = Path.home() / ".local/state/statepod/task_suite.jsonl"
 
 
 def main():
@@ -60,7 +60,7 @@ def main():
                                        "(repeatable, e.g. --governed-op EXECUTE)")
     ap.add_argument("--supervisor-secret", default=None,
                     help="HMAC secret for supervisor tokens (env: "
-                         "SWARMSTATE_SUPERVISOR_SECRET)")
+                         "STATEPOD_SUPERVISOR_SECRET)")
     ap.add_argument("--mock-auth-token", default=None,
                     help=("stamp mock plans' governed ops with this "
                           "supervisor token (deterministic demo path)"))
@@ -82,7 +82,7 @@ def main():
 
     env = ({"model": args.model, "gpu": gpu.gpu_label(),
             "processor": gpu.ollama_processor(),
-            "ngl": int(os.environ.get("SS_OLLAMA_NGL", "0") or 0)}
+            "ngl": int(os.environ.get("SP_OLLAMA_NGL", "0") or 0)}
            if args.backend in ("ollama", "normal", "deepseek",
                                *OPENAI_BACKEND_NAMES) else {})
 
@@ -127,7 +127,7 @@ def main():
             _time.sleep(0.2)
 
     for name in want:
-        with tempfile.TemporaryDirectory(prefix="swarmstate-named-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="statepod-named-") as tmp:
             root = Path(tmp)
             build_repo(root)
             from governance import Governance
@@ -137,7 +137,7 @@ def main():
                              governed_ops=set(args.governed_op),
                              secret=(args.supervisor_secret
                                      or os.environ.get(
-                                         "SWARMSTATE_SUPERVISOR_SECRET")),
+                                         "STATEPOD_SUPERVISOR_SECRET")),
                              log_path=gov_log)
             with Orchestrator(str(root), backend=args.backend,
                               model=args.model,

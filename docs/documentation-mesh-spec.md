@@ -1,4 +1,4 @@
-## SwarmState Mesh Integration Specification
+## StatePod Mesh Integration Specification
 
 **Version:** 1.0 (Draft)  
 **Author:** @grave0x  
@@ -8,14 +8,14 @@
 
 > **Document status:** end-state design and building decisions. `README.md`
 > documents what is actually implemented today; nothing in this spec exists
-> in the code yet — it is the roadmap for turning SwarmState into a
+> in the code yet — it is the roadmap for turning StatePod into a
 > distributed personal swarm.
 
 ---
 
 ### 1. Executive Summary
 
-SwarmState currently operates as a single‑device agent harness: a local C kernel, an orchestrator, and a registry. The Mesh Integration Specification extends SwarmState into a **personal distributed swarm** by connecting multiple SwarmState instances over the existing `agent-mesh` communication layer. Each device runs its own kernel and local model, but the mesh enables shared inference, state synchronization, registry aggregation, and LoRA distribution—all without centralized servers.
+StatePod currently operates as a single‑device agent harness: a local C kernel, an orchestrator, and a registry. The Mesh Integration Specification extends StatePod into a **personal distributed swarm** by connecting multiple StatePod instances over the existing `agent-mesh` communication layer. Each device runs its own kernel and local model, but the mesh enables shared inference, state synchronization, registry aggregation, and LoRA distribution—all without centralized servers.
 
 **Key Benefits:**
 - **Shared inference**: Offload LLM requests to the most capable or least loaded device.
@@ -24,7 +24,7 @@ SwarmState currently operates as a single‑device agent harness: a local C kern
 - **Resource‑aware routing**: Use sysinfo from all nodes to decide where to execute a plan or run a model.
 - **Privacy & resilience**: No cloud dependency; data stays inside the personal mesh. If one device fails, others continue.
 
-**Honest Claim:** This specification defines a peer‑to‑peer extension to SwarmState, not a cloud service. It assumes the user owns all participating devices and that the mesh operates within a trusted personal network.
+**Honest Claim:** This specification defines a peer‑to‑peer extension to StatePod, not a cloud service. It assumes the user owns all participating devices and that the mesh operates within a trusted personal network.
 
 ---
 
@@ -44,7 +44,7 @@ SwarmState currently operates as a single‑device agent harness: a local C kern
 
 ### 3. Problem Statement
 
-A single‑device SwarmState instance already reduces token usage and improves privacy. However, users often have multiple devices:
+A single‑device StatePod instance already reduces token usage and improves privacy. However, users often have multiple devices:
 - A powerful desktop for heavy coding.
 - A laptop for mobile work.
 - A phone for quick checks or voice commands.
@@ -66,7 +66,7 @@ Peer‑to‑peer LoRA sharing | Exchange fine‑tuned adapters without a central
 The mesh layer sits **below the harness** and **above the transport** provided by `agent-mesh`. It consists of:
 
 1. **Mesh Manager** – Handles peer discovery, authentication, and connection lifecycle.
-2. **Message Router** – Serializes, encrypts, and routes SwarmState‑specific messages.
+2. **Message Router** – Serializes, encrypts, and routes StatePod‑specific messages.
 3. **State Sync Engine** – Propagates repo state diffs using the kernel's event log.
 4. **Registry Aggregator** – Merges performance and feedback data from peers.
 5. **Inference Broker** – Receives inference requests and dispatches them to local or remote orchestrators.
@@ -74,7 +74,7 @@ The mesh layer sits **below the harness** and **above the transport** provided b
 
 ```
 ┌──────────────────────────────────────────────┐
-│               SwarmState Harness              │
+│               StatePod Harness              │
 │         (Orchestrator, Planner, CLI)          │
 └──────────────────────────────────────────────┘
                       │
@@ -198,12 +198,12 @@ LoRA adapters are small (10 MB) and can be shared directly between peers. The `l
 
 ---
 
-### 8. Integration Points with Existing SwarmState
+### 8. Integration Points with Existing StatePod
 
 #### 8.1 Kernel Changes
 
 The C kernel needs minimal changes:
-- A new `SS_OP_MESH_SEND` operation could be added, but for v1, mesh interactions happen in the harness using the existing Python bindings. The kernel remains mesh‑agnostic.
+- A new `SP_OP_MESH_SEND` operation could be added, but for v1, mesh interactions happen in the harness using the existing Python bindings. The kernel remains mesh‑agnostic.
 - The one real kernel change for state sync: extend the event log with
   `content_hash` + `prev_hash` per entry (the hash chain described in §7.1).
   That is a small, additive change to `event_log()` in `kernel.c`; the
@@ -250,7 +250,7 @@ These are estimates for a 3–5 node home mesh. Actual performance will depend o
 #### Phase 1: Mesh Core
 - Integrate `agent-mesh` into the harness as a background service.
 - Implement node discovery, authentication, and encrypted transport.
-- Establish a persistent connection between two SwarmState instances on the same LAN.
+- Establish a persistent connection between two StatePod instances on the same LAN.
 
 #### Phase 2: State Sync
 - Broadcast state diffs on file changes.
@@ -295,4 +295,4 @@ These are estimates for a 3–5 node home mesh. Actual performance will depend o
 
 ### 13. Conclusion
 
-The SwarmState Mesh Integration Specification turns a single‑device, context‑containing agent into a **distributed personal swarm**. By leveraging the existing `agent-mesh` layer, SwarmState gains shared inference, state continuity, and collective learning—all without sacrificing privacy or requiring cloud infrastructure. This is the natural evolution of the "kernel contains context" philosophy: now the mesh connects the bodies, and the swarm becomes the brain.
+The StatePod Mesh Integration Specification turns a single‑device, context‑containing agent into a **distributed personal swarm**. By leveraging the existing `agent-mesh` layer, StatePod gains shared inference, state continuity, and collective learning—all without sacrificing privacy or requiring cloud infrastructure. This is the natural evolution of the "kernel contains context" philosophy: now the mesh connects the bodies, and the swarm becomes the brain.

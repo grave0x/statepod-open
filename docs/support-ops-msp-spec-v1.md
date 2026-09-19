@@ -1,7 +1,7 @@
-# SwarmState Common Domain Adaptation Spec v1.0
+# StatePod Common Domain Adaptation Spec v1.0
 
 **Status:** Distilled from live design discussions  
-**Purpose:** Provide a reusable, domain-agnostic framework for extending SwarmState into any operational environment.  
+**Purpose:** Provide a reusable, domain-agnostic framework for extending StatePod into any operational environment.  
 **Audience:** System architects, domain specialists, and future contributors.
 
 ---
@@ -22,7 +22,7 @@ These components do not change between domains. They are the foundation upon whi
 
 ## 2. Domain Adaptation Process
 
-To bring SwarmState to a new domain, follow these steps:
+To bring StatePod to a new domain, follow these steps:
 
 1. **Identify repeatable tasks**  
    List the top 5–20 actions a worker performs daily. These become task signatures.
@@ -94,7 +94,7 @@ The reason must be model-actionable, e.g., “File still contains old variable n
 
 ## 5. Pool and Federation Model
 
-SwarmState scales by keeping trust local and shared knowledge scoped.
+StatePod scales by keeping trust local and shared knowledge scoped.
 
 - **Pool** — a set of devices that trust each other fully. Membership is explicit (QR, token, admin).
 - **Bridge** — a mutually accepted connection between two pools. Bridges are scoped:
@@ -224,7 +224,7 @@ For any new domain, build a 3-node demo that proves:
 
 ## 12. Conclusion
 
-SwarmState is a **general-purpose edge intelligence layer**. The same kernel, registry, mesh, and oracle pattern works across code, emergency services, healthcare, agriculture, industry, and beyond. This spec exists so that any domain expert can adapt the system without rebuilding its core.
+StatePod is a **general-purpose edge intelligence layer**. The same kernel, registry, mesh, and oracle pattern works across code, emergency services, healthcare, agriculture, industry, and beyond. This spec exists so that any domain expert can adapt the system without rebuilding its core.
 
 The cage contains context. The mesh connects bodies. The registry turns experience into judgment. Together, they form a **responsible, self-improving swarm** that helps humans work safer, faster, and calmer—without ever leaving the edge.
 
@@ -235,11 +235,11 @@ The cage contains context. The mesh connects bodies. The registry turns experien
 
 ## Appendix D. Implementation Status (agent note — NOT part of spec v1.0)
 
-Mapped against the SwarmState repo at commit time. Kept current as features land.
+Mapped against the StatePod repo at commit time. Kept current as features land.
 
 | Spec element | Status | Where |
 |---|---|---|
-| Kernel (C), ops allowlist, deterministic validation | **SHIPPED** | C lib (`libswarmstate.so`), `harness/swarmstate.py` |
+| Kernel (C), ops allowlist, deterministic validation | **SHIPPED** | C lib (`libstatepod.so`), `harness/statepod.py` |
 | Registry: `STRAT:*`, `MODEL:q:*` + fb_samples/fb_ok | **SHIPPED** | `harness/registry.py` (era fields, fresh-window replay) |
 | Mesh: Lamport ops, dedup, default-deny allowlist | **SHIPPED** | `harness/meshd.py` + `harness/meshbridge.py` (ctypes libmesh.so) |
 | Encrypted transport | **SHIPPED** (Tailcat) | `scripts/mesh_tailcat.py` + `scripts/mesh_tailcat_smoke.sh` |

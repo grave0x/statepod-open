@@ -63,7 +63,7 @@ impl std::fmt::Display for OrchestrateTab {
     }
 }
 
-/// Strategy selection for the kernel context (matches SS_ContextStrategy in FFI).
+/// Strategy selection for the kernel context (matches SP_ContextStrategy in FFI).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum Strategy {
@@ -97,7 +97,7 @@ impl std::fmt::Display for Strategy {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct QueuedOp {
     pub id: u32,
-    pub op_type: crate::ffi::SS_OpType,
+    pub op_type: crate::ffi::SP_OpType,
     pub path: String,
     pub pattern: Option<String>,
     pub line_start: Option<u32>,
@@ -109,7 +109,7 @@ impl QueuedOp {
     /// Read op on `path` (optional line range).
     pub fn read(id: u32, path: impl Into<String>, line_start: Option<u32>, line_end: Option<u32>) -> Self {
         Self {
-            id, op_type: crate::ffi::SS_OpType::READ,
+            id, op_type: crate::ffi::SP_OpType::READ,
             path: path.into(), pattern: None,
             line_start, line_end, max_results: None,
         }
@@ -117,7 +117,7 @@ impl QueuedOp {
     /// Grep op (POSIX ERE pattern, optional max_results).
     pub fn grep(id: u32, path: impl Into<String>, pattern: impl Into<String>, max_results: Option<u32>) -> Self {
         Self {
-            id, op_type: crate::ffi::SS_OpType::GREP,
+            id, op_type: crate::ffi::SP_OpType::GREP,
             path: path.into(), pattern: Some(pattern.into()),
             line_start: None, line_end: None, max_results,
         }
@@ -125,7 +125,7 @@ impl QueuedOp {
     /// AST parse op (pattern = "" | "sexp").
     pub fn ast_parse(id: u32, path: impl Into<String>, pattern: impl Into<String>) -> Self {
         Self {
-            id, op_type: crate::ffi::SS_OpType::AST_PARSE,
+            id, op_type: crate::ffi::SP_OpType::AST_PARSE,
             path: path.into(), pattern: Some(pattern.into()),
             line_start: None, line_end: None, max_results: None,
         }
@@ -133,7 +133,7 @@ impl QueuedOp {
     /// Symbol summary op (doc layer).
     pub fn symbol_summary(id: u32, path: impl Into<String>, name: impl Into<String>) -> Self {
         Self {
-            id, op_type: crate::ffi::SS_OpType::SYMBOL_SUMMARY,
+            id, op_type: crate::ffi::SP_OpType::SYMBOL_SUMMARY,
             path: path.into(), pattern: Some(name.into()),
             line_start: None, line_end: None, max_results: None,
         }
@@ -418,8 +418,8 @@ mod tests {
         assert_eq!(p.op_queue.len(), 3);
         p.reorder(0, 2);
         // order is now: b, c, a
-        assert_eq!(p.op_queue[0].op_type, crate::ffi::SS_OpType::GREP);
-        assert_eq!(p.op_queue[2].op_type, crate::ffi::SS_OpType::READ);
+        assert_eq!(p.op_queue[0].op_type, crate::ffi::SP_OpType::GREP);
+        assert_eq!(p.op_queue[2].op_type, crate::ffi::SP_OpType::READ);
     }
 
     #[test]

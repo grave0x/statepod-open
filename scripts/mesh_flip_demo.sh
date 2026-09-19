@@ -16,9 +16,9 @@
 set -u
 cd "$(dirname "$0")/.."
 
-R_MESH=/tmp/ss_flip_mesh.jsonl
-R_CTRL=/tmp/ss_flip_ctrl.jsonl
-rm -f "$R_MESH" "$R_CTRL" /tmp/ss_flip_hub.log
+R_MESH=/tmp/sp_flip_mesh.jsonl
+R_CTRL=/tmp/sp_flip_ctrl.jsonl
+rm -f "$R_MESH" "$R_CTRL" /tmp/sp_flip_hub.log
 pkill -f "harness/meshd.py" 2>/dev/null; sleep 1
 
 # Node A: legacy node sharing its hard-won (negative) learning about WRITE
@@ -29,7 +29,7 @@ python3 harness/meshd.py --name node-a --port 5501 < /dev/null \
   --publish $'reg/STRAT/WRITE/DELTA\t0' \
   --publish $'reg/STRAT/WRITE/FULL\t1' \
   --publish $'reg/STRAT/WRITE/FULL\t1' \
-  --hash-interval 2 > /tmp/ss_flip_hub.log 2>&1 &
+  --hash-interval 2 > /tmp/sp_flip_hub.log 2>&1 &
 APID=$!
 sleep 1
 
@@ -58,8 +58,8 @@ def strat(p):
         r = json.loads(l)
         out.append((r.get("task", "?")[:24], r.get("plan_sig"), r.get("strategy")))
     return out
-m = strat("/tmp/ss_flip_mesh.jsonl")
-c = strat("/tmp/ss_flip_ctrl.jsonl")
+m = strat("/tmp/sp_flip_mesh.jsonl")
+c = strat("/tmp/sp_flip_ctrl.jsonl")
 print(f"  {'task':24} {'sig':8} {'WITH-mesh':10} {'control':10}")
 for (t1, s1, sm), (t2, s2, sc) in zip(m, c):
     flip = "  <-- FLIP" if sm != sc else ""

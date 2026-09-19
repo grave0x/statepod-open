@@ -1,24 +1,24 @@
 ---
-name: swarmstate
+name: statepod
 description: >
-  SwarmState containment for Grok Build. Use when the user runs /swarmstate,
+  StatePod containment for Grok Build. Use when the user runs /statepod,
   asks to enable/disable containment, or wants kernel status / savings stats.
-  Shares ~/.swarmstate/omp.json with the prime-agent extension.
+  Shares ~/.statepod/omp.json with the prime-agent extension.
 ---
 
-# SwarmState (Grok) v0.2
+# StatePod (Grok) v0.2
 
-Deep wiring of SwarmState containment into Grok Build hooks. Toggle persists
-to `~/.swarmstate/omp.json` (same file prime uses).
+Deep wiring of StatePod containment into Grok Build hooks. Toggle persists
+to `~/.statepod/omp.json` (same file prime uses).
 
 ## Commands
 
 ```bash
-python3 "$SWARMSTATE_REPO/integrations/grok-plugin/scripts/swarmstate_cli.py" \
+python3 "$STATEPOD_REPO/integrations/grok-plugin/scripts/statepod_cli.py" \
   on|off|status|stats|full <id>|cap <chars>
 ```
 
-Default `SWARMSTATE_REPO=~/Projects/internal.source/02-tools/swarmstate`.
+Default `STATEPOD_REPO=~/Projects/internal.source/02-tools/statepod`.
 
 | Subcommand | Effect |
 |------------|--------|
@@ -39,7 +39,7 @@ Default `SWARMSTATE_REPO=~/Projects/internal.source/02-tools/swarmstate`.
 ## Prefer when ON
 
 - `sed -n 'A,Bp'`, `grep -n -m`, `head`/`tail`, lean-ctx `ctx_read(mode=signatures|map)`
-- `swarmcli ask` / `swarmcli explain` for repo-scale questions
+- `statepod ask` / `statepod explain` for repo-scale questions
 - Never `cat` whole large files
 
 ## Hard gap vs prime

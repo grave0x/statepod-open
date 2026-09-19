@@ -1,4 +1,4 @@
-# SwarmState UI wireframes (uxd)
+# StatePod UI wireframes (uxd)
 
 Built with [UXDesign.c](../../UXDesign.c) `uxd` — C99 terminal UX designer.
 
@@ -17,5 +17,5 @@ uxd html docs/ux/02-supervisor.uxd /tmp/supervisor.html
 # open HTML quietly on an empty Hyprland workspace — do not steal focus
 ```
 
-Grounded in shipped `win/swarmstate-node.c` widgets + `docs/ui-kit-spec-v1.md`.
+Grounded in shipped `win/statepod-node.c` widgets + `docs/ui-kit-spec-v1.md`.
 Gov approve/deny is **wireframe target** (UI still display-only today).

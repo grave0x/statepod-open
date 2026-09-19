@@ -1,4 +1,4 @@
-# SwarmState Modular UI Kit Specification
+# StatePod Modular UI Kit Specification
 
 **Version:** 1.0
 **Status:** Draft for discussion
@@ -108,7 +108,7 @@ multi-language, wearables, third-party widget developer API.
 ## Appendix A. Build Status — C node web UI (agent note — NOT part of the draft)
 
 The first-build milestone shipped in the Windows/standalone node
-(`win/swarmstate-node.c`, web UI served by the node itself):
+(`win/statepod-node.c`, web UI served by the node itself):
 
 | Spec item | Status | Details |
 |---|---|---|
@@ -119,10 +119,10 @@ The first-build milestone shipped in the Windows/standalone node
 | Federation context switcher | **SHIPPED** | top-bar `select` (all pools / per-pool) + `fed` widget rendering each foreign pool's STRAT/MODEL partition; local `tasks` widget shows ONLY the local partition |
 | Role views | **SHIPPED** | `field_worker`, `supervisor`, `admin`, `observer`; widget lists per role (from config, with ROLES defaults); `?role=`/`#hash` selection |
 | Offline-first | **SHIPPED** | UI is fully static once loaded; no external CDNs |
-| Governance approve/deny from the UI | **NOT YET** | `gov` widget is display-only (denial counters); real approval flows live in the Python harness/`sw` CLI — cross-language approval is roadmap |
+| Governance approve/deny from the UI | **NOT YET** | `gov` widget is display-only (denial counters); real approval flows live in the Python harness/`sp` CLI — cross-language approval is roadmap |
 
 **Quality notes:** the served SPA passes `node --check` (a pre-existing
 nested-backtick bug in the QR widget made the shipped JS unparseable and
-was fixed); `win/swarmstate-win-v1.zip` ships the verified build; the
+was fixed); `win/statepod-win-v1.zip` ships the verified build; the
 SPA exposes no secrets (the `join` invite is intentionally public — it IS
 the join credential).

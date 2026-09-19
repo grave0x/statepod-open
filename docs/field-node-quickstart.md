@@ -16,7 +16,7 @@ and control messages (`req`/`resp` inference, `file_request`/
 
 - Python 3, `libmesh.so` at `~/.local/lib/libmesh.so` (shared C mesh
   base; the mesh-c skill documents the build).
-- `export SWARMSTATE_LIB=$PWD/libswarmstate.so` when running the
+- `export STATEPOD_LIB=$PWD/libstatepod.so` when running the
   harness (planner/oracle layer).
 - `ollama serve` + a pulled model only if the node is an inference
   provider (`--serve-model`).
@@ -93,7 +93,7 @@ bash scripts/acceptance_demo.sh
 Chains the five demos: pool/QR state sync, capability-routed local
 inference, cross-node refusal of contradictory evidence, governance
 stop button, and LoRa air-gapped convergence.  Logs land in
-`/tmp/ss_acceptance/`.
+`/tmp/sp_acceptance/`.
 
 Individual demos: `mesh_flip_demo.sh`, `mesh_broker_demo.sh`,
 `governance_demo.sh`, `pool_qr_demo.sh`, `broker_capability_demo.sh`,

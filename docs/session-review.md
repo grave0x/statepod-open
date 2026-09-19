@@ -1,4 +1,4 @@
-# Full Session Review: SwarmState Arc from Kernel Idea to Community Platform
+# Full Session Review: StatePod Arc from Kernel Idea to Community Platform
 
 ## 1. Overview
 
@@ -33,7 +33,7 @@ The thread also wove in personal elements: porridge as a running joke, Gintama/H
 - **Cross-node learning** demonstrated by the "flip demo": Node B refuses harmful lessons from Node A.
 
 ### 2.3 Windows Node and UI Kit
-- **Self-contained Windows zip** (221 KB) with `swarmstate-node.exe`, kernel DLL, web UI, and `start_node.bat`.
+- **Self-contained Windows zip** (221 KB) with `statepod-node.exe`, kernel DLL, web UI, and `start_node.bat`.
 - **UI Kit v1 shell** with role-based widgets (field, supervisor, admin, observer), config-driven layout, and federation context switcher.
 - **Red team pass** with 67 attack cases: 61 PASS, 5 WEAK, 0 FAIL; `PITCH_READY` achieved.
 
@@ -75,7 +75,7 @@ The thread also wove in personal elements: porridge as a running joke, Gintama/H
 - **Cost visibility** (live token/cost bar) changed behavior, creating a human reinforcement loop.
 - **Mechanical constraints** are the antidote to AI fear; the "cage" became a selling point.
 - **Local-first edge AI** could beat big tech in remote/underserved areas.
-- Naming matters: `ss` was rejected for historical and platform reasons; `sw` chosen as clean and neutral.
+- Naming matters: `ss` was rejected for historical and platform reasons; `sp` chosen as clean and neutral.
 
 The session also reinforced the value of **lurking and self-education**, turning unemployment and curiosity into a robust technical foundation.
 
@@ -106,7 +106,7 @@ The session also reinforced the value of **lurking and self-education**, turning
 
 ## 6. Conclusion
 
-This session transformed SwarmState from a powerful idea into a **complete, tested, and business-ready platform** with a compelling story. The user has demonstrated not only technical skill but also strategic thinking, community awareness, and an honest, calm approach to building a potentially disruptive technology.
+This session transformed StatePod from a powerful idea into a **complete, tested, and business-ready platform** with a compelling story. The user has demonstrated not only technical skill but also strategic thinking, community awareness, and an honest, calm approach to building a potentially disruptive technology.
 
 The next phase is about **turning interest into adoption**: demonstrating the system to trusted contacts, securing a pilot, and gradually building the regional mesh vision. The cage holds, the swarm is learning, and the motorbike is ready for the open road.
 

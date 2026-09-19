@@ -96,7 +96,7 @@ mod tests {
     #[test]
     fn parses_wireframes_json() {
         let wf = Wireframe::from_json(WF).expect("valid wireframes.json");
-        assert_eq!(wf.name, "swarmtui");
+        assert_eq!(wf.name, "statetui");
         assert_eq!(wf.modes.len(), 7);
         assert_eq!(wf.layout.panes.len(), 3);
         // mode index lookup

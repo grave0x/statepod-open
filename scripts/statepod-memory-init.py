@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Swarmstate Memory Layer Initialization Script
+StatePod Memory Layer Initialization Script
 """
 import os
 import json
@@ -50,7 +50,7 @@ def list_memory(extension, scope="global"):
 
 if __name__ == "__main__":
     import argparse
-    parser = argparse.ArgumentParser(description="Swarmstate Memory Layer Manager")
+    parser = argparse.ArgumentParser(description="StatePod Memory Layer Manager")
     parser.add_argument("action", choices=["init", "save", "load", "list"], help="Action to perform")
     parser.add_argument("--extension", required=True, help="Extension name")
     parser.add_argument("--key", help="Memory key")

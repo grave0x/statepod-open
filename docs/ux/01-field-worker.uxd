@@ -1,8 +1,8 @@
 # Role: field_worker — alerts, tasks, status (calm, big targets)
-screen "SwarmState · Field Worker" w 78 h 28 bg 17
+screen "StatePod · Field Worker" w 78 h 28 bg 17
   col weight 1 pad 1 gap 1
     row gap 1
-      text "SwarmState" fg 14 bold 1
+      text "StatePod" fg 14 bold 1
       spacer weight 1
       text "role: field_worker" fg 8
       button "Alerts" fg 15 bg 52

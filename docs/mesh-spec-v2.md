@@ -1,5 +1,5 @@
 <!--
-  SwarmState Mesh Specification v2.0
+  StatePod Mesh Specification v2.0
   Author: @grave0x  |  Date: August 2026
   Status: Design / Roadmap (product vision)
   Transport: Tailcat (primary) + LoRa mesh (optional field) + local discovery
@@ -8,7 +8,7 @@
         engineering rules -- see docs/mesh-phase1-implementation.md.
 -->
 
-## SwarmState Mesh Specification v2.0
+## StatePod Mesh Specification v2.0
 **Status:** Design / Roadmap  
 **Dependency:** [tailcat](https://github.com/tailscale/tailcat) (primary transport) + LoRa mesh (optional field transport)  
 **Author:** @grave0x  
@@ -18,9 +18,9 @@
 
 ## 1. Executive Summary
 
-SwarmState Mesh extends the single-device kernel into a **private, self-organizing network of devices** that share inference, state, and learned outcomes. The mesh is transport-agnostic: it runs over Tailcat for standard networks, LoRa mesh for infrastructure-free environments, and local discovery (mDNS/QR/BLE) for ad-hoc pairing.
+StatePod Mesh extends the single-device kernel into a **private, self-organizing network of devices** that share inference, state, and learned outcomes. The mesh is transport-agnostic: it runs over Tailcat for standard networks, LoRa mesh for infrastructure-free environments, and local discovery (mDNS/QR/BLE) for ad-hoc pairing.
 
-The key insight: **SwarmState's 62-byte prompts and semantic output make mesh inference practical on almost any transport.** A state diff is a few hundred bytes. A plan request is under a kilobyte. Even a low-bandwidth LoRa link can carry a full inference request, making distributed AI viable in places no cloud could reach.
+The key insight: **StatePod's 62-byte prompts and semantic output make mesh inference practical on almost any transport.** A state diff is a few hundred bytes. A plan request is under a kilobyte. Even a low-bandwidth LoRa link can carry a full inference request, making distributed AI viable in places no cloud could reach.
 
 **Primary use cases are civilian first**—agriculture, search and rescue, field work, education, emergency services—with military/defense as one deployment context among many. The same technology that helps a farmer monitor 5,000 acres can help a rescue team coordinate in a flood zone, or a school run a private AI lab without cloud costs.
 
@@ -43,7 +43,7 @@ The key insight: **SwarmState's 62-byte prompts and semantic output make mesh in
 
 ## 3. Problem Statement
 
-A single SwarmState instance is powerful but isolated. Real-world work happens across multiple devices, in places without reliable internet, or in teams where compute should be shared.
+A single StatePod instance is powerful but isolated. Real-world work happens across multiple devices, in places without reliable internet, or in teams where compute should be shared.
 
 **Without the mesh:**
 - A farmer must drive back to the homestead to analyze drone footage.
@@ -65,11 +65,11 @@ A single SwarmState instance is powerful but isolated. Real-world work happens a
 
 [tailcat](https://github.com/tailscale/tailcat) provides point-to-point WireGuard-encrypted tunnels without a control plane. It's userspace-only (no root), handles NAT traversal via DERP, and supports token-based addressing.
 
-**SwarmState integration:**
+**StatePod integration:**
 - Each node runs a Tailcat server (listener) that accepts connections on a well-known port.
 - The node prints a connection token (`tc...`). This token is the entire invitation.
 - Other nodes connect by passing the token to the Tailcat client.
-- All SwarmState messages (JSON) flow over this encrypted tunnel.
+- All StatePod messages (JSON) flow over this encrypted tunnel.
 
 **Node identity:**
 - Tailcat keys are saved to disk so addresses remain stable across restarts.
@@ -90,13 +90,13 @@ For environments without Wi-Fi, cell coverage, or any fixed infrastructure, LoRa
 - Power: milliwatts; nodes can run for days on small batteries.
 - Topology: peer-to-peer mesh with flooding or directed diffusion.
 
-**Why it works with SwarmState:**
+**Why it works with StatePod:**
 - A plan request is ~62 bytes of prompt + schema overhead.
 - A plan response is ~200–500 bytes of JSON.
 - A state diff for a single file edit is ~100–500 bytes.
 - A registry update for 10 entries is <1 KB.
 
-SwarmState's messages are *already* small enough for LoRa. The mesh just needs a thin framing layer.
+StatePod's messages are *already* small enough for LoRa. The mesh just needs a thin framing layer.
 
 **Integration approach:**
 - A LoRa adapter in the mesh manager handles packetization, acknowledgements, and retries.
@@ -109,7 +109,7 @@ SwarmState's messages are *already* small enough for LoRa. The mesh just needs a
 For devices on the same Wi-Fi or physically close:
 
 - **QR code pairing**: A node displays a QR containing its Tailcat token. A phone scans it, the mesh manager parses, and the node is added to the allowlist. Perfect for field teams and classrooms.
-- **mDNS advertisement**: Nodes advertise `_swarmstate._tcp.local` on the local network. The UI shows a list of discoverable nodes. One tap to join.
+- **mDNS advertisement**: Nodes advertise `_statepod._tcp.local` on the local network. The UI shows a list of discoverable nodes. One tap to join.
 - **Bluetooth LE / NFC**: For offline pairing when Wi-Fi isn't available but devices are within a few meters. Exchange Tailcat tokens over BLE, then establish the tunnel via DERP or direct UDP.
 
 The goal: **a primary school kid should be able to join two devices to the same mesh.**
@@ -246,7 +246,7 @@ LoRA adapters (10 MB) can be shared between nodes that trust each other.
 **Scenario:** A farmer manages 5,000 acres of mixed cropping and grazing with no reliable internet beyond the homestead.
 
 **Setup:**
-- Farm truck: laptop running SwarmState with 7B model, acting as primary inference provider.
+- Farm truck: laptop running StatePod with 7B model, acting as primary inference provider.
 - Farmer's phone: 1.5B model, joins mesh when within range or via LoRa.
 - Solar-powered LoRa nodes at key points (gates, water tanks, cattle yards).
 - Drone: lightweight camera + 1.5B vision model for aerial surveys.
@@ -286,7 +286,7 @@ LoRA adapters (10 MB) can be shared between nodes that trust each other.
 
 **Setup:**
 - Two teacher workstations run 7B models, act as inference providers.
-- 30 thin clients run SwarmState kernels with 1.5B models (or no local model—just the kernel + consumer role).
+- 30 thin clients run StatePod kernels with 1.5B models (or no local model—just the kernel + consumer role).
 - The lab mesh connects everything via Wi-Fi/Ethernet.
 - A shared LoRA adapter tuned to the curriculum is distributed across the mesh.
 
@@ -421,7 +421,7 @@ A node can be one or more of these roles simultaneously.
 
 ## 14. Conclusion
 
-SwarmState Mesh turns a single-device, context-containing kernel into a **private, self-organizing network of devices that share inference, state, and learned outcomes**. The transport is flexible—Tailcat for standard networks, LoRa for infrastructure-free, local discovery for zero-config pairing—but the message schema and security model are consistent.
+StatePod Mesh turns a single-device, context-containing kernel into a **private, self-organizing network of devices that share inference, state, and learned outcomes**. The transport is flexible—Tailcat for standard networks, LoRa for infrastructure-free, local discovery for zero-config pairing—but the message schema and security model are consistent.
 
 The primary use cases are civilian: agriculture, search and rescue, education, field work, emergency services. The same technology has defense applications, but that's not the design center. The point is to make **distributed, self-improving AI practical on any hardware, anywhere, without cloud dependency**.
 

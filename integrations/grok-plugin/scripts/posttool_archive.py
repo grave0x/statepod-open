@@ -3,7 +3,7 @@
 
 Grok docs: PostToolUse stdout is ignored — we only perform side effects.
 The model still sees the full result; PreToolUse must prevent dumps.
-Archived paths power `/swarmstate full` and `/swarmstate stats`.
+Archived paths power `/statepod full` and `/statepod stats`.
 """
 from __future__ import annotations
 
@@ -47,7 +47,7 @@ def main() -> int:
         digest_chars=len(out["digest"]),
         cap=cap,
     )
-    # Also drop a sidecar digest next to the archive for humans / sw full
+    # Also drop a sidecar digest next to the archive for humans / sp full
     try:
         Path(out["path"] + ".digest").write_text(out["digest"], encoding="utf-8")
     except OSError:

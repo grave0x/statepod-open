@@ -14,10 +14,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "py"))
 
-from swarmstate import (  # noqa: E402
-    SwarmState,
-    SS_CONTEXT_DELTA, SS_CONTEXT_TARGETED, SS_CONTEXT_FULL,
-    SS_CONTEXT_SYMBOLIC,
+from statepod import (  # noqa: E402
+    StatePod,
+    SP_CONTEXT_DELTA, SP_CONTEXT_TARGETED, SP_CONTEXT_FULL,
+    SP_CONTEXT_SYMBOLIC,
 )
 from planner import (  # noqa: E402
     make_plan, decide_strategy, normalize_plan, validate_plan,
@@ -25,8 +25,8 @@ from planner import (  # noqa: E402
 )
 from router import pick_model, pick_model_rates, query_sig  # noqa: E402
 
-STRATEGIES = {"DELTA": SS_CONTEXT_DELTA, "TARGETED": SS_CONTEXT_TARGETED,
-              "FULL": SS_CONTEXT_FULL, "SYMBOLIC": SS_CONTEXT_SYMBOLIC}
+STRATEGIES = {"DELTA": SP_CONTEXT_DELTA, "TARGETED": SP_CONTEXT_TARGETED,
+              "FULL": SP_CONTEXT_FULL, "SYMBOLIC": SP_CONTEXT_SYMBOLIC}
 
 
 def _exec(state, ops, strategy_name, targets, max_loops=4):
@@ -99,7 +99,7 @@ class Orchestrator:
         # use_registry_strategy=False forces the op-shape heuristic
         # (maturity bench A/B baseline). Default True = §9.3 rates.
         self.use_registry_strategy = use_registry_strategy
-        self.state = SwarmState(root)
+        self.state = StatePod(root)
         # mesh=None (default) or a MeshDaemon (harness/meshd.py): when
         # set, every feedback() call also publishes the learning as mesh
         # ops so peer nodes fold it into their own registry memory.
@@ -108,14 +108,14 @@ class Orchestrator:
         self.backend = backend
         # Auto-start ollama serve if we need a local model
         if backend == "ollama":
-            # Default store: swarmstate/models/ -> ~/.ollama/models
+            # Default store: statepod/models/ -> ~/.ollama/models
             repo_root = Path(__file__).resolve().parent.parent
             store_path = repo_root / "models"
             try:
                 from model_store import ensure_ollama_running
                 base_url = ensure_ollama_running(shared_store=store_path)
                 # Set the base URL for planner.ollama so it uses the right port
-                os.environ.setdefault("SWARMSTATE_OLLAMA", base_url)
+                os.environ.setdefault("STATEPOD_OLLAMA", base_url)
             except Exception as exc:
                 print(f"[orchestrator] WARNING: could not auto-start ollama ({exc})")
         self.model = model
@@ -134,7 +134,7 @@ class Orchestrator:
         self.last_usage = {}
         self.last_strategy = None
         self.last_retries = 0
-        self._fb_log = Path.home() / ".local/state/swarmstate/pending_feedback.jsonl"
+        self._fb_log = Path.home() / ".local/state/statepod/pending_feedback.jsonl"
         self._fb_log.parent.mkdir(parents=True, exist_ok=True)
 
     def _ensure_write_context(self, query: str, summary: str,
@@ -568,7 +568,7 @@ class Orchestrator:
         total = 0
         for dirpath, dirnames, filenames in os.walk(root):
             dirnames[:] = [d for d in dirnames
-                           if d not in (".git", ".swarmstate", "__pycache__")]
+                           if d not in (".git", ".statepod", "__pycache__")]
             for fn in sorted(filenames):
                 if fn.endswith((".pyc", ".so", ".o", ".a")):
                     continue

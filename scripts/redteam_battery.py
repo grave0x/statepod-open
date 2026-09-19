@@ -1,21 +1,21 @@
-"""SwarmState pre-pitch red-team battery — attack tests vs the shipped system.
-Records PASS/WEAK/FAIL with evidence to /tmp/ss_redteam/battery.log"""
+"""StatePod pre-pitch red-team battery — attack tests vs the shipped system.
+Records PASS/WEAK/FAIL with evidence to /tmp/sp_redteam/battery.log"""
 import os, sys, time, json
-sys.path.insert(0, "/home/grave/Projects/internal.source/02-tools/swarmstate/harness")
-sys.path.insert(0, "/home/grave/Projects/internal.source/02-tools/swarmstate")
-os.environ.setdefault("SWARMSTATE_LIB", "/home/grave/Projects/internal.source/02-tools/swarmstate/libswarmstate.so")
-from py import swarmstate as _ss; SwarmState = _ss.SwarmState
+sys.path.insert(0, "/home/grave/Projects/internal.source/02-tools/statepod/harness")
+sys.path.insert(0, "/home/grave/Projects/internal.source/02-tools/statepod")
+os.environ.setdefault("STATEPOD_LIB", "/home/grave/Projects/internal.source/02-tools/statepod/libstatepod.so")
+from py import statepod as _ss; StatePod = _ss.StatePod
 from governance import Governance, issue_token, check_multiparty
 from pool import PoolHub, issue_invite, verify_invite
 
-REPO = "/tmp/ss_redteam/repo"
-OUT = "/tmp/ss_redteam/outside"
+REPO = "/tmp/sp_redteam/repo"
+OUT = "/tmp/sp_redteam/outside"
 RESULTS = []
 def rec(cat, name, verdict, evidence, note=""):
     RESULTS.append(dict(cat=cat, name=name, verdict=verdict, evidence=evidence[:160], note=note))
     print(f"[{verdict}] {cat}: {name} :: {evidence[:120]}{'  ('+note+')' if note else ''}")
 
-# Self-bootstrap sandbox (ss_state_new requires an existing directory).
+# Self-bootstrap sandbox (sp_state_new requires an existing directory).
 os.makedirs(os.path.join(REPO, "src"), exist_ok=True)
 os.makedirs(OUT, exist_ok=True)
 open(os.path.join(OUT, "secret.txt"), "w").write("secret\n")
@@ -23,7 +23,7 @@ if not os.path.exists(os.path.join(REPO, "src", "a.c")):
     open(os.path.join(REPO, "src", "a.c"), "w").write("int x;\n")
 
 # ---------------- kernel EXECUTE ----------------
-st = SwarmState(REPO)
+st = StatePod(REPO)
 exec_attacks = [
     ("metachar_semicolon", "ls; rm -rf /tmp/x"),
     ("metachar_pipe",      "ls | head"),
@@ -91,7 +91,7 @@ except OSError as e:
 st.close()
 
 # ---------------- governance ----------------
-gov = Governance(mode="enforce", governed_ops={"EXECUTE"}, secret="s1", log_path="/tmp/ss_redteam/audit.jsonl")
+gov = Governance(mode="enforce", governed_ops={"EXECUTE"}, secret="s1", log_path="/tmp/sp_redteam/audit.jsonl")
 tok = issue_token("s1", ttl=300)
 expired = issue_token("s1", ttl=1); time.sleep(1.1)
 forged = issue_token("WRONG", ttl=300)
@@ -132,7 +132,7 @@ rec("gov", "replay_other_reason", "INFO" if r3.get("verdict") == "APPROVE" else 
 import json as _json
 n_deny = 0
 try:
-    with open("/tmp/ss_redteam/audit.jsonl") as f:
+    with open("/tmp/sp_redteam/audit.jsonl") as f:
         n_deny = sum(1 for ln in f if ln.strip() and _json.loads(ln).get("verdict") == "DENY")
 except FileNotFoundError:
     pass
@@ -153,7 +153,7 @@ r2 = hub.join(inv, "node2")
 rec("pool", "invite_reuse", "INFO" if r2 else "PASS", f"reuse={'denied' if r2 is None else 'allowed'}", note="invite replay within TTL")
 
 # ---------------- registry / feedback freshness ----------------
-s2 = SwarmState(REPO)
+s2 = StatePod(REPO)
 for i in range(5):
     s2.feedback("REG:STRAT:WRITE:DELTA", True)
 rec("registry", "feedback_counts", "INFO", f"5x ok=1 recorded -> {s2.success_rate('REG:STRAT:WRITE:DELTA')}")
@@ -165,5 +165,5 @@ print("\n===== SUMMARY =====")
 from collections import Counter
 c = Counter(r["verdict"] for r in RESULTS)
 print(dict(c))
-with open("/tmp/ss_redteam/battery_results.json", "w") as f:
+with open("/tmp/sp_redteam/battery_results.json", "w") as f:
     json.dump(RESULTS, f, indent=1)

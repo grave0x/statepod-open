@@ -1,4 +1,4 @@
-"""Identity: signed role credentials for the sw CLI (UX spec, §6).
+"""Identity: signed role credentials for the sp CLI (UX spec, §6).
 
 An identity is a long-lived, role-scoped credential issued by a
 supervisor (architect).  It reuses the governance HMAC-SHA256 framing so
@@ -10,7 +10,7 @@ identities:
     sig     = HMAC-SHA256(secret, payload)      (fixed last 32 bytes)
 
 Base-version roles (least -> most privilege) -- DEFINED but
-DORMANT.  The CLI does not enforce them while SwarmState is used as a
+DORMANT.  The CLI does not enforce them while StatePod is used as a
 coding harness:
 
     user      -- read-only plans (SAFE ops only) + basic commands
@@ -33,7 +33,7 @@ enforcement is switched on, an expired identity would degrade to
 would be ``architect`` (unauthenticated demo default, documented --
 production deployments issue identities).
 
-Identity file location: $SW_IDENTITY, else ~/.swarmstate/identity.json.
+Identity file location: $SW_IDENTITY, else ~/.statepod/identity.json.
 """
 from __future__ import annotations
 
@@ -56,10 +56,10 @@ CAPS = {
     "read_plan": ("user", "support", "architect"),
     # WRITE/EXEC (and WRITE-class) ops in plans
     "write_exec": ("support", "architect"),
-    # sw gov audit / verify, sw rollback
+    # sp gov audit / verify, sp rollback
     "audit": ("support", "architect"),
     "rollback": ("support", "architect"),
-    # sw gov issue / sw identity issue
+    # sp gov issue / sp identity issue
     "mint": ("architect",),
 }
 
@@ -121,7 +121,7 @@ def identity_path(override: str | None = None) -> Path:
     env = override or os.environ.get("SW_IDENTITY")
     if env:
         return Path(env)
-    return Path.home() / ".swarmstate" / "identity.json"
+    return Path.home() / ".statepod" / "identity.json"
 
 
 def save_identity(path: Path, line: str, secret: str) -> dict:

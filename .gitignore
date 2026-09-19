@@ -2,8 +2,8 @@
 *.o
 *.a
 *.so
-!libswarmstate.so
-!libswarmstate.a
+!libstatepod.so
+!libstatepod.a
 *.exe
 *.dll
 test_kernel
@@ -15,6 +15,6 @@ win/dist/
 win/*.zip
 infer/smoke_infer
 infer/*.log
-.swarmstate/
+.statepod/
 .pi/
 .Rhistory

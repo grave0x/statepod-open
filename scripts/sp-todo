@@ -1,5 +1,5 @@
 #!/home/grave/.prime/agent/kernel-venv/bin/python
-"""sw todo — 4-layer task manager CLI (Vision/Epic/Story/Task) with GitHub Issues
+"""sp todo — 4-layer task manager CLI (Vision/Epic/Story/Task) with GitHub Issues
 parity extension fields.
 
 Wraps the agent's task_manager skill and enforces the 4-layer schema + ext-v1
@@ -10,26 +10,26 @@ Extension fields: labels, milestone, assignees, mentions, reactions, draft,
 estimate, actual, due, closed_at, project, effort_score, impact_score, risk,
 weight, checklist, links, watchers, priority_boost, swarm_tags.
 
-Custom fields: drop a JSON catalog at ~/.swarmstate/todo-fields.json.
+Custom fields: drop a JSON catalog at ~/.statepod/todo-fields.json.
 
 Usage:
-  sw todo add "Title" --layer task [--parent T-0001] [--priority P0]
+  sp todo add "Title" --layer task [--parent T-0001] [--priority P0]
                      [--label bug,security] [--assignee alice,bob]
                      [--estimate 2h] [--due 2026-09-15] [--risk high]
                      [--effort 8] [--impact 4] [--milestone v1.0]
-  sw todo ls    [--layer L] [--status S] [--priority P] [--label X] [--assignee X]
-  sw todo show  T-0001
-  sw todo start T-0001
-  sw todo complete T-0001 [--actual 2.5h]
-  sw todo depend T-0001 T-0002 T-0003
-  sw todo graph [--fmt ascii|md] [--depth N] [--root T-0001]
-  sw todo next  [--limit 3]
-  sw todo check [--task T-0001] [--strict]
-  sw todo scaffold "I want to <verb> <thing>"
-  sw todo field ls|show <name>|add NAME=SPEC
-  sw todo sync  push|pull
-  sw todo serve [--port 7741] [--all-interfaces]
-  sw todo version
+  sp todo ls    [--layer L] [--status S] [--priority P] [--label X] [--assignee X]
+  sp todo show  T-0001
+  sp todo start T-0001
+  sp todo complete T-0001 [--actual 2.5h]
+  sp todo depend T-0001 T-0002 T-0003
+  sp todo graph [--fmt ascii|md] [--depth N] [--root T-0001]
+  sp todo next  [--limit 3]
+  sp todo check [--task T-0001] [--strict]
+  sp todo scaffold "I want to <verb> <thing>"
+  sp todo field ls|show <name>|add NAME=SPEC
+  sp todo sync  push|pull
+  sp todo serve [--port 7741] [--all-interfaces]
+  sp todo version
 
 Exit codes:
   0 = success, 1 = invalid args, 2 = invariant violation, 3 = not found
@@ -54,7 +54,7 @@ VALID_PRIORITIES = {"P0", "P1", "P2", "P3"}
 
 
 def err(msg, code=1):
-    print("sw todo: " + msg, file=sys.stderr)
+    print("sp todo: " + msg, file=sys.stderr)
     sys.exit(code)
 
 
@@ -85,7 +85,7 @@ def parse_args(argv):
 
 # Extension field store
 def _ext_path():
-    p = Path(os.path.expanduser("~/.swarmstate/task-extensions.json"))
+    p = Path(os.path.expanduser("~/.statepod/task-extensions.json"))
     p.parent.mkdir(parents=True, exist_ok=True)
     return p
 
@@ -112,7 +112,7 @@ def _ext_set(tid, fields):
 
 def mirror_md(task):
     try:
-        md_dir = Path(os.path.expanduser("~/.swarmstate/tasks"))
+        md_dir = Path(os.path.expanduser("~/.statepod/tasks"))
         md_dir.mkdir(parents=True, exist_ok=True)
         tid = task["id"]
         ext = _ext_get(tid)
@@ -143,7 +143,7 @@ def mirror_md(task):
         body = "# " + task["title"] + "\n\n" + task.get("description", "") + "\n"
         (md_dir / (tid + ".md")).write_text("\n".join(lines) + "\n" + body)
     except Exception as e:
-        print("sw todo: warning: mirror failed: " + str(e), file=sys.stderr)
+        print("sp todo: warning: mirror failed: " + str(e), file=sys.stderr)
 
 
 def _load_raw():
@@ -276,7 +276,7 @@ async def cmd_add(pos, flags):
     errs = tc.validate_all(ext_fields)
     if errs:
         for e in errs:
-            print("sw todo: " + e, file=sys.stderr)
+            print("sp todo: " + e, file=sys.stderr)
         err("extension field validation failed", code=2)
     bad = [n for n in ext_fields if not tc.layer_applicable(n, layer)]
     if bad:
@@ -423,14 +423,14 @@ async def cmd_scaffold(pos, flags):
          "test": "story", "document": "task", "research": "task", "rename": "task"}
     layer = V.get(verb, "task")
     print("verb=" + verb + " object=" + repr(obj) + " -> layer=" + layer)
-    print("Run: sw todo add " + repr(obj) + " --layer " + layer)
+    print("Run: sp todo add " + repr(obj) + " --layer " + layer)
     return 0
 
 
 async def cmd_auto(pos, flags):
     """Auto-generate a 4-layer todo chain from a goal phrase.
     
-    Usage: sw todo auto "<goal>"
+    Usage: sp todo auto "<goal>"
     
     Creates: Vision -> Epic -> Story -> Task
     Each layer depends on its parent.
@@ -495,7 +495,7 @@ async def cmd_auto(pos, flags):
 async def cmd_git(pos, flags):
     """Auto-create tasks from recent git commits.
     
-    Usage: sw todo git [--repo PATH] [--count N] [--skip-merge]
+    Usage: sp todo git [--repo PATH] [--count N] [--skip-merge]
     
     Walks recent commits, extracts meaningful messages, creates a 4-layer
     todo chain for each. Skips chore/ci/merge commits by default.
@@ -588,7 +588,7 @@ async def cmd_git(pos, flags):
         created.append((v_id, e_id, s_id, t_id))
     
     print()
-    print(f"Created {len(created)} chains. Start with: sw todo start {created[0][0]}")
+    print(f"Created {len(created)} chains. Start with: sp todo start {created[0][0]}")
     return 0
 
 
@@ -611,7 +611,7 @@ async def cmd_field(pos, flags):
             err("field show requires a field name")
         spec = cat.get(name)
         if not spec:
-            err("unknown field: " + repr(name) + " (try: sw todo field ls)")
+            err("unknown field: " + repr(name) + " (try: sp todo field ls)")
         print("Field: " + name)
         print("  type    : " + spec.ftype)
         print("  layers  : " + str(spec.layers))
@@ -629,7 +629,7 @@ async def cmd_field(pos, flags):
             data = json.loads(rest)
         except json.JSONDecodeError:
             data = {"ftype": rest.strip()}
-        user_cat = Path.home() / ".swarmstate" / "todo-fields.json"
+        user_cat = Path.home() / ".statepod" / "todo-fields.json"
         user_cat.parent.mkdir(parents=True, exist_ok=True)
         existing = {}
         if user_cat.exists():
@@ -640,13 +640,13 @@ async def cmd_field(pos, flags):
         existing[name.strip()] = data
         user_cat.write_text(json.dumps(existing, indent=2))
         print("Added custom field " + repr(name.strip()) + " -> " + str(user_cat))
-        print("Restart sw todo to pick up the new field.")
+        print("Restart sp todo to pick up the new field.")
         return 0
     err("unknown field subcommand: " + repr(sub) + " (ls|show|add)", code=1)
 
 
 async def cmd_version(pos, flags):
-    print("sw todo v0.2.0 (4-layer schema v1 + ext-v1)")
+    print("sp todo v0.2.0 (4-layer schema v1 + ext-v1)")
     return 0
 
 
@@ -654,21 +654,21 @@ async def cmd_sync(pos, flags):
     """Sync tasks to/from a remote git repo.
     
     Usage:
-      sw todo sync push          Push local tasks to remote
-      sw todo sync pull          Pull tasks from remote
-      sw todo sync status        Show sync status
+      sp todo sync push          Push local tasks to remote
+      sp todo sync pull          Pull tasks from remote
+      sp todo sync status        Show sync status
     
-    Requires a swarmstate-tasks git remote configured at:
-      ~/.swarmstate/tasks-remote (git@github.com:grave0x/swarmstate-tasks.git)
+    Requires a statepod-tasks git remote configured at:
+      ~/.statepod/tasks-remote (git@github.com:grave0x/statepod-tasks.git)
     """
     import subprocess, asyncio
     
     sub = pos[0] if pos else "status"
-    remote_path = os.path.expanduser("~/.swarmstate/tasks-remote")
+    remote_path = os.path.expanduser("~/.statepod/tasks-remote")
     
     if sub == "status":
         # Check if tasks dir is a git repo
-        tasks_dir = os.path.expanduser("~/.swarmstate/tasks")
+        tasks_dir = os.path.expanduser("~/.statepod/tasks")
         r = subprocess.run(["git", "rev-parse", "--git-dir"],
                           capture_output=True, text=True, cwd=tasks_dir)
         if r.returncode == 0:
@@ -687,14 +687,14 @@ async def cmd_sync(pos, flags):
             if os.path.exists(remote_path):
                 print(f"  Remote configured: {open(remote_path).read().strip()}")
             else:
-                print("  No remote configured. Run: sw todo sync init <git-url>")
+                print("  No remote configured. Run: sp todo sync init <git-url>")
         return 0
     
     if sub == "init":
         url = pos[1] if len(pos) > 1 else ""
         if not url:
             err("sync init requires a git URL")
-        tasks_dir = os.path.expanduser("~/.swarmstate/tasks")
+        tasks_dir = os.path.expanduser("~/.statepod/tasks")
         # Init git repo
         r = subprocess.run(["git", "init"], capture_output=True, text=True, cwd=tasks_dir)
         if r.returncode != 0 and "already exists" not in r.stderr:
@@ -712,15 +712,15 @@ async def cmd_sync(pos, flags):
             f.write(url + "\n")
         # Create initial commit
         r4 = subprocess.run(["git", "add", "."], capture_output=True, text=True, cwd=tasks_dir)
-        r5 = subprocess.run(["git", "commit", "-m", "Initial: swarmstate tasks"],
+        r5 = subprocess.run(["git", "commit", "-m", "Initial: statepod tasks"],
                           capture_output=True, text=True, cwd=tasks_dir)
         print(f"Initialized tasks git repo at {tasks_dir}")
         print(f"Remote: {url}")
-        print(f"Run: sw todo sync push")
+        print(f"Run: sp todo sync push")
         return 0
     
     if sub == "push":
-        tasks_dir = os.path.expanduser("~/.swarmstate/tasks")
+        tasks_dir = os.path.expanduser("~/.statepod/tasks")
         r = subprocess.run(["git", "add", "."], capture_output=True, text=True, cwd=tasks_dir)
         r2 = subprocess.run(["git", "commit", "-m", "Auto-sync tasks"],
                           capture_output=True, text=True, cwd=tasks_dir)
@@ -737,7 +737,7 @@ async def cmd_sync(pos, flags):
         return 0
     
     if sub == "pull":
-        tasks_dir = os.path.expanduser("~/.swarmstate/tasks")
+        tasks_dir = os.path.expanduser("~/.statepod/tasks")
         r = subprocess.run(["git", "pull", "--rebase", "origin", "main"],
                           capture_output=True, text=True, cwd=tasks_dir, timeout=30)
         if r.returncode != 0:
@@ -753,7 +753,7 @@ async def cmd_sync(pos, flags):
 async def cmd_serve(pos, flags):
     """Serve tasks as a JSON HTTP API (text-mode, subprocess-based).
     
-    Usage: sw todo serve [--port PORT] [--all-interfaces]
+    Usage: sp todo serve [--port PORT] [--all-interfaces]
     
     Endpoints:
       GET /           — list tasks as JSON
@@ -766,7 +766,7 @@ async def cmd_serve(pos, flags):
     
     port = int(flags.get("port", 7741))
     host = "0.0.0.0" if flags.get("all-interfaces") else "127.0.0.1"
-    sw_path = "/home/grave/.local/bin/sw-todo"
+    sw_path = "/home/grave/.local/bin/sp-todo"
     
     class Handler(BaseHTTPRequestHandler):
         def do_GET(self):
@@ -869,7 +869,7 @@ async def cmd_serve(pos, flags):
 async def cmd_dogfood(pos, flags):
     """Self-check: verify the 4-layer system works end-to-end.
     
-    Usage: sw todo dogfood
+    Usage: sp todo dogfood
     
     Runs a complete cycle: create chain → verify schema → complete → graph.
     Exits 0 if all checks pass.
@@ -878,7 +878,7 @@ async def cmd_dogfood(pos, flags):
     
     test_goal = "Auto-dogfood test: " + __import__("datetime").datetime.now().isoformat()
     
-    print("=== swarmstate dogfood self-check ===")
+    print("=== statepod dogfood self-check ===")
     print()
     
     # 1. Create a chain
@@ -1005,7 +1005,7 @@ def main(argv):
         return 1
     sub = argv[1]
     if sub not in SUBCOMMANDS:
-        err("unknown subcommand: " + repr(sub) + ". try: sw todo help")
+        err("unknown subcommand: " + repr(sub) + ". try: sp todo help")
     pos, flags = parse_args(argv[1:])
     handler = SUBCOMMANDS[sub]
     return asyncio.run(handler(pos, flags))

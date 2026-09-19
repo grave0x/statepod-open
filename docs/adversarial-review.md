@@ -1,4 +1,4 @@
-# Adversarial Review: SwarmState
+# Adversarial Review: StatePod
 
 > **Superseded for security/mesh/claims:** see repo-root [`ADVERSARIAL_REVIEW_REPORT.md`](../ADVERSARIAL_REVIEW_REPORT.md) (2026-09-04 specialists + research). This narrative pass remains useful for business/SPOF framing.
 
@@ -9,12 +9,12 @@ This review is intentionally harsh. It assumes the perspective of a skeptical en
 ## 1. Technical Risks and Gaps
 
 ### 1.1 The embedded inference engine is still vaporware
-The specification exists, but the implementation has not shipped. Until that's done, SwarmState depends on Ollama, which violates the "single-binary, no external service" promise. A failure here undermines the entire Windows node story and the pitch of zero-install, zero-dependency. The roadmap is sound, but without a working llama.cpp integration, the core product is incomplete.
+The specification exists, but the implementation has not shipped. Until that's done, StatePod depends on Ollama, which violates the "single-binary, no external service" promise. A failure here undermines the entire Windows node story and the pitch of zero-install, zero-dependency. The roadmap is sound, but without a working llama.cpp integration, the core product is incomplete.
 
 **Critical concern:** If Ollama is removed from the demo and the embedded engine isn't ready, the node becomes a thin shell with no brain. The pitch demo may pass because it uses Ollama, but a clean-machine demo will fail.
 
 ### 1.2 GPU offload tuning is fragile
-The `pick_ngl()` function currently hardcodes the MX550. The generalized `ss_infer_auto_tune` has not been tested on varied hardware. On machines with integrated GPUs (Intel UHD, AMD Vega), VRAM is shared with system RAM; the algorithm may over-offload and cause OOM or severe slowdown. A robust implementation needs to account for:
+The `pick_ngl()` function currently hardcodes the MX550. The generalized `sp_infer_auto_tune` has not been tested on varied hardware. On machines with integrated GPUs (Intel UHD, AMD Vega), VRAM is shared with system RAM; the algorithm may over-offload and cause OOM or severe slowdown. A robust implementation needs to account for:
 - Shared memory constraints
 - Driver-specific quirks (CUDA vs Vulkan)
 - Thermal throttling
@@ -60,7 +60,7 @@ Without these, the MSP owner may smile and say "interesting," but never deploy.
 Mum said "great idea," dad said "cool." Neither has committed to a demo or pilot. The assumption that these connections will lead to adoption is optimistic. The hardest part of this project may be converting polite interest into a signed pilot agreement.
 
 ### 2.4 Competition from existing RMM/SCADA tools
-The MSP already has tools like NinjaRMM, TeamViewer, or even free options like MeshCentral. SwarmState's advantage is offline capability and AI assistance, but it lacks maturity. An MSP will ask: "Why should I replace something that works with a single-developer project?" The answer must be compelling and quantified (e.g., "we cut support time by 60% in a pilot").
+The MSP already has tools like NinjaRMM, TeamViewer, or even free options like MeshCentral. StatePod's advantage is offline capability and AI assistance, but it lacks maturity. An MSP will ask: "Why should I replace something that works with a single-developer project?" The answer must be compelling and quantified (e.g., "we cut support time by 60% in a pilot").
 
 ### 2.5 The "$3 build" story may backfire
 While impressive, it can also imply the system is a toy. Enterprise buyers sometimes equate cost with value. If the pitch leads with "it cost less than a coffee," a hospital IT lead may think it's not serious. The story works for Twitter, but in a boardroom, you need to emphasize reliability, security, and support, not just cheapness.
@@ -100,7 +100,7 @@ The same codebase is being positioned for:
 - Energy logistics
 - Agriculture
 
-Each domain has unique requirements, regulations, and competitors. Trying to serve all of them dilutes focus. The most successful edge AI projects start with one killer use case and dominate it. SwarmState risks being "a mile wide and an inch deep."
+Each domain has unique requirements, regulations, and competitors. Trying to serve all of them dilutes focus. The most successful edge AI projects start with one killer use case and dominate it. StatePod risks being "a mile wide and an inch deep."
 
 ### 4.2 The open-core model may not generate enough revenue
 The AGPL harness + proprietary kernel split is common, but many developers will simply use the open harness with a self-built kernel. The enterprise features (private LoRA hub, compliance) are still largely unimplemented. There is no evidence that an MSP will pay enough per client to sustain development. The project's current $3 cost is also its revenue problem: it's so cheap that there's little margin.
@@ -109,7 +109,7 @@ The AGPL harness + proprietary kernel split is common, but many developers will 
 Community adoption through word-of-mouth and family connections is charming, but it may take years to reach critical mass. Meanwhile, a well-funded startup could copy the idea, build a polished product, and capture the market. The first-mover advantage is only real if you move fast.
 
 ### 4.4 The developer is a single point of failure
-The entire project depends on one person. If the developer loses interest, gets a job, or is hit by a bus, SwarmState dies. There is no succession plan, no community of contributors, and no company structure. This is the biggest long-term risk.
+The entire project depends on one person. If the developer loses interest, gets a job, or is hit by a bus, StatePod dies. There is no succession plan, no community of contributors, and no company structure. This is the biggest long-term risk.
 
 ---
 
@@ -130,6 +130,6 @@ The entire project depends on one person. If the developer loses interest, gets 
 
 ## 6. Final Verdict
 
-SwarmState is an impressive technical achievement and a bold vision. But the gap between "working prototype" and "deployed product" is still large. The next phase should be ruthless about focus: ship the embedded inference, harden security, and land one real pilot. Without that, the project risks remaining a brilliant but unadopted side project.
+StatePod is an impressive technical achievement and a bold vision. But the gap between "working prototype" and "deployed product" is still large. The next phase should be ruthless about focus: ship the embedded inference, harden security, and land one real pilot. Without that, the project risks remaining a brilliant but unadopted side project.
 
 The cage is strong, but the wild is waiting.

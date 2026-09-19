@@ -1,11 +1,11 @@
-# SwarmState → Grok Build plugin (v0.2)
+# StatePod → Grok Build plugin (v0.2)
 
 Deepest containment wiring Grok’s hook API allows. Shares
-`~/.swarmstate/omp.json` with the prime-agent extension.
+`~/.statepod/omp.json` with the prime-agent extension.
 
 | Piece | Role |
 |-------|------|
-| `/swarmstate` | `on` / `off` / `status` / `stats` / `full` / `cap` |
+| `/statepod` | `on` / `off` / `status` / `stats` / `full` / `cap` |
 | `PreToolUse` | Cap `read_file` / lean-ctx full→signatures / rewrite bare `cat` / grep `-m` |
 | `PostToolUse` | Archive oversized `toolResult` + ledger (side effects only) |
 | `SessionStart` | Scrollback reminder (stderr) |
@@ -16,8 +16,8 @@ Deepest containment wiring Grok’s hook API allows. Shares
 ## Install / update
 
 ```bash
-grok plugin install /home/grave/Projects/internal.source/02-tools/swarmstate/integrations/grok-plugin --trust
-# or: grok plugin update swarmstate
+grok plugin install /home/grave/Projects/internal.source/02-tools/statepod/integrations/grok-plugin --trust
+# or: grok plugin update statepod
 ```
 
 Optional status line in `~/.grok/config.toml`:
@@ -25,7 +25,7 @@ Optional status line in `~/.grok/config.toml`:
 ```toml
 [ui.status_line]
 type = "command"
-command = "~/Projects/internal.source/02-tools/swarmstate/integrations/grok-plugin/scripts/statusline.sh"
+command = "~/Projects/internal.source/02-tools/statepod/integrations/grok-plugin/scripts/statusline.sh"
 refresh_interval = 30
 ```
 
@@ -33,8 +33,8 @@ refresh_interval = 30
 
 ```bash
 python3 integrations/grok-plugin/scripts/test_containment.py
-python3 integrations/grok-plugin/scripts/swarmstate_cli.py on
-python3 integrations/grok-plugin/scripts/swarmstate_cli.py status
+python3 integrations/grok-plugin/scripts/statepod_cli.py on
+python3 integrations/grok-plugin/scripts/statepod_cli.py status
 ```
 
 ## Hard limit

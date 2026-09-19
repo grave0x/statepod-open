@@ -1,4 +1,4 @@
-"""frontierharness.py — run FrontierHarness Eval tasks through sw.
+"""frontierharness.py — run FrontierHarness Eval tasks through sp.
 
 FrontierHarness Eval (github.com/runta-dev/frontier-harness, v1, Sep 2026)
 ships 30 task definitions (21 terminal-bench + 9 deep-swe/datacurve):
@@ -13,7 +13,7 @@ research.py) that:
             or INDIVIDUAL task name;
   * list  — shows the cached task inventory (pack, difficulty, docker
             image, agent timeout);
-  * run   — executes each selected task through sw's own one-shot path
+  * run   — executes each selected task through sp's own one-shot path
             (harness/main.py) in an ISOLATED seeded scratch repo per
             task, with a hard per-task timeout, then classifies the
             outcome honestly:
@@ -31,7 +31,7 @@ research.py) that:
               ERROR   runner/infra failure.
 
     PASS is deliberately unreachable in this build (no verifier, no
-    oracle).  A swarmstate run therefore measures the *structural
+    oracle).  A statepod run therefore measures the *structural
     denial surface* and kernel divergence against the benchmark — the
     citable harness-design finding — not model quality.
 
@@ -70,7 +70,7 @@ FHE_REF = "main"
 # cache root for the downloaded benchmark repo
 def _default_cache() -> Path:
     return Path(os.environ.get("SW_FHE_ROOT")
-                or Path.home() / ".swarmstate" / "fhe")
+                or Path.home() / ".statepod" / "fhe")
 
 # pack labelling follows benchmark.json task_sources:
 #   terminal_bench -> terminal-bench/terminal-bench-2-1 (21 tasks)
@@ -248,7 +248,7 @@ FAIL_PATTERNS = [
 ]
 
 def classify(text: str) -> tuple[str, str]:
-    """Map a sw one-shot transcript to (outcome, reason)."""
+    """Map a sp one-shot transcript to (outcome, reason)."""
     if not text:
         return "ERROR", "no output captured"
     low = text.lower()
@@ -257,13 +257,13 @@ def classify(text: str) -> tuple[str, str]:
         if m:
             return "DENY", fn(m)
     if "status: deny" in low:
-        return "DENY", "sw status DENY"
+        return "DENY", "sp status DENY"
     for rx, fn in FAIL_PATTERNS:
         m = rx.search(text)
         if m:
             return "FAIL", fn(m)
     if "status: weak" in low or "status: fail" in low:
-        return "FAIL", "sw status " + ("weak" if "status: weak" in low
+        return "FAIL", "sp status " + ("weak" if "status: weak" in low
                                        else "fail")
     return "FAIL", "kernel ran clean but outcome unverified locally (FHE verifier is private)"
 
@@ -272,10 +272,10 @@ def _seed_repo(scratch: Path) -> None:
     subprocess.run(["git", "-C", str(scratch), "init", "-q"],
                    check=False, capture_output=True)
     subprocess.run(["git", "-C", str(scratch), "config", "user.email",
-                    "sw-eval@swarmstate"], capture_output=True)
+                    "sp-eval@statepod"], capture_output=True)
     subprocess.run(["git", "-C", str(scratch), "config", "user.name",
-                    "sw eval"], capture_output=True)
-    (scratch / ".gitignore").write_text(".swarmstate/\n__pycache__/\n")
+                    "sp eval"], capture_output=True)
+    (scratch / ".gitignore").write_text(".statepod/\n__pycache__/\n")
     subprocess.run(["git", "-C", str(scratch), "add", "-A"],
                    capture_output=True)
     subprocess.run(["git", "-C", str(scratch), "commit", "-qm", "seed"],
@@ -290,7 +290,7 @@ def _artifacts(scratch: Path) -> list[str]:
         if not entry or len(entry) < 4:
             continue
         path = entry[3:]
-        if path == ".swarmstate/" or path.startswith(".swarmstate/"):
+        if path == ".statepod/" or path.startswith(".statepod/"):
             continue
         # porcelain -z quotes paths with special chars: strip one layer
         if len(path) >= 2 and path[0] == path[-1] == '"':
@@ -325,9 +325,9 @@ def _cost_of(text: str, per_1k: float) -> float:
 def run_one(task: dict, backend: str, model: str | None,
             timeout: float, work: Path, rate: float = 0.0
             ) -> dict:
-    """Run one task through sw's one-shot path in a fresh scratch repo."""
+    """Run one task through sp's one-shot path in a fresh scratch repo."""
     key = task["key"]
-    scratch = Path(tempfile.mkdtemp(prefix="sw-eval-", dir=str(work)))
+    scratch = Path(tempfile.mkdtemp(prefix="sp-eval-", dir=str(work)))
     row = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
            "task": key, "pack": task["pack"],
            "backend": backend, "model": model}
@@ -336,9 +336,9 @@ def run_one(task: dict, backend: str, model: str | None,
     try:
         _seed_repo(scratch)
         env = dict(os.environ)
-        lib = REPO / "libswarmstate.so"
+        lib = REPO / "libstatepod.so"
         if lib.exists():
-            env.setdefault("SWARMSTATE_LIB", str(lib))
+            env.setdefault("STATEPOD_LIB", str(lib))
         argv = [sys.executable, str(REPO / "harness" / "main.py"),
                 str(scratch), "--backend", backend, "--query",
                 _instruction(task)]
@@ -379,7 +379,7 @@ def run(selected: list[dict], backend: str = "mock", model: str | None = None,
         timeout: float = 300.0, work: Path | None = None,
         results: Path | None = None, rate: float = 0.0,
         progress: bool = True) -> tuple[Path, list[dict]]:
-    work = work or Path(tempfile.mkdtemp(prefix="sw-eval-work-"))
+    work = work or Path(tempfile.mkdtemp(prefix="sp-eval-work-"))
     work.mkdir(parents=True, exist_ok=True)
     results = results or (Path.cwd() / "eval" /
                           time.strftime("%Y%m%d-%H%M%S"))
@@ -421,7 +421,7 @@ def write_report(rows: list[dict], results: Path,
     total = round(sum(times), 1)
     packs = sorted({r["pack"] for r in rows})
     lines = [
-        "# FrontierHarness Eval — swarmstate run",
+        "# FrontierHarness Eval — statepod run",
         "",
         f"> benchmark: {FHE_URL} · tasks run: {n} · "
         f"backend: `{backend}` · per-task cap: {timeout:.0f}s · "
@@ -429,7 +429,7 @@ def write_report(rows: list[dict], results: Path,
         "",
         "**Honest caveats.** FHE ships task definitions only — verifiers, "
         "Docker envs and solutions are private.  Every task ran in a plain "
-        "seeded git scratch repo through sw's real one-shot path "
+        "seeded git scratch repo through sp's real one-shot path "
         "(`harness/main.py`); no task environment was emulated.  PASS is "
         "therefore unreachable: a green kernel run is reported FAIL "
         "(unverified locally).  DENY records an environment gate that "
@@ -483,7 +483,7 @@ def cli_main(argv: list[str] | None = None) -> int:
     l.add_argument("names", nargs="*", help="substring filters")
     l.add_argument("--json", action="store_true")
 
-    r = sub.add_parser("run", help="run selected tasks through sw")
+    r = sub.add_parser("run", help="run selected tasks through sp")
     r.add_argument("--pack", default=None)
     r.add_argument("names", nargs="*")
     r.add_argument("--limit", type=int, default=None)

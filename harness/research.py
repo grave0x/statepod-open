@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Self-contained search/research handler for swarmstate (`sw research`).
+"""Self-contained search/research handler for statepod (`sp research`).
 
 One module, stdlib-only runtime: web search (no API keys), URL fetch,
 and decode of the common formats an agent actually hits — HTML source,
@@ -9,7 +9,7 @@ upgrades* when present (poppler's `pdftotext` for PDFs); every decoder
 has a pure-Python fallback so the handler works on a bare box.
 
 Hand-off contract with the `deep-analysis` skill:
-  `sw research <query|url|file…> [--save NAME]` gathers + decodes and
+  `sp research <query|url|file…> [--save NAME]` gathers + decodes and
   stores a *machine-labelled* knowledge kit under `research/<topic>/` —
   every source row is ✅ (fetched & decoded), ⚠️ (degraded/partial
   decode) or ✗ (fetch/decode failed) with the reason and a human
@@ -1141,7 +1141,7 @@ def write_kit(corpus: Corpus, outdir: str | Path, name: str = "") -> Path:
     lines += ["", "## Narrative sections", "",
               "Pending `deep-analysis`: apply the deep-analysis skill to "
               "this manifest (verified narrative + per-facet sections), or "
-              "run `sw research <topic> --deep` for the configured brain "
+              "run `sp research <topic> --deep` for the configured brain "
               "to draft them from `sources/text-*.txt`.", ""]
     (kit / "README.md").write_text("\n".join(lines))
     (kit / "sources.jsonl").write_text(
@@ -1214,7 +1214,7 @@ def deep_synthesize(corpus: Corpus, kit_dir: Path, brain: str) -> str:
         readme = readme.replace(
             "Pending `deep-analysis`: apply the deep-analysis skill to "
             "this manifest (verified narrative + per-facet sections), or "
-            "run `sw research <topic> --deep` for the configured brain "
+            "run `sp research <topic> --deep` for the configured brain "
             "to draft them from `sources/text-*.txt`.",
             f"Drafted by the {brain} brain — see `narrative.md`. Treat as "
             "a draft; re-verify claims against `sources/text-*.txt` "
@@ -1262,7 +1262,7 @@ TEAM_MERGE_SYS = (
 
 def _planner():
     """Import harness/planner with the repo root importable (planner
-    pulls in the swarmstate module from the repo root)."""
+    pulls in the statepod module from the repo root)."""
     root = str(Path(__file__).resolve().parent.parent)
     if root not in sys.path:
         sys.path.insert(0, root)
@@ -1275,7 +1275,7 @@ _ollama_ok: bool | None = None   # probe once per process
 
 def _local_brain_up() -> bool:
     """Ollama (or any OpenAI-compat local server) reachable?  This is the
-    swarmstate fallback backend: embedded/daemon llama on localhost."""
+    statepod fallback backend: embedded/daemon llama on localhost."""
         # global _ollama_ok  # refactored: use class attribute
     if _ollama_ok is None:
         try:

@@ -8,8 +8,8 @@
 # orchestrator falls back to local inference.
 set -u
 cd "$(dirname "$0")/.."
-export SWARMSTATE_LIB=$PWD/libswarmstate.so
-export SS_MESH_TIMEOUT=6   # fast fallback in the demo (default 20s)
+export STATEPOD_LIB=$PWD/libstatepod.so
+export SP_MESH_TIMEOUT=6   # fast fallback in the demo (default 20s)
 
 pkill -f "harness/meshd.py" 2>/dev/null; sleep 1
 
@@ -17,12 +17,12 @@ echo "=== providers announce capabilities ==="
 python3 harness/meshd.py --name prov-a --port 5901 --serve-model \
   qwen2.5-coder:1.5b --serve-backend mock \
   --announce-models qwen2.5-coder:1.5b --hash-interval 3 \
-  > /tmp/ss_bcap_a.log 2>&1 &
+  > /tmp/sp_bcap_a.log 2>&1 &
 PA=$!
 python3 harness/meshd.py --name prov-b --port 5902 --serve-model \
   qwen2.5-coder:7b --serve-backend mock \
   --announce-models qwen2.5-coder:7b --hash-interval 3 \
-  > /tmp/ss_bcap_b.log 2>&1 &
+  > /tmp/sp_bcap_b.log 2>&1 &
 PB=$!
 sleep 2
 
@@ -32,8 +32,8 @@ python3 scripts/run_named.py --backend mesh --names "count src/math.c" \
   --model qwen2.5-coder:7b --no-escalate \
   --mesh-name consumer --mesh-port 5903 \
   --mesh-peer 127.0.0.1:5901 --mesh-peer 127.0.0.1:5902 \
-  --results /tmp/ss_bcap_r1.jsonl 2>&1 | grep -E "ok$|FAIL"
-grep "answered" /tmp/ss_bcap_b.log | tail -1 | sed 's/^/   prov-b: /'
+  --results /tmp/sp_bcap_r1.jsonl 2>&1 | grep -E "ok$|FAIL"
+grep "answered" /tmp/sp_bcap_b.log | tail -1 | sed 's/^/   prov-b: /'
 
 echo ""
 echo "=== ACT 2: prov-b (7b) is LOADED -> broker routes to prov-a ==="
@@ -43,8 +43,8 @@ python3 scripts/run_named.py --backend mesh --names "count src/math.c" \
   --model qwen2.5-coder:7b --no-escalate \
   --mesh-name consumer --mesh-port 5903 \
   --mesh-peer 127.0.0.1:5901 --mesh-peer 127.0.0.1:5902 \
-  --results /tmp/ss_bcap_r2.jsonl 2>&1 | grep -E "ok$|FAIL"
-grep "answered" /tmp/ss_bcap_a.log | tail -1 | sed 's/^/   prov-a: /'
+  --results /tmp/sp_bcap_r2.jsonl 2>&1 | grep -E "ok$|FAIL"
+grep "answered" /tmp/sp_bcap_a.log | tail -1 | sed 's/^/   prov-a: /'
 kill -CONT $PB
 
 echo ""
@@ -54,14 +54,14 @@ pkill -f "harness/meshd.py" 2>/dev/null; sleep 1
 python3 scripts/run_named.py --backend mesh --names "count src/math.c" \
   --model qwen2.5-coder:1.5b --no-escalate \
   --mesh-name consumer --mesh-port 5903 \
-  --results /tmp/ss_bcap_r3.jsonl --show-turns 2>&1 \
+  --results /tmp/sp_bcap_r3.jsonl --show-turns 2>&1 \
   | grep -E "ok$|FAIL|fallback|mesh planner" | head -3
 
 echo ""
 echo "=== broker view (consumer side) ==="
 python3 - <<'EOF'
 import re
-for f, name in [("/tmp/ss_bcap_a.log", "prov-a"), ("/tmp/ss_bcap_b.log", "prov-b")]:
+for f, name in [("/tmp/sp_bcap_a.log", "prov-a"), ("/tmp/sp_bcap_b.log", "prov-b")]:
     for line in open(f):
         if "answered" in line:
             m = re.search(r"answered (\S+) ok=(\w+) model=(\S+) load=([\d.]+)", line)

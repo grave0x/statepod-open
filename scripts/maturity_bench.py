@@ -20,7 +20,7 @@ from orchestrator import Orchestrator
 from planner import STRAT_MIN_SAMPLES, decide_strategy, plan_signature
 from task_suite import build_repo, run_one
 
-REPORT = Path.home() / ".local/state/swarmstate" / "maturity-bench-latest.json"
+REPORT = Path.home() / ".local/state/statepod" / "maturity-bench-latest.json"
 OVERRIDE_SIG = "READ"  # plan_signature([{type:READ,path:...}])
 
 

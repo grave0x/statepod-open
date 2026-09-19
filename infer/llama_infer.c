@@ -1,6 +1,6 @@
 /* infer/llama_infer.c — embedded inference handler (spec v1, M1).
  *
- * Wraps llama.cpp (system libllama.so + <llama.h>) behind the ss_infer_*
+ * Wraps llama.cpp (system libllama.so + <llama.h>) behind the sp_infer_*
  * API.  CPU-only in Milestone 1: n_gpu_layers is accepted but the
  * shipped path defaults to 0 (Ollama remains the fallback provider).
  *
@@ -17,7 +17,7 @@
 #include <string.h>
 #include <time.h>
 
-struct ss_infer_ctx {
+struct sp_infer_ctx {
     struct llama_model*    model;
     struct llama_context*  ctx;
     const struct llama_vocab* vocab;
@@ -56,9 +56,9 @@ static void sb_append(sbuf* sb, const char* s, size_t n) {
 }
 
 /* ── lifecycle ─────────────────────────────────────────────────────────── */
-ss_infer_ctx* ss_infer_init(const char* model_path, int n_ctx, int n_gpu_layers) {
+sp_infer_ctx* sp_infer_init(const char* model_path, int n_ctx, int n_gpu_layers) {
     if (!model_path || !model_path[0]) {
-        fprintf(stderr, "ss_infer: no model path\n");
+        fprintf(stderr, "sp_infer: no model path\n");
         return NULL;
     }
     llama_backend_init();
@@ -68,27 +68,27 @@ ss_infer_ctx* ss_infer_init(const char* model_path, int n_ctx, int n_gpu_layers)
 
     struct llama_model* model = llama_model_load_from_file(model_path, mp);
     if (!model) {
-        fprintf(stderr, "ss_infer: model load failed: %s\n", model_path);
+        fprintf(stderr, "sp_infer: model load failed: %s\n", model_path);
         return NULL;
     }
 
     struct llama_context_params cp = llama_context_default_params();
     cp.n_ctx = n_ctx > 0 ? n_ctx : 1024;
-    /* thread count: conservative default for M1; SS_INFER_N_THREADS overrides */
+    /* thread count: conservative default for M1; SP_INFER_N_THREADS overrides */
     {
-        const char* nth = getenv("SS_INFER_N_THREADS");
+        const char* nth = getenv("SP_INFER_N_THREADS");
         cp.n_threads = (nth && nth[0]) ? atoi(nth) : 2;
         if (cp.n_threads < 1) cp.n_threads = 1;
     }
 
     struct llama_context* ctx = llama_init_from_model(model, cp);
     if (!ctx) {
-        fprintf(stderr, "ss_infer: context init failed\n");
+        fprintf(stderr, "sp_infer: context init failed\n");
         llama_model_free(model);
         return NULL;
     }
 
-    ss_infer_ctx* out = (ss_infer_ctx*)calloc(1, sizeof(*out));
+    sp_infer_ctx* out = (sp_infer_ctx*)calloc(1, sizeof(*out));
     if (!out) {
         llama_free(ctx);
         llama_model_free(model);
@@ -105,7 +105,7 @@ ss_infer_ctx* ss_infer_init(const char* model_path, int n_ctx, int n_gpu_layers)
     return out;
 }
 
-void ss_infer_free(ss_infer_ctx* ctx) {
+void sp_infer_free(sp_infer_ctx* ctx) {
     if (!ctx) return;
     free(ctx->prefix_sys);
     if (ctx->ctx)   llama_free(ctx->ctx);
@@ -114,7 +114,7 @@ void ss_infer_free(ss_infer_ctx* ctx) {
 }
 
 /* ── generation ────────────────────────────────────────────────────────── */
-char* ss_infer_generate(ss_infer_ctx* ctx,
+char* sp_infer_generate(sp_infer_ctx* ctx,
                         const char* system_prompt,
                         const char* user_prompt,
                         const char* grammar,
@@ -142,7 +142,7 @@ char* ss_infer_generate(ss_infer_ctx* ctx,
     if (use_prefix) {
         /* drop the previous generation tail, keep [0, prefix_len) */
         if (!llama_memory_seq_rm(mem, 0, ctx->prefix_len, -1)) {
-            fprintf(stderr, "ss_infer: prefix tail remove failed; falling back to full path\n");
+            fprintf(stderr, "sp_infer: prefix tail remove failed; falling back to full path\n");
             use_prefix = 0;
         }
     }
@@ -172,7 +172,7 @@ char* ss_infer_generate(ss_infer_ctx* ctx,
                                 ctx->n_ctx, false, true);
         free(usr_prompt);
     }
-    if (n_toks < 0) { free(toks); fprintf(stderr, "ss_infer: tokenize failed\n"); return NULL; }
+    if (n_toks < 0) { free(toks); fprintf(stderr, "sp_infer: tokenize failed\n"); return NULL; }
 
     /* First decode: the whole prompt, or the user continuation. */
     struct llama_batch batch;
@@ -193,7 +193,7 @@ char* ss_infer_generate(ss_infer_ctx* ctx,
     if (llama_decode(ctx->ctx, batch) < 0) {
         if (use_prefix) llama_batch_free(batch);
         free(toks);
-        fprintf(stderr, "ss_infer: decode failed\n");
+        fprintf(stderr, "sp_infer: decode failed\n");
         return NULL;
     }
     if (use_prefix) llama_batch_free(batch);
@@ -210,7 +210,7 @@ char* ss_infer_generate(ss_infer_ctx* ctx,
         struct llama_sampler* g =
             llama_sampler_init_grammar(ctx->vocab, grammar, "root");
         if (g) llama_sampler_chain_add(smpl, g);
-        else fprintf(stderr, "ss_infer: grammar parse failed, continuing unconstrained\n");
+        else fprintf(stderr, "sp_infer: grammar parse failed, continuing unconstrained\n");
     }
     llama_sampler_chain_add(smpl, llama_sampler_init_temp(temperature));
     llama_sampler_chain_add(smpl, llama_sampler_init_dist(1u));
@@ -225,7 +225,7 @@ char* ss_infer_generate(ss_infer_ctx* ctx,
         if (id == eos) break;
         n_gen++;
         if ((n_gen & 15) == 0)
-            fprintf(stderr, "ss_infer: gen %d/%d (%lds)\n", n_gen, max_tokens,
+            fprintf(stderr, "sp_infer: gen %d/%d (%lds)\n", n_gen, max_tokens,
                     (long)time(NULL) - t_start);
 
         char piece[512];
@@ -236,10 +236,10 @@ char* ss_infer_generate(ss_infer_ctx* ctx,
 
         struct llama_batch b1 = llama_batch_get_one(&id, 1);
         if ((n_gen & 15) == 0)
-            fprintf(stderr, "ss_infer: decode %d/%d\n", n_gen, max_tokens);
+            fprintf(stderr, "sp_infer: decode %d/%d\n", n_gen, max_tokens);
         int dr = llama_decode(ctx->ctx, b1);
-        if (dr < 0) { fprintf(stderr, "ss_infer: decode FAILED at %d (%d)\n", n_gen, dr); break; }
-        else if (dr > 0) fprintf(stderr, "ss_infer: decode warning at %d (%d)\n", n_gen, dr);
+        if (dr < 0) { fprintf(stderr, "sp_infer: decode FAILED at %d (%d)\n", n_gen, dr); break; }
+        else if (dr > 0) fprintf(stderr, "sp_infer: decode warning at %d (%d)\n", n_gen, dr);
     }
 
     llama_sampler_free(smpl);
@@ -249,7 +249,7 @@ char* ss_infer_generate(ss_infer_ctx* ctx,
 }
 
 /* ── Milestone 2: prefix KV caching ─────────────────────────────────────── */
-int ss_infer_cache_prefix(ss_infer_ctx* ctx, const char* prefix) {
+int sp_infer_cache_prefix(sp_infer_ctx* ctx, const char* prefix) {
     if (!ctx || !ctx->ctx || !prefix || !prefix[0]) return -1;
 
     /* Tokenize the prefix (BOS via add_special) and decode it once. */
@@ -280,7 +280,7 @@ int ss_infer_cache_prefix(ss_infer_ctx* ctx, const char* prefix) {
     llama_batch_free(b);
     free(toks);
     if (!ok) {
-        fprintf(stderr, "ss_infer: prefix decode failed\n");
+        fprintf(stderr, "sp_infer: prefix decode failed\n");
         return -1;
     }
 
@@ -290,11 +290,11 @@ int ss_infer_cache_prefix(ss_infer_ctx* ctx, const char* prefix) {
     ctx->prefix_sys = keep;
     ctx->prefix_len = (llama_pos)n;
     ctx->prefix_valid = 1;
-    fprintf(stderr, "ss_infer: prefix cached (%d tokens)\n", n);
+    fprintf(stderr, "sp_infer: prefix cached (%d tokens)\n", n);
     return 0;
 }
 
-void ss_infer_clear_cache(ss_infer_ctx* ctx) {
+void sp_infer_clear_cache(sp_infer_ctx* ctx) {
     if (!ctx) return;
     free(ctx->prefix_sys);
     ctx->prefix_sys = NULL;
@@ -303,7 +303,7 @@ void ss_infer_clear_cache(ss_infer_ctx* ctx) {
     if (ctx->ctx) llama_memory_clear(llama_get_memory(ctx->ctx), true);
 }
 
-int ss_infer_auto_tune(ss_infer_ctx* ctx, int vram_mb,
+int sp_infer_auto_tune(sp_infer_ctx* ctx, int vram_mb,
                        int model_params_m, int n_layers) {
     (void)ctx;
     if (vram_mb <= 0 || n_layers <= 0 || model_params_m <= 0) return 0;
@@ -316,11 +316,11 @@ int ss_infer_auto_tune(ss_infer_ctx* ctx, int vram_mb,
     return fit < n_layers ? fit : n_layers;
 }
 
-const char* ss_infer_model_desc(ss_infer_ctx* ctx) {
+const char* sp_infer_model_desc(sp_infer_ctx* ctx) {
     return ctx ? ctx->model_desc : "";
 }
 
-int ss_infer_is_available(void) { return 1; }
+int sp_infer_is_available(void) { return 1; }
 
 /* The embedded plan grammar (llama.cpp-safe GBNF). */
-const char* ss_infer_plan_gbnf(void) { return SS_PLAN_GBNF; }
+const char* sp_infer_plan_gbnf(void) { return SP_PLAN_GBNF; }

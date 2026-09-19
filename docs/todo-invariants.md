@@ -1,6 +1,6 @@
 # Todo Invariants Checklist
 
-> Lint-friendly format. Used by `sw todo check`.
+> Lint-friendly format. Used by `sp todo check`.
 
 ## Layer / parent invariants
 
@@ -48,7 +48,7 @@
 - Suggest the corrective action
 
 ```bash
-sw todo check                       # all tasks
-sw todo check --task T-0011         # one task
-sw todo check --strict              # treat warnings as errors
+sp todo check                       # all tasks
+sp todo check --task T-0011         # one task
+sp todo check --strict              # treat warnings as errors
 ```

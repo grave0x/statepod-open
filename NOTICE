@@ -1,4 +1,4 @@
-SwarmState Third-Party Notices
+StatePod Third-Party Notices
 ===============================
 
 This repository includes or interfaces with the third-party components
@@ -22,8 +22,8 @@ listed below. Their copyrights and license terms are noted here.
    and <llama.h>. llama.cpp is Copyright (c) the llama.cpp authors and
    licensed under the MIT License (https://github.com/ggml-org/llama.cpp).
 
-4. Shared C mesh base (libmesh) — win/swarmstate-node.c
-   The Windows node links against the SwarmState shared C mesh base
+4. Shared C mesh base (libmesh) — win/statepod-node.c
+   The Windows node links against the StatePod shared C mesh base
    (mesh.h, jsmn.h, libmesh). That component is maintained by the same
    copyright holder and is distributed separately.
 

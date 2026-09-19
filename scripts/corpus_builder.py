@@ -37,9 +37,9 @@ try:
     from meshd import MeshDaemon, registry_bridge
 except OSError:          # libmesh.so missing: mesh is optional
     MeshDaemon = registry_bridge = None
-from swarmstate import KERNEL_VERSION
+from statepod import KERNEL_VERSION
 
-DEFAULT_RESULTS = Path.home() / ".local/state/swarmstate" / "task_suite.jsonl"
+DEFAULT_RESULTS = Path.home() / ".local/state/statepod" / "task_suite.jsonl"
 
 
 def summarize(recs, results_path, backend):
@@ -182,7 +182,7 @@ def main() -> int:
         if args.budget_min and (time.monotonic() - t_start) / 60 >= args.budget_min:
             print(f"[corpus_builder] budget reached at task {i-1}", flush=True)
             break
-        with tempfile.TemporaryDirectory(prefix="swarmstate-corpus-") as tmp:
+        with tempfile.TemporaryDirectory(prefix="statepod-corpus-") as tmp:
             root = Path(tmp)
             build_repo(root, scale_kb=args.scale_kb)
             with Orchestrator(str(root), backend=args.backend,
@@ -199,7 +199,7 @@ def main() -> int:
                 env = ({"model": args.model,
                         "gpu": gpu.gpu_label(),
                         "processor": gpu.ollama_processor(),
-                        "ngl": int(os.environ.get("SS_OLLAMA_NGL", "0") or 0)}
+                        "ngl": int(os.environ.get("SP_OLLAMA_NGL", "0") or 0)}
                        if args.backend in ("ollama", "normal", "deepseek")
                        else {})
                 recs.append(run_one(orch, root, results_path, name, query,

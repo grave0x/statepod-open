@@ -50,7 +50,7 @@ Constraint: engineering rules — **reuse the shared C mesh base**
 
 ## 3. Phase 1 target (GAPS #9 acceptance, unchanged)
 
-> Two SwarmState harnesses exchange ≥2 registry STRAT samples each way and
+> Two StatePod harnesses exchange ≥2 registry STRAT samples each way and
 > converge on a shared state hash. Plaintext-LAN + node-id allowlist first.
 
 Concretely: node A publishes 2 `reg/STRAT/...` ops, node B publishes 2, and

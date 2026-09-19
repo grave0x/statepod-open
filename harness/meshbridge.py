@@ -1,7 +1,7 @@
 """meshbridge -- ctypes binding to the shared C mesh base (libmesh.a).
 
 The C mesh (~/Projects/02-tools/mesh) is the stateless CRDT core: Lamport
-ordering, dedup, deterministic fold.  This module gives the SwarmState
+ordering, dedup, deterministic fold.  This module gives the StatePod
 harness a thin Python face on that core so the harness can provide the
 *transport* (Tailcat / LoRa / plaintext-LAN) via the send callback.
 
@@ -23,7 +23,7 @@ from pathlib import Path
 #   gcc -std=c99 -O2 -fPIC -shared -Iinclude src/mesh.c \
 #       -o ~/.local/lib/libmesh.so
 LIB = ctypes.CDLL(os.environ.get(
-    "SWARMSTATE_MESH_LIB",
+    "STATEPOD_MESH_LIB",
     str(Path.home() / ".local" / "lib" / "libmesh.so")))
 
 # ── constants (must match mesh.h) ────────────────────────────────────────

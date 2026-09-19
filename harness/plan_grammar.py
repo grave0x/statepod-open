@@ -37,7 +37,7 @@ MAX_OPS = 32        # a batch is bounded; beyond this it is not a plan
 MAX_STR = 65536     # control channel: no megabyte literals
 MAX_INT = 1 << 40   # line numbers etc. stay sane
 
-PLAN_GBNF = r'''# SwarmState plan grammar (spec v1) -- llama.cpp GBNF.
+PLAN_GBNF = r'''# StatePod plan grammar (spec v1) -- llama.cpp GBNF.
 # Constrains generation: shape, op-type enum, strategy enum, value
 # terminals.  Per-type REQUIRED fields are enforced by the strict
 # validator (dependent fields are impractical in GBNF).

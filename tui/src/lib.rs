@@ -1,6 +1,6 @@
-//! swarmtui — TUI model + keymap layer (T-0021, T-0022).
+//! statetui — TUI model + keymap layer (T-0021, T-0022).
 //!
-//! All types are derived from `/tmp/swarmtui-wireframes.json`.
+//! All types are derived from `/tmp/statetui-wireframes.json`.
 //! Rendering lives in the future `src/render/` module (T-0023+).
 
 pub mod design;

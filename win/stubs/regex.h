@@ -3,8 +3,8 @@
  * alternation '|', backslash escapes (\d \w \s \b and escaped metas).
  * Unsupported constructs degrade to literals.  Compile-time shim only
  * (never built on Linux, where the real POSIX regex is used). */
-#ifndef SS_REGEX_H
-#define SS_REGEX_H
+#ifndef SP_REGEX_H
+#define SP_REGEX_H
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

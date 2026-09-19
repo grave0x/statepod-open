@@ -1,7 +1,7 @@
-"""sw docs — documentation ingestion for SwarmState (stdlib-only).
+"""sp docs — documentation ingestion for StatePod (stdlib-only).
 
 Ingests a repo's documentation files (markdown/rst/txt/adoc/org) into a
-section-level index under ~/.swarmstate/docs/<slug>/index.jsonl so the
+section-level index under ~/.statepod/docs/<slug>/index.jsonl so the
 orchestrator can serve doc summaries without reading whole files.
 
 Design mirrors harness/research.py: pure stdlib, no deps, honest status.
@@ -17,10 +17,10 @@ import time
 from pathlib import Path
 
 VERSION = "0.1"
-SYS = Path.home() / ".swarmstate"
+SYS = Path.home() / ".statepod"
 DOC_EXTS = {".md", ".rst", ".txt", ".adoc", ".org"}
 SKIP_DIRS = {".git", ".hg", ".svn", "node_modules", "__pycache__", ".venv",
-             "venv", "target", "dist", "build", ".strix_runs", ".swarmstate",
+             "venv", "target", "dist", "build", ".strix_runs", ".statepod",
              "eval", "research"}
 
 _MD_HEAD = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
@@ -211,7 +211,7 @@ def stats(entries):
 
 def main(argv=None):
     import argparse
-    ap = argparse.ArgumentParser(prog="sw docs")
+    ap = argparse.ArgumentParser(prog="sp docs")
     sub = ap.add_subparsers(dest="op")
     ig = sub.add_parser("ingest", help="(re)index docs under a repo root")
     ig.add_argument("root", nargs="?", default=".")

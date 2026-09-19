@@ -9,7 +9,7 @@
       "outputs": [
         "libllama.a",
         "kernel/c/src/lora.c modifications",
-        "bindings/swarmstate.py updates"
+        "bindings/statepod.py updates"
       ],
       "phase": "Phase 1: Kernel Spike",
       "milestone": "Working LLM inference in C daemon",
@@ -64,7 +64,7 @@
       "outputs": [
         "kernel/c/src/ops.c",
         "kernel/c/src/state.h API",
-        "bindings/swarmstate.py"
+        "bindings/statepod.py"
       ],
       "phase": "Phase 1: Kernel Spike",
       "milestone": "Basic file operations functional",
@@ -125,7 +125,7 @@
       ],
       "outputs": [
         "harness/state.py",
-        "bindings/swarmstate.py",
+        "bindings/statepod.py",
         "harness/orchestrator.py"
       ],
       "phase": "Phase 2: State & Persistence",
@@ -232,7 +232,7 @@
         "msp_partnership_agreements"
       ],
       "phase": "Phase 4: Security Gate",
-      "milestone": "MSP-ready SwarmState deployment",
+      "milestone": "MSP-ready StatePod deployment",
       "source": [
         "Pilot Plan"
       ],
@@ -300,7 +300,7 @@
     }
   },
   "improvement_loop": {
-    "name": "SwarmState Self-Referential Improvement Loop (SRIL)",
+    "name": "StatePod Self-Referential Improvement Loop (SRIL)",
     "description": "A system that continuously evaluates and improves its own project planning and execution",
     "components": {
       "feedback_collection": {

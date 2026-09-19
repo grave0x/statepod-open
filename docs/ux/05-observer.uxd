@@ -1,8 +1,8 @@
 # Role: observer — read-only status + alerts
-screen "SwarmState · Observer" w 70 h 22 bg 17
+screen "StatePod · Observer" w 70 h 22 bg 17
   col weight 1 pad 1 gap 1
     row gap 1
-      text "SwarmState" fg 14 bold 1
+      text "StatePod" fg 14 bold 1
       spacer weight 1
       text "role: observer (read-only)" fg 8
       button "Status" fg 15 bg 23

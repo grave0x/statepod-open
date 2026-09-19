@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Offline smoke tests for Grok SwarmState containment scripts."""
+"""Offline smoke tests for Grok StatePod containment scripts."""
 from __future__ import annotations
 
 import json
@@ -33,10 +33,10 @@ def main() -> int:
         os.environ["HOME"] = str(home)
         # reload paths by rewriting module constants via monkeypatch
         cl.HOME = home
-        cl.STATE = home / ".swarmstate" / "omp.json"
-        cl.OUT_DIR = home / ".swarmstate" / "grok" / "outbox"
-        cl.LEDGER = home / ".swarmstate" / "grok" / "containment.jsonl"
-        cl.GUIDED = home / ".swarmstate" / "grok" / "guided_sessions"
+        cl.STATE = home / ".statepod" / "omp.json"
+        cl.OUT_DIR = home / ".statepod" / "grok" / "outbox"
+        cl.LEDGER = home / ".statepod" / "grok" / "containment.jsonl"
+        cl.GUIDED = home / ".statepod" / "grok" / "guided_sessions"
 
         # --- contain_text ---
         big = ("line\n" * 500) + ("x" * 5000)
@@ -114,7 +114,7 @@ def main() -> int:
             "toolResult": "Z" * 25000,
         })
         assert code == 0
-        archived = list((home / ".swarmstate" / "grok" / "outbox").glob("uid99*.txt"))
+        archived = list((home / ".statepod" / "grok" / "outbox").glob("uid99*.txt"))
         assert archived, "expected archive"
         print("ok posttool archive")
 

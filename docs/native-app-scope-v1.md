@@ -1,4 +1,4 @@
-# SwarmState Standalone Native App Scope
+# StatePod Standalone Native App Scope
 
 **Version:** 1.0
 **Status:** Draft for discussion

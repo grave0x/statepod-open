@@ -1,12 +1,12 @@
-# SwarmState Documentation Layer — Specification (Phase-Agnostic)
+# StatePod Documentation Layer — Specification (Phase-Agnostic)
 
 > **Document status:** end-state design and building decisions. The v1
-> subset implemented so far (SS_OP_SYMBOL_SUMMARY, C extraction, lazy
+> subset implemented so far (SP_OP_SYMBOL_SUMMARY, C extraction, lazy
 > content-hash cache, WRITE invalidation) is documented in `README.md`;
 > everything else in this spec is the target.  
 
 ### 1. Motivation
-SwarmState's kernel owns the repository state and controls what context the LLM sees. Currently, the orchestrator can request:
+StatePod's kernel owns the repository state and controls what context the LLM sees. Currently, the orchestrator can request:
 - `READ` (full file contents)
 - `AST_PARSE` / `AST_QUERY` (syntactic structure)
 - `GREP` (pattern matching)
@@ -56,7 +56,7 @@ typedef struct {
 ```
 
 #### 3.2 SymbolIndex
-An in-memory and persisted index mapping `(file_path, symbol_name)` → `SymbolSummary`. Stored as a binary file in the repo state directory (e.g., `~/.local/state/swarmstate/symbols.bin`), with a JSONL fallback for debuggability.
+An in-memory and persisted index mapping `(file_path, symbol_name)` → `SymbolSummary`. Stored as a binary file in the repo state directory (e.g., `~/.local/state/statepod/symbols.bin`), with a JSONL fallback for debuggability.
 
 ```c
 typedef struct {
@@ -71,30 +71,30 @@ typedef struct {
 
 ### 4. Kernel API Additions
 
-#### 4.1 New Operation Type: `SS_OP_SYMBOL_SUMMARY`
-Add to the `SS_OpType` enum:
+#### 4.1 New Operation Type: `SP_OP_SYMBOL_SUMMARY`
+Add to the `SP_OpType` enum:
 
 ```c
-SS_OP_SYMBOL_SUMMARY,   // fetch symbol summaries for a path or query
+SP_OP_SYMBOL_SUMMARY,   // fetch symbol summaries for a path or query
 ```
 
-**Input fields in `SS_Operation`:**
+**Input fields in `SP_Operation`:**
 - `path` (optional): repo-relative file path to limit search. If `NULL`, search whole repo.
 - `pattern` (optional): symbol name substring or glob. If `NULL`, return all symbols in scope.
 - `target` (optional): if provided, lookup a specific symbol by exact name.
 
 **Output:**
-- `SS_Result.logs` contains one or more serialized `SymbolSummary` entries (JSON or plain text) suitable for inclusion in the LLM context.
+- `SP_Result.logs` contains one or more serialized `SymbolSummary` entries (JSON or plain text) suitable for inclusion in the LLM context.
 
-#### 4.2 New Helper Function: `ss_build_symbol_index`
+#### 4.2 New Helper Function: `sp_build_symbol_index`
 ```c
-int ss_build_symbol_index(RepoState* state, const char* path_filter);
+int sp_build_symbol_index(RepoState* state, const char* path_filter);
 ```
 Rebuilds or updates the symbol index. Uses tree-sitter to extract symbols, docstrings, and local call graphs. Should be callable both manually and automatically after writes/checkouts.
 
-#### 4.3 New Helper Function: `ss_invalidate_symbols`
+#### 4.3 New Helper Function: `sp_invalidate_symbols`
 ```c
-int ss_invalidate_symbols(RepoState* state, const char** paths, size_t path_count);
+int sp_invalidate_symbols(RepoState* state, const char** paths, size_t path_count);
 ```
 Marks symbol summaries as stale when files change. Called internally after `WRITE` or `EXECUTE` (if git mutation is allowed).
 
@@ -121,17 +121,17 @@ The kernel uses its existing tree-sitter integration (already used for AST ops) 
 
 #### 5.4 Staleness
 - Each `SymbolSummary` stores a `content_hash` of its source span.
-- Before serving a summary, the kernel can optionally verify the hash against the current file (fast lookup) or rely on the fact that writes invalidate properly. For v1, rely on automatic invalidation after writes; a manual `ss_build_symbol_index` is available for out-of-band changes (e.g., user edits outside SwarmState).
+- Before serving a summary, the kernel can optionally verify the hash against the current file (fast lookup) or rely on the fact that writes invalidate properly. For v1, rely on automatic invalidation after writes; a manual `sp_build_symbol_index` is available for out-of-band changes (e.g., user edits outside StatePod).
 
 ---
 
 ### 6. Harness / Orchestrator Integration
 
 #### 6.1 New Context Strategy Option: `SYMBOLIC`
-Add to the `SS_ContextStrategy` enum:
+Add to the `SP_ContextStrategy` enum:
 
 ```c
-SS_CONTEXT_SYMBOLIC,    // serve symbol summaries instead of raw file content
+SP_CONTEXT_SYMBOLIC,    // serve symbol summaries instead of raw file content
 ```
 
 The orchestrator can choose `SYMBOLIC` when:
@@ -174,7 +174,7 @@ For code without docstrings, the harness may use a local LLM (or cloud model if 
 - The documentation index is stored locally, alongside the repo state.
 - No source code leaves the device for indexing unless the user explicitly enables cloud summarization.
 - Symbol summaries are derived from the repo; they do not expose more than the code itself.
-- Access control follows the same path containment rules as other kernel operations (`ss_resolve` ensures paths stay inside root).
+- Access control follows the same path containment rules as other kernel operations (`sp_resolve` ensures paths stay inside root).
 
 ---
 

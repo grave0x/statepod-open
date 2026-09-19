@@ -1,4 +1,4 @@
-"""Micro-benchmarks for the SwarmState kernel (Phase 1 spike).
+"""Micro-benchmarks for the StatePod kernel (Phase 1 spike).
 
 Run:  python3 py/bench.py
 Measures kernel-side latency only (no LLM). The orchestrator's task
@@ -12,10 +12,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from swarmstate import (  # noqa: E402
-    SwarmState,
-    SS_OP_READ, SS_OP_WRITE, SS_OP_GREP, SS_OP_STATUS,
-    SS_CONTEXT_DELTA,
+from statepod import (  # noqa: E402
+    StatePod,
+    SP_OP_READ, SP_OP_WRITE, SP_OP_GREP, SP_OP_STATUS,
+    SP_CONTEXT_DELTA,
 )
 
 
@@ -30,8 +30,8 @@ def bench(fn, iters=200):
 
 
 def main():
-    with tempfile.TemporaryDirectory(prefix="swarmstate-bench-") as root:
-        with SwarmState(root) as s:
+    with tempfile.TemporaryDirectory(prefix="statepod-bench-") as root:
+        with StatePod(root) as s:
             # synthetic repo: 100 files x ~40 lines
             for i in range(100):
                 s.write_file(f"src/mod{i:03d}.c",
@@ -40,24 +40,24 @@ def main():
 
             def pure5():
                 s.execute([
-                    {"type": SS_OP_WRITE, "path": "tmp_a.txt", "content": "a\n"},
-                    {"type": SS_OP_WRITE, "path": "tmp_b.txt", "content": "b\n"},
-                    {"type": SS_OP_READ, "path": "src/mod000.c"},
-                    {"type": SS_OP_GREP, "pattern": "fn000_10", "target": "src/mod000.c"},
-                    {"type": SS_OP_READ, "path": "src/mod001.c"},
+                    {"type": SP_OP_WRITE, "path": "tmp_a.txt", "content": "a\n"},
+                    {"type": SP_OP_WRITE, "path": "tmp_b.txt", "content": "b\n"},
+                    {"type": SP_OP_READ, "path": "src/mod000.c"},
+                    {"type": SP_OP_GREP, "pattern": "fn000_10", "target": "src/mod000.c"},
+                    {"type": SP_OP_READ, "path": "src/mod001.c"},
                 ])
 
             def with_git_status():
                 s.execute([
-                    {"type": SS_OP_WRITE, "path": "tmp_a.txt", "content": "a\n"},
-                    {"type": SS_OP_WRITE, "path": "tmp_b.txt", "content": "b\n"},
-                    {"type": SS_OP_READ, "path": "src/mod000.c"},
-                    {"type": SS_OP_GREP, "pattern": "fn000_10", "target": "src/mod000.c"},
-                    {"type": SS_OP_STATUS},
+                    {"type": SP_OP_WRITE, "path": "tmp_a.txt", "content": "a\n"},
+                    {"type": SP_OP_WRITE, "path": "tmp_b.txt", "content": "b\n"},
+                    {"type": SP_OP_READ, "path": "src/mod000.c"},
+                    {"type": SP_OP_GREP, "pattern": "fn000_10", "target": "src/mod000.c"},
+                    {"type": SP_OP_STATUS},
                 ])
 
             def delta_read():
-                s.read("src/mod050.c", strategy=SS_CONTEXT_DELTA)
+                s.read("src/mod050.c", strategy=SP_CONTEXT_DELTA)
 
             def repo_grep():
                 s.grep("fn099_39")

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Shared DELTA-style containment helpers for the Grok SwarmState plugin.
+"""Shared DELTA-style containment helpers for the Grok StatePod plugin.
 
-Ports the prime-agent swarmstate.ts containText/ledger logic to stdlib Python.
+Ports the prime-agent statepod.ts containText/ledger logic to stdlib Python.
 Grok cannot rewrite tool *results* (PostToolUse stdout is ignored); this module
-still archives oversized outputs and writes the containment ledger so /swarmstate
+still archives oversized outputs and writes the containment ledger so /statepod
 stats|full work. PreToolUse uses the same digest format when emitting guidance.
 """
 from __future__ import annotations
@@ -22,11 +22,11 @@ def _ts() -> str:
     return _dt.utcnow().isoformat() + "Z"
 
 HOME = Path.home()
-STATE = HOME / ".swarmstate" / "omp.json"
-OUT_DIR = HOME / ".swarmstate" / "grok" / "outbox"
-LEDGER = HOME / ".swarmstate" / "grok" / "containment.jsonl"
-GUIDED = HOME / ".swarmstate" / "grok" / "guided_sessions"
-MARKER = "[swarmstate:contained]"
+STATE = HOME / ".statepod" / "omp.json"
+OUT_DIR = HOME / ".statepod" / "grok" / "outbox"
+LEDGER = HOME / ".statepod" / "grok" / "containment.jsonl"
+GUIDED = HOME / ".statepod" / "grok" / "guided_sessions"
+MARKER = "[statepod:contained]"
 DIGEST_BUDGET = 700  # chars for head and tail each
 DEFAULTS = {
     "enabled": False,
@@ -152,10 +152,10 @@ def guidance_once(session_id: str, cfg: dict[str, Any] | None = None) -> str | N
         pass
     cap = int(cfg.get("capChars") or DEFAULTS["capChars"])
     return (
-        f"[swarmstate] containment ON: dump-shaped reads/shell are rewritten before "
+        f"[statepod] containment ON: dump-shaped reads/shell are rewritten before "
         f"they run; outputs over {cap:,} chars are archived under {OUT_DIR} "
-        f"(ledger for /swarmstate stats). Prefer sed -n, grep -n -m, head/tail, "
-        f"lean-ctx ctx_read(mode=signatures|map), or `swarmcli ask`/`swarmcli explain` — "
+        f"(ledger for /statepod stats). Prefer sed -n, grep -n -m, head/tail, "
+        f"lean-ctx ctx_read(mode=signatures|map), or `statepod ask`/`statepod explain` — "
         f"never cat whole large files. Grok cannot rewrite tool results in-place "
         f"(unlike prime); PreToolUse hardening + archive is the containment path."
     )

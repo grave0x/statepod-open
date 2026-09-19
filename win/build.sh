@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# build.sh — cross-compile the Windows node (swarmstate-node.exe +
-# swarmstate-kernel.dll) with mingw-w64, plus a Linux test binary.
+# build.sh — cross-compile the Windows node (statepod-node.exe +
+# statepod-kernel.dll) with mingw-w64, plus a Linux test binary.
 # Reuses the shared C mesh base (libmesh) — no second mesh.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -25,22 +25,22 @@ PY
 
 # 2) precompiled kernel DLL (kernel.c + Windows shims + tree-sitter stubs)
 "$CCW" -shared -static -O2 -Iwin/stubs -include win/compat/win_compat.h \
-       kernel.c -o win/build/swarmstate-kernel.dll \
+       kernel.c -o win/build/statepod-kernel.dll \
        -Wl,--out-implib,win/build/libkernel_win.a
 
 # 3) node exe (links the kernel import lib + static mesh)
 "$CCW" -O2 -static -I. -I. -Iwin -I"$MESH/include" -I"$MESH/src" \
-       -Iwin/build win/swarmstate-node.c win/build/mesh_win.o \
+       -Iwin/build win/statepod-node.c win/build/mesh_win.o \
        win/build/libkernel_win.a \
-       -lws2_32 -o win/build/swarmstate-node.exe
+       -lws2_32 -o win/build/statepod-node.exe
 
 # 4) Linux test binary (same node, real tree-sitter kernel)
 if pkg-config --exists tree-sitter tree-sitter-c; then
   gcc -O2 -I. -I. -Iwin -I"$MESH/include" -I"$MESH/src" \
-      -Iwin/build win/swarmstate-node.c "$MESH/src/mesh.c" kernel.c \
+      -Iwin/build win/statepod-node.c "$MESH/src/mesh.c" kernel.c \
       $(pkg-config --cflags --libs tree-sitter tree-sitter-c) \
-      -o win/build/swarmstate-node-linux
-  echo "linux test binary: win/build/swarmstate-node-linux"
+      -o win/build/statepod-node-linux
+  echo "linux test binary: win/build/statepod-node-linux"
 else
   echo "WARN: tree-sitter not found — skipping Linux test binary"
 fi
@@ -49,16 +49,16 @@ fi
 #    Default provider; falls back to Ollama when the model is absent.
 if pkg-config --exists llama; then
   gcc -O2 -DSS_EMBED_INFER -I. -I. -Iwin -Iinfer -I"$MESH/include" -I"$MESH/src" \
-      -Iwin/build win/swarmstate-node.c infer/llama_infer.c \
+      -Iwin/build win/statepod-node.c infer/llama_infer.c \
       "$MESH/src/mesh.c" kernel.c \
       $(pkg-config --cflags --libs tree-sitter tree-sitter-c) \
       $(pkg-config --libs llama) \
-      -o win/build/swarmstate-node-embed
-  echo "embedded node: win/build/swarmstate-node-embed"
+      -o win/build/statepod-node-embed
+  echo "embedded node: win/build/statepod-node-embed"
 else
   echo "WARN: llama not found — skipping embedded node"
 fi
-ls -la win/build/swarmstate-node.exe win/build/swarmstate-kernel.dll
+ls -la win/build/statepod-node.exe win/build/statepod-kernel.dll
 
 # 6) Windows EXECUTE acceptance test (wine; real PowerShell not needed)
 #    exec_win_test.exe drives the kernel DLL's EXECUTE path against a

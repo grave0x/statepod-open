@@ -1,4 +1,4 @@
-# SwarmState Project Priorities & Self-Referential Improvement Loop
+# StatePod Project Priorities & Self-Referential Improvement Loop
 
 Generated: 2026-09-04
 Source: 104 exported DeepSeek chat sessions (~12.2 MB)
@@ -13,7 +13,7 @@ Source: 104 exported DeepSeek chat sessions (~12.2 MB)
 | Low | 4 | 19 |
 | **Total** | **15** | **52** |
 
-The project portfolio is organized into 4 phases matching SwarmState's existing roadmap.
+The project portfolio is organized into 4 phases matching StatePod's existing roadmap.
 
 ---
 
@@ -25,7 +25,7 @@ These projects form the foundation for all subsequent development and can procee
 
 #### 1. Embedded Inference Engine (2 days)
 **Dependencies:** None  
-**Outputs:** `libllama.a`, `kernel/c/src/lora.c` modifications, `bindings/swarmstate.py` updates  
+**Outputs:** `libllama.a`, `kernel/c/src/lora.c` modifications, `bindings/statepod.py` updates  
 **Goal:** Working LLM inference in C daemon with static llama.cpp linkage, prefix caching, GBNF grammar enforcement, and auto-tuning GPU layers  
 **Status:** Not Started
 
@@ -43,7 +43,7 @@ These projects form the foundation for all subsequent development and can procee
 
 #### 4. Kernel Core Operations (3 days)
 **Dependencies:** None  
-**Outputs:** `kernel/c/src/ops.c`, `kernel/c/src/state.h` API header, `bindings/swarmstate.py`  
+**Outputs:** `kernel/c/src/ops.c`, `kernel/c/src/state.h` API header, `bindings/statepod.py`  
 **Goal:** Basic file READ/WRITE/GREP/AST operations functional in C kernel  
 **Status:** Not Started
 
@@ -67,7 +67,7 @@ These projects form the foundation for all subsequent development and can procee
 
 #### 7. C Kernel Python ctypes Binding (3 days)
 **Dependencies:** Kernel Core Operations  
-**Outputs:** `harness/state.py`, `bindings/swarmstate.py`, `harness/orchestrator.py`  
+**Outputs:** `harness/state.py`, `bindings/statepod.py`, `harness/orchestrator.py`  
 **Goal:** Python FFI wrapper for all kernel operations  
 **Status:** Not Started
 
@@ -110,7 +110,7 @@ These projects form the foundation for all subsequent development and can procee
 #### 12. MSP Pilot Program Preparation (5 days)
 **Dependencies:** Embedded Inference, Governance UI, LoRa Hardware, Maturity Bench  
 **Outputs:** `docs/support-ops-msp-spec-v1.md`, pilot brief document  
-**Goal:** MSP-ready SwarmState deployment for Port Augusta pilot  
+**Goal:** MSP-ready StatePod deployment for Port Augusta pilot  
 **Status:** Deferred (waiting for successful field test)
 
 #### 13. Stigmergic Kernel Prefetch (4 days)

@@ -60,7 +60,7 @@ def test_gov_ui_refuses_no_secret():
     r = subprocess.run(
         [sys.executable, "gov_ui.py", "--port", "0"],
         cwd=os.path.dirname(__file__),
-        capture_output=True, text=True, env={**os.environ, "SS_GOV_SECRET": ""},
+        capture_output=True, text=True, env={**os.environ, "SP_GOV_SECRET": ""},
         timeout=5,
     )
     # --port 0 may still bind; we care about exit before serve if no secret
