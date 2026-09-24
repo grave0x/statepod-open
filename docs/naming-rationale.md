@@ -8,7 +8,7 @@ We considered `ss` for internal use due to its brevity. It was rejected for publ
 `sp` was chosen because:
 
 - It is short and fast to type.
-- It suggests both **swarm** and **software**.
+- It evokes **StatePod** and **software**.
 - It has no negative historical association.
 - It is broadly unambiguous across professional and community settings.
 - It aligns with the calm, private, and trustworthy image of the project.

@@ -64,7 +64,7 @@ pool — `sha256(mesh_peer_state_json())` matches on every member.
 ```bash
 # archive node: serve only *.py and conf/* from a share root
 python3 harness/meshd.py --name archive --port 7002 --allow archive \
-  --serve-files /srv/swarm/share --file-patterns '*.py,conf/*' \
+  --serve-files /srv/statepod/share --file-patterns '*.py,conf/*' \
   --max-file-bytes 65536
 ```
 

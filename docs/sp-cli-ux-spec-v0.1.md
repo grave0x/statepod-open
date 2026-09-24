@@ -8,7 +8,7 @@
 `sp`
 
 - Short, memorable, and free of historical or platform conflicts.
-- Expands to **Swarm** or **Software** depending on context.
+- Short for **StatePod**; also evokes **Software**.
 - Full project name remains **StatePod**.
 
 ## 2. Core Commands
